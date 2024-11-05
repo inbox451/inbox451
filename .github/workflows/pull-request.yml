@@ -15,7 +15,8 @@ permissions:
   checks: write
 
 jobs:
-  build:
+  backend:
+    name: Backend Checks
     runs-on: ubuntu-latest
 
     steps:
@@ -47,3 +48,35 @@ jobs:
 
       - name: Build application
         run: make build
+
+  frontend:
+    name: Frontend Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'frontend/pnpm-lock.yaml'
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Build frontend
+        working-directory: .
+        run: make build-frontend

@@ -21,6 +21,9 @@ A simple email server that allows you to create inboxes and rules to filter emai
   - [Development](#development)
     - [Project Structure](#project-structure)
     - [API Testing with Bruno](#api-testing-with-bruno)
+  - [Frontend Development](#frontend-development)
+    - [Development Mode](#development-mode)
+    - [Production Build](#production-build)
   - [Architecture](#architecture)
 
 ## Features
@@ -39,13 +42,31 @@ A simple email server that allows you to create inboxes and rules to filter emai
 ## Development Setup
 
 1. Clone the repository
-2. Start the PostgreSQL database and run the application:
+2. Install dependencies:
 ```bash
-make dev
+make deps  # Installs Go and frontend dependencies
+```
+
+3. Start the development servers:
+
+For backend development:
+```bash
+make dev  # Starts PostgreSQL and Go server
+```
+
+For frontend development:
+```bash
+make run-frontend  # Starts Vite dev server
 ```
 
 Additional commands:
 ```bash
+# Build the frontend
+make build-frontend
+
+# Build production binary (includes frontend)
+make pack-bin
+
 # Start the database
 make db-up
 
@@ -198,31 +219,24 @@ QUIT
 │   └── main.go           # Main application entry point
 ├── config/
 │   └── default.yaml      # Default configuration
-├── bruno/                # API testing collections
-│   └── mercury-api/
-│       ├── accounts/     # Account-related requests
-│       ├── inboxes/      # Inbox-related requests
-│       ├── messages/     # Message-related requests
-│       ├── rules/        # Rule-related requests
-│       └── environments/ # Environment configurations
+├── frontend/             # Vue.js frontend application
+│   ├── src/             # Frontend source code
+│   │   ├── App.vue      # Root Vue component
+│   │   ├── main.js      # Frontend entry point
+│   │   └── style.css    # Global styles
+│   ├── public/          # Static assets
+│   ├── index.html       # HTML template
+│   └── vite.config.js   # Vite configuration
 ├── internal/
 │   ├── api/             # HTTP API implementation
-│   │   ├── handlers.go
-│   │   ├── middleware.go
-│   │   └── server.go
+│   ├── assets/          # Asset embedding (frontend)
 │   ├── config/          # Configuration management
 │   ├── core/            # Business logic
-│   │   ├── accounts.go
-│   │   ├── inboxes.go
-│   │   ├── messages.go
-│   │   └── rules.go
 │   ├── logger/          # Logging package
-│   ├── models/          # Data models and pagination
-│   ├── smtp/            # SMTP server implementation
-│   ├── imap/           # IMAP server implementation
+│   ├── models/          # Data models
+│   ├── smtp/            # SMTP server
+│   ├── imap/           # IMAP server
 │   └── storage/         # Database operations
-│       ├── queries.sql
-│       └── schema.sql
 ```
 
 ### API Testing with Bruno
@@ -234,6 +248,33 @@ To use the Bruno collection:
 2. Open the `bruno` folder in Bruno
 3. Run requests individually or use collections
 4. Tests will automatically validate responses
+
+## Frontend Development
+
+The project includes a Vue.js frontend that's served directly from the Go binary in production. In development, it runs on a separate Vite dev server.
+
+### Development Mode
+
+1. Start the backend:
+```bash
+make dev  # Runs on http://localhost:8080
+```
+
+2. In another terminal, start the frontend:
+```bash
+make run-frontend  # Runs on http://localhost:5173
+```
+
+### Production Build
+
+The frontend is embedded into the Go binary using stuffbin:
+
+```bash
+make pack-bin
+./inbox451 -config config/default.yaml
+```
+
+This creates a single binary that serves both the API and frontend assets. Visit http://localhost:8080 to access the application.
 
 ## Architecture
 

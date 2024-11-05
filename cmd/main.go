@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"mercury/internal/api"
+	"mercury/internal/assets"
 	"mercury/internal/config"
 	"mercury/internal/core"
 	"mercury/internal/imap"
@@ -137,6 +138,19 @@ func handleGracefulShutdown(core *core.Core, servers []ServerInstance) error {
 }
 
 func main() {
+	// Get executable path for stuffbin
+	execPath, err := os.Executable()
+	if err != nil {
+		fmt.Printf("Failed to get executable path: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Initialize asset system
+	if err := assets.InitAssets(execPath); err != nil {
+		fmt.Printf("Failed to initialize assets: %v\n", err)
+		os.Exit(1)
+	}
+
 	// Parse command line flags
 	configFile := flag.String("config", "config/default.yaml", "Path to configuration file")
 	flag.Parse()

@@ -30,3 +30,23 @@ go.work
 
 # Environment variables
 .env
+*.local
+
+# Binary
+inbox451
+
+# Frontend
+frontend/dist
+frontend/node_modules
+frontend/dist-ssr
+frontend/logs
+frontend/*.log
+frontend/npm-debug.log*
+yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+frontend/node_modules
+frontend/dist
+frontend/dist-ssr
