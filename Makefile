@@ -1,9 +1,9 @@
 .PHONY: dev db-up db-down db-clean test build
 
-BIN := mercury
+BIN := inbox451
 
 build:
-	CGO_ENABLED=0 go build -ldflags="-s -w" cmd/*.go
+	CGO_ENABLED=0 go build -o ${BIN} -ldflags="-s -w" cmd/*.go
 
 dev: db-up
 	go run ./cmd/

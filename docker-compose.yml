@@ -1,19 +1,51 @@
+x-environment: &shared-environment
+  POSTGRES_USER: ${POSTGRES_USER:-inbox}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-inbox}
+  POSTGRES_DB: ${POSTGRES_DB:-inbox451}
+  POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+
 services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: inbox
-      POSTGRES_PASSWORD: inbox
-      POSTGRES_DB: inbox451
+      <<: *shared-environment
     ports:
       - "5432:5432"
+    networks:
+      - inbox451
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./tmp/postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mercury"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-inbox} -d ${POSTGRES_DB:-inbox451}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-inbox451@inbox451.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-inbox451}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "False"
+      PGADMIN_CONFIG_LOGIN_REQUIRED: "False"
+    volumes:
+      - ./tmp/pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json
+    ports:
+      - "8081:80"
+    networks:
+      - inbox451
+    restart: unless-stopped
+    depends_on:
+      - postgres
 
-volumes:
-  postgres_data:
+networks:
+  inbox451:
+    driver: bridge
