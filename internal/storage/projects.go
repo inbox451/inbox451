@@ -1,81 +1,102 @@
 package storage
 
 import (
-	"context"
-
 	"inbox451/internal/models"
 )
 
-func (r *repository) ListProjects(ctx context.Context, limit, offset int) ([]*models.Project, int, error) {
+func (r *repository) ListProjects(limit int, offset int) ([]models.Project, int, error) {
+	var projects []models.Project
 	var total int
-	err := r.queries.CountProjects.GetContext(ctx, &total)
+
+	err := r.queries.CountProjects.Get(&total)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	projects := []*models.Project{}
-	if total > 0 {
-		err = r.queries.ListProjects.SelectContext(ctx, &projects, limit, offset)
-		if err != nil {
-			return nil, 0, err
-		}
+	err = r.queries.ListProjects.Select(&projects, limit, offset)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	return projects, total, nil
 }
 
-func (r *repository) ListProjectsByUser(ctx context.Context, userID int, limit int, offset int) ([]*models.Project, int, error) {
+func (r *repository) ListProjectsByUser(userId int, limit int, offset int) ([]models.Project, int, error) {
 	var total int
-	err := r.queries.CountProjectsByUser.GetContext(ctx, &total, userID)
+	var projects []models.Project
+
+	err := r.queries.CountProjectsByUser.Get(&total, userId)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	projects := []*models.Project{}
-	if total > 0 {
-		err = r.queries.ListProjectsByUser.SelectContext(ctx, &projects, userID, limit, offset)
-		if err != nil {
-			return nil, 0, err
-		}
+	err = r.queries.ListProjectsByUser.Select(&projects, userId, limit, offset)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	return projects, total, nil
 }
 
-func (r *repository) GetProject(ctx context.Context, id int) (*models.Project, error) {
+func (r *repository) GetProject(id int) (models.Project, error) {
 	var project models.Project
-	err := r.queries.GetProject.GetContext(ctx, &project, id)
-	return &project, handleDBError(err)
+	err := r.queries.GetProject.Get(&project, id)
+	return project, handleDBError(err)
 }
 
-func (r *repository) CreateProject(ctx context.Context, project *models.Project) error {
-	err := r.queries.CreateProject.QueryRowContext(ctx, project.Name).
-		Scan(&project.ID, &project.CreatedAt, &project.UpdatedAt)
-	return handleDBError(err)
+func (r *repository) CreateProject(project models.Project) (models.Project, error) {
+	var projectId int
+	err := r.queries.CreateProject.QueryRow(project.Name).Scan(&projectId)
+	if err != nil {
+		return models.Project{}, handleDBError(err)
+	}
+	return r.GetProject(projectId)
 }
 
-func (r *repository) UpdateProject(ctx context.Context, project *models.Project) error {
-	err := r.queries.UpdateProject.QueryRowContext(ctx, project.Name, project.ID).
-		Scan(&project.UpdatedAt)
-	return handleDBError(err)
+func (r *repository) UpdateProject(project models.Project) (models.Project, error) {
+	res, err := r.queries.UpdateProject.Exec(project.Name, project.ID)
+	if err != nil {
+		return models.Project{}, handleDBError(err)
+	}
+	if err := handleRowsAffected(res); err != nil {
+		return models.Project{}, err
+	}
+	return r.GetProject(project.ID)
 }
 
-func (r *repository) ProjectAddUser(ctx context.Context, projectUser *models.ProjectUser) error {
-	err := r.queries.AddUserToProject.QueryRowContext(ctx, projectUser.ProjectID, projectUser.UserID, projectUser.Role).
-		Scan(&projectUser.CreatedAt, &projectUser.UpdatedAt)
-	return handleDBError(err)
+func (r *repository) GetProjectUser(projectId int, userId int) (models.ProjectUser, error) {
+	var projectUser models.ProjectUser
+	err := r.queries.GetProjectUser.Get(&projectUser, projectId, userId)
+	return projectUser, handleDBError(err)
 }
 
-func (r *repository) DeleteProject(ctx context.Context, id int) error {
-	result, err := r.queries.DeleteProject.ExecContext(ctx, id)
+func (r *repository) ProjectAddUser(projectUser models.ProjectUser) (models.ProjectUser, error) {
+	res, err := r.queries.AddUserToProject.Exec(
+		projectUser.ProjectID,
+		projectUser.UserID,
+		projectUser.Role)
+
+	if err != nil {
+		return models.ProjectUser{}, handleDBError(err)
+	}
+
+	if err := handleRowsAffected(res); err != nil {
+		return models.ProjectUser{}, err
+	}
+
+	return r.GetProjectUser(projectUser.ProjectID, projectUser.UserID)
+}
+
+func (r *repository) DeleteProject(id int) error {
+	result, err := r.queries.DeleteProject.Exec(id)
 	if err != nil {
 		return handleDBError(err)
 	}
 	return handleRowsAffected(result)
 }
 
-func (r *repository) ProjectRemoveUser(ctx context.Context, projectID int, userID int) error {
-	result, err := r.queries.RemoveUserFromProject.ExecContext(ctx, projectID, userID)
+func (r *repository) ProjectRemoveUser(projectId int, userId int) error {
+	result, err := r.queries.RemoveUserFromProject.Exec(projectId, userId)
 	if err != nil {
 		return handleDBError(err)
 	}

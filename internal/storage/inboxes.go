@@ -1,65 +1,74 @@
 package storage
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 
 	"inbox451/internal/models"
 )
 
-func (r *repository) CreateInbox(ctx context.Context, inbox *models.Inbox) error {
-	return r.queries.CreateInbox.QueryRowContext(ctx, inbox.ProjectID, inbox.Email).
-		Scan(&inbox.ID, &inbox.CreatedAt, &inbox.UpdatedAt)
+func (r *repository) CreateInbox(inbox models.Inbox) (models.Inbox, error) {
+	var inboxID int
+	err := r.queries.CreateInbox.QueryRow(inbox.ProjectID, inbox.Email).
+		Scan(&inbox.ID)
+	if err != nil {
+		return models.Inbox{}, handleDBError(err)
+	}
+	return r.GetInbox(inboxID)
 }
 
-func (r *repository) GetInbox(ctx context.Context, id int) (*models.Inbox, error) {
+func (r *repository) GetInbox(id int) (models.Inbox, error) {
 	var inbox models.Inbox
-	err := r.queries.GetInbox.GetContext(ctx, &inbox, id)
-	return &inbox, handleDBError(err)
+	err := r.queries.GetInbox.Get(&inbox, id)
+	if err != nil {
+		return models.Inbox{}, handleDBError(err)
+	}
+	return inbox, nil
 }
 
-func (r *repository) GetInboxByEmail(ctx context.Context, email string) (*models.Inbox, error) {
+func (r *repository) GetInboxByEmail(email string) (models.Inbox, error) {
 	var inbox models.Inbox
-	err := r.queries.GetInboxByEmail.GetContext(ctx, &inbox, email)
+	err := r.queries.GetInboxByEmail.Get(&inbox, email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+			return models.Inbox{}, nil
 		}
-		return nil, err
+		return models.Inbox{}, err
 	}
-	return &inbox, nil
+	return inbox, nil
 }
 
-func (r *repository) UpdateInbox(ctx context.Context, inbox *models.Inbox) error {
-	result, err := r.queries.UpdateInbox.ExecContext(ctx, inbox.Email, inbox.ID)
+func (r *repository) UpdateInbox(inbox models.Inbox) (models.Inbox, error) {
+	result, err := r.queries.UpdateInbox.Exec(inbox.Email, inbox.ID)
+	if err != nil {
+		return models.Inbox{}, handleDBError(err)
+	}
+	if err := handleRowsAffected(result); err != nil {
+		return models.Inbox{}, err
+	}
+	return r.GetInbox(inbox.ID)
+}
+
+func (r *repository) DeleteInbox(id int) error {
+	result, err := r.queries.DeleteInbox.Exec(id)
 	if err != nil {
 		return handleDBError(err)
 	}
 	return handleRowsAffected(result)
 }
 
-func (r *repository) DeleteInbox(ctx context.Context, id int) error {
-	result, err := r.queries.DeleteInbox.ExecContext(ctx, id)
-	if err != nil {
-		return handleDBError(err)
-	}
-	return handleRowsAffected(result)
-}
-
-func (r *repository) ListInboxesByProject(ctx context.Context, projectID, limit, offset int) ([]*models.Inbox, int, error) {
+func (r *repository) ListInboxesByProject(projectID, limit, offset int) ([]models.Inbox, int, error) {
 	var total int
-	err := r.queries.CountInboxesByProject.GetContext(ctx, &total, projectID)
+	var inboxes []models.Inbox
+
+	err := r.queries.CountInboxesByProject.Get(&total, projectID)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	inboxes := []*models.Inbox{}
-	if total > 0 {
-		err = r.queries.ListInboxesByProject.SelectContext(ctx, &inboxes, projectID, limit, offset)
-		if err != nil {
-			return nil, 0, err
-		}
+	err = r.queries.ListInboxesByProject.Select(&inboxes, projectID, limit, offset)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	return inboxes, total, nil

@@ -1,86 +1,95 @@
 package storage
 
 import (
-	"context"
-
 	"inbox451/internal/models"
 )
 
-func (r *repository) CreateMessage(ctx context.Context, message *models.Message) error {
-	err := r.queries.CreateMessage.QueryRowContext(ctx,
-		message.InboxID, message.Sender, message.Receiver, message.Subject, message.Body).
-		Scan(&message.ID, &message.CreatedAt, &message.UpdatedAt)
-	return handleDBError(err)
-}
+func (r *repository) CreateMessage(message models.Message) (models.Message, error) {
+	var messageId int
+	err := r.queries.CreateMessage.QueryRow(
+		message.InboxID,
+		message.Sender,
+		message.Receiver,
+		message.Subject,
+		message.Body).Scan(&messageId)
 
-func (r *repository) GetMessage(ctx context.Context, id int) (*models.Message, error) {
-	var message models.Message
-	err := r.queries.GetMessage.GetContext(ctx, &message, id)
 	if err != nil {
-		return nil, handleDBError(err)
+		return models.Message{}, handleDBError(err)
 	}
-	return &message, nil
+
+	return r.GetMessage(messageId)
 }
 
-func (r *repository) ListMessagesByInbox(ctx context.Context, inboxID, limit, offset int) ([]*models.Message, int, error) {
+func (r *repository) GetMessage(messageId int) (models.Message, error) {
+	var message models.Message
+	err := r.queries.GetMessage.Get(&message, messageId)
+	if err != nil {
+		return models.Message{}, handleDBError(err)
+	}
+	return message, nil
+}
+
+func (r *repository) ListMessagesByInbox(inboxId, limit, offset int) ([]models.Message, int, error) {
 	var total int
-	err := r.queries.CountMessagesByInbox.GetContext(ctx, &total, inboxID)
+	var messages []models.Message
+
+	err := r.queries.CountMessagesByInbox.Get(&total, inboxId)
 	if err != nil {
 		return nil, 0, handleDBError(err)
 	}
 
-	messages := []*models.Message{}
-
-	if total > 0 {
-		err = r.queries.ListMessagesByInbox.SelectContext(ctx, &messages, inboxID, limit, offset)
-		if err != nil {
-			return nil, 0, handleDBError(err)
-		}
+	err = r.queries.ListMessagesByInbox.Select(&messages, inboxId, limit, offset)
+	if err != nil {
+		return nil, 0, handleDBError(err)
 	}
 
 	return messages, total, nil
 }
 
-func (r *repository) UpdateMessageReadStatus(ctx context.Context, messageID int, isRead bool) error {
-	result, err := r.queries.UpdateMessageReadStatus.ExecContext(ctx, isRead, messageID)
+func (r *repository) UpdateMessageReadStatus(messageId int, isRead bool) (models.Message, error) {
+	result, err := r.queries.UpdateMessageReadStatus.Exec(isRead, messageId)
+
+	if err != nil {
+		return models.Message{}, handleDBError(err)
+	}
+
+	if err := handleRowsAffected(result); err != nil {
+		return models.Message{}, err
+	}
+
+	return r.GetMessage(messageId)
+}
+
+func (r *repository) DeleteMessage(messageId int) error {
+	result, err := r.queries.DeleteMessage.Exec(messageId)
 	if err != nil {
 		return handleDBError(err)
 	}
 	return handleRowsAffected(result)
 }
 
-func (r *repository) DeleteMessage(ctx context.Context, messageID int) error {
-	result, err := r.queries.DeleteMessage.ExecContext(ctx, messageID)
-	if err != nil {
-		return handleDBError(err)
-	}
-	return handleRowsAffected(result)
-}
-
-func (r *repository) ListMessagesByInboxWithFilter(ctx context.Context, inboxID int, isRead *bool, limit, offset int) ([]*models.Message, int, error) {
+func (r *repository) ListMessagesByInboxWithFilter(inboxId int, isRead *bool, limit, offset int) ([]models.Message, int, error) {
 	var total int
 	var err error
+	var messages []models.Message
 
 	if isRead == nil {
-		err = r.queries.CountMessagesByInbox.GetContext(ctx, &total, inboxID)
+		err = r.queries.CountMessagesByInbox.Get(&total, &inboxId)
 	} else {
-		err = r.queries.CountMessagesByInboxWithReadFilter.GetContext(ctx, &total, inboxID, *isRead)
+		err = r.queries.CountMessagesByInboxWithReadFilter.Get(&total, inboxId, *isRead)
 	}
 	if err != nil {
 		return nil, 0, handleDBError(err)
 	}
 
-	messages := []*models.Message{}
+	if isRead == nil {
+		err = r.queries.ListMessagesByInbox.Select(&messages, inboxId, limit, offset)
+	} else {
+		err = r.queries.ListMessagesByInboxWithReadFilter.Select(&messages, inboxId, *isRead, limit, offset)
+	}
 
-	if total > 0 {
-		if isRead == nil {
-			err = r.queries.ListMessagesByInbox.SelectContext(ctx, &messages, inboxID, limit, offset)
-		} else {
-			err = r.queries.ListMessagesByInboxWithReadFilter.SelectContext(ctx, &messages, inboxID, *isRead, limit, offset)
-		}
-		if err != nil {
-			return nil, 0, handleDBError(err)
-		}
+	if err != nil {
+		return nil, 0, handleDBError(err)
 	}
 
 	return messages, total, nil

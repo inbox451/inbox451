@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 
@@ -10,15 +9,16 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (r *repository) ListUsers(ctx context.Context, limit, offset int) ([]*models.User, int, error) {
+func (r *repository) ListUsers(limit int, offset int) ([]models.User, int, error) {
 	var total int
-	err := r.queries.CountUsers.GetContext(ctx, &total)
+	var users []models.User
+
+	err := r.queries.CountUsers.Get(&total)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	var users []*models.User
-	err = r.queries.ListUsers.SelectContext(ctx, &users, limit, offset)
+	err = r.queries.ListUsers.Select(&users, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -26,26 +26,27 @@ func (r *repository) ListUsers(ctx context.Context, limit, offset int) ([]*model
 	return users, total, nil
 }
 
-func (r *repository) GetUser(ctx context.Context, userID int) (*models.User, error) {
+func (r *repository) GetUser(userId int) (models.User, error) {
 	var user models.User
-	err := r.queries.GetUser.GetContext(ctx, &user, userID)
-	return &user, handleDBError(err)
+	err := r.queries.GetUser.Get(&user, userId)
+	return user, handleDBError(err)
 }
 
-func (r *repository) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
+func (r *repository) GetUserByUsername(username string) (models.User, error) {
 	var user models.User
-	err := r.queries.GetUserByUsername.GetContext(ctx, &user, username)
+	err := r.queries.GetUserByUsername.Get(&user, username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+			return user, nil
 		}
-		return nil, err
+		return user, err
 	}
-	return &user, nil
+	return user, nil
 }
 
-func (r *repository) CreateUser(ctx context.Context, user *models.User) error {
-	return r.queries.CreateUser.QueryRowContext(ctx,
+func (r *repository) CreateUser(user models.User) (models.User, error) {
+	var userId int
+	err := r.queries.CreateUser.QueryRow(
 		user.Name,
 		user.Username,
 		user.Password,
@@ -53,11 +54,15 @@ func (r *repository) CreateUser(ctx context.Context, user *models.User) error {
 		user.Status,
 		user.Role,
 		user.PasswordLogin).
-		Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
+		Scan(&userId)
+	if err != nil {
+		return models.User{}, handleDBError(err)
+	}
+	return r.GetUser(userId)
 }
 
-func (r *repository) UpdateUser(ctx context.Context, user *models.User) error {
-	return r.queries.UpdateUser.QueryRowContext(ctx,
+func (r *repository) UpdateUser(user models.User) (models.User, error) {
+	res, err := r.queries.UpdateUser.Exec(
 		user.Name,
 		user.Username,
 		user.Password,
@@ -65,12 +70,20 @@ func (r *repository) UpdateUser(ctx context.Context, user *models.User) error {
 		user.Status,
 		user.Role,
 		user.PasswordLogin,
-		user.ID).
-		Scan(&user.UpdatedAt)
+		user.ID)
+	if err != nil {
+		return models.User{}, handleDBError(err)
+	}
+
+	if err := handleRowsAffected(res); err != nil {
+		return models.User{}, err
+	}
+
+	return r.GetUser(user.ID)
 }
 
-func (r *repository) DeleteUser(ctx context.Context, id int) error {
-	result, err := r.queries.DeleteUser.ExecContext(ctx, id)
+func (r *repository) DeleteUser(id int) error {
+	result, err := r.queries.DeleteUser.Exec(id)
 	if err != nil {
 		return handleDBError(err)
 	}

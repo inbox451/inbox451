@@ -57,6 +57,12 @@ RETURNING created_at, updated_at;
 DELETE FROM project_users
 WHERE user_id = $1 AND project_id = $2;
 
+-- name: get-project-user
+SELECT user_id, project_id, role, created_at, updated_at
+FROM project_users
+WHERE project_id = $1 AND user_id = $2;
+
+
 --- ------------------------------------------
 -- Inboxes
 -- -------------------------------------------
