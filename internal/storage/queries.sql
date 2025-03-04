@@ -30,7 +30,7 @@ WHERE id = $1;
 -- name: create-project
 INSERT INTO projects (name, created_at, updated_at)
 VALUES ($1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-RETURNING id, created_at, updated_at;
+RETURNING id;
 
 -- name: update-project
 UPDATE projects
@@ -152,7 +152,7 @@ SELECT COUNT(*) FROM forward_rules;
 -- name: create-message
 INSERT INTO messages (inbox_id, sender, receiver, subject, body, is_read, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-RETURNING id, created_at, updated_at;
+RETURNING id;
 
 -- name: get-message
 SELECT id, inbox_id, sender, receiver, subject, body, is_read, created_at, updated_at

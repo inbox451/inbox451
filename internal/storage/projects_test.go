@@ -30,6 +30,7 @@ func setupProjectTestDB(t *testing.T) (*repository, sqlmock.Sqlmock) {
 	mock.ExpectPrepare("DELETE FROM project_users")                               // RemoveUserFromProject
 	mock.ExpectPrepare("SELECT (.+) FROM projects INNER JOIN project_users")      // ListProjectsByUser
 	mock.ExpectPrepare("SELECT COUNT(.+) FROM projects INNER JOIN project_users") // CountProjectsByUser
+	mock.ExpectPrepare("SELECT (.+) FROM project_users WHERE project_id")
 
 	listProjects, err := sqlxDB.Preparex("SELECT id, name, created_at, updated_at FROM projects ORDER BY id LIMIT ? OFFSET ?")
 	require.NoError(t, err)
@@ -61,6 +62,9 @@ func setupProjectTestDB(t *testing.T) (*repository, sqlmock.Sqlmock) {
 	countProjectsByUser, err := sqlxDB.Preparex("SELECT COUNT(DISTINCT(projects.id)) FROM projects INNER JOIN project_users ON projects.id = project_users.project_id WHERE project_users.user_id = ?")
 	require.NoError(t, err)
 
+	getProjectUser, err := sqlxDB.Preparex("SELECT project_id, user_id, role, created_at, updated_at FROM project_users WHERE project_id = ? AND user_id = ?")
+	require.NoError(t, err)
+
 	queries := &Queries{
 		ListProjects:          listProjects,
 		CountProjects:         countProjects,
@@ -72,6 +76,7 @@ func setupProjectTestDB(t *testing.T) (*repository, sqlmock.Sqlmock) {
 		RemoveUserFromProject: removeUserFromProject,
 		ListProjectsByUser:    listProjectsByUser,
 		CountProjectsByUser:   countProjectsByUser,
+		GetProjectUser:        getProjectUser,
 	}
 
 	repo := &repository{
@@ -97,12 +102,22 @@ func TestRepository_CreateProject(t *testing.T) {
 				Name: "Test Project",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
+				// The implementation expects only an ID to be returned from INSERT
 				mock.ExpectQuery("INSERT INTO projects").
 					WithArgs("Test Project").
 					WillReturnRows(
-						sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).
-							AddRow(1, now, now),
+						sqlmock.NewRows([]string{"id"}).
+							AddRow(1),
 					)
+
+				// Then the implementation calls GetProject to fetch the complete project
+				rows := sqlmock.NewRows([]string{
+					"id", "name", "created_at", "updated_at",
+				}).AddRow(1, "Test Project", now, now)
+
+				mock.ExpectQuery("SELECT (.+) FROM projects WHERE id").
+					WithArgs(1).
+					WillReturnRows(rows)
 			},
 			wantErr: false,
 		},
@@ -233,12 +248,19 @@ func TestRepository_UpdateProject(t *testing.T) {
 				Name: "Updated Project",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("UPDATE projects").
+				// The implementation uses Exec, not Query
+				mock.ExpectExec("UPDATE projects").
 					WithArgs("Updated Project", 1).
-					WillReturnRows(
-						sqlmock.NewRows([]string{"updated_at"}).
-							AddRow(now),
-					)
+					WillReturnResult(sqlmock.NewResult(0, 1))
+
+				// After update, the implementation calls GetProject to get the updated project
+				rows := sqlmock.NewRows([]string{
+					"id", "name", "created_at", "updated_at",
+				}).AddRow(1, "Updated Project", now, now)
+
+				mock.ExpectQuery("SELECT (.+) FROM projects WHERE id").
+					WithArgs(1).
+					WillReturnRows(rows)
 			},
 			wantErr: false,
 		},
@@ -337,7 +359,7 @@ func TestRepository_ListProjects(t *testing.T) {
 		limit   int
 		offset  int
 		mockFn  func(sqlmock.Sqlmock)
-		want    []*models.Project
+		want    []models.Project
 		total   int
 		wantErr bool
 	}{
@@ -360,7 +382,7 @@ func TestRepository_ListProjects(t *testing.T) {
 					WithArgs(10, 0).
 					WillReturnRows(rows)
 			},
-			want: []*models.Project{
+			want: []models.Project{
 				{
 					Base: models.Base{
 						ID:        1,
@@ -389,8 +411,18 @@ func TestRepository_ListProjects(t *testing.T) {
 				countRows := sqlmock.NewRows([]string{"count"}).AddRow(0)
 				mock.ExpectQuery("SELECT COUNT").
 					WillReturnRows(countRows)
+
+				// Even with zero count, the implementation still calls Select
+				// So we need to mock an empty result set
+				rows := sqlmock.NewRows([]string{
+					"id", "name", "created_at", "updated_at",
+				})
+
+				mock.ExpectQuery("SELECT (.+) FROM projects").
+					WithArgs(10, 0).
+					WillReturnRows(rows)
 			},
-			want:    []*models.Project{},
+			want:    nil,
 			total:   0,
 			wantErr: false,
 		},
@@ -428,7 +460,7 @@ func TestRepository_ListProjectsByUser(t *testing.T) {
 		limit   int
 		offset  int
 		mockFn  func(sqlmock.Sqlmock)
-		want    []*models.Project
+		want    []models.Project
 		total   int
 		wantErr bool
 	}{
@@ -453,7 +485,7 @@ func TestRepository_ListProjectsByUser(t *testing.T) {
 					WithArgs(1, 10, 0).
 					WillReturnRows(rows)
 			},
-			want: []*models.Project{
+			want: []models.Project{
 				{
 					Base: models.Base{
 						ID:        1,
@@ -484,8 +516,18 @@ func TestRepository_ListProjectsByUser(t *testing.T) {
 				mock.ExpectQuery("SELECT COUNT").
 					WithArgs(2).
 					WillReturnRows(countRows)
+
+				// Even with zero count, the implementation still calls Select
+				// So we need to mock an empty result set
+				rows := sqlmock.NewRows([]string{
+					"id", "name", "created_at", "updated_at",
+				})
+
+				mock.ExpectQuery("SELECT (.+) FROM projects").
+					WithArgs(2, 10, 0). // Fixed the arguments here - need 3 args: userID, limit, offset
+					WillReturnRows(rows)
 			},
-			want:    []*models.Project{},
+			want:    nil,
 			total:   0,
 			wantErr: false,
 		},
@@ -531,11 +573,16 @@ func TestRepository_ProjectAddUser(t *testing.T) {
 				Role:      "member",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("INSERT INTO project_users").
+				mock.ExpectExec("INSERT INTO project_users").
 					WithArgs(1, 1, "member").
+					WillReturnResult(sqlmock.NewResult(1, 1))
+
+				// Then mock the GetProjectUser call that happens afterward
+				mock.ExpectQuery("SELECT (.+) FROM project_users").
+					WithArgs(1, 1).
 					WillReturnRows(
-						sqlmock.NewRows([]string{"created_at", "updated_at"}).
-							AddRow(now, now),
+						sqlmock.NewRows([]string{"project_id", "user_id", "role", "created_at", "updated_at"}).
+							AddRow(1, 1, "member", now, now),
 					)
 			},
 			wantErr: false,
@@ -548,7 +595,7 @@ func TestRepository_ProjectAddUser(t *testing.T) {
 				Role:      "member",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("INSERT INTO project_users").
+				mock.ExpectExec("INSERT INTO project_users").
 					WithArgs(1, 1, "member").
 					WillReturnError(sql.ErrConnDone)
 			},
