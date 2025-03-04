@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"database/sql"
 	"testing"
 	"time"
@@ -73,13 +72,13 @@ func TestRepository_CreateInbox(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		inbox   *models.Inbox
+		inbox   models.Inbox
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful creation",
-			inbox: &models.Inbox{
+			inbox: models.Inbox{
 				ProjectID: 1,
 				Email:     "test@example.com",
 			},
@@ -95,7 +94,7 @@ func TestRepository_CreateInbox(t *testing.T) {
 		},
 		{
 			name: "duplicate email",
-			inbox: &models.Inbox{
+			inbox: models.Inbox{
 				ProjectID: 1,
 				Email:     "existing@example.com",
 			},
@@ -115,16 +114,16 @@ func TestRepository_CreateInbox(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.CreateInbox(context.Background(), tt.inbox)
+			inbox, err := repo.CreateInbox(tt.inbox)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.NotZero(t, tt.inbox.ID)
-			assert.NotZero(t, tt.inbox.CreatedAt)
-			assert.NotZero(t, tt.inbox.UpdatedAt)
+			assert.NotZero(t, inbox.ID)
+			assert.NotZero(t, inbox.CreatedAt)
+			assert.NotZero(t, inbox.UpdatedAt)
 
 			err = mock.ExpectationsWereMet()
 			assert.NoError(t, err)
@@ -187,7 +186,7 @@ func TestRepository_GetInbox(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, err := repo.GetInbox(context.Background(), tt.id)
+			got, err := repo.GetInbox(tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errType != nil {
@@ -258,7 +257,7 @@ func TestRepository_GetInboxByEmail(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, err := repo.GetInboxByEmail(context.Background(), tt.email)
+			got, err := repo.GetInboxByEmail(tt.email)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -276,13 +275,13 @@ func TestRepository_GetInboxByEmail(t *testing.T) {
 func TestRepository_UpdateInbox(t *testing.T) {
 	tests := []struct {
 		name    string
-		inbox   *models.Inbox
+		inbox   models.Inbox
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful update",
-			inbox: &models.Inbox{
+			inbox: models.Inbox{
 				Base:      models.Base{ID: 1},
 				ProjectID: 1,
 				Email:     "updated@example.com",
@@ -296,7 +295,7 @@ func TestRepository_UpdateInbox(t *testing.T) {
 		},
 		{
 			name: "non-existent inbox",
-			inbox: &models.Inbox{
+			inbox: models.Inbox{
 				Base:      models.Base{ID: 999},
 				ProjectID: 1,
 				Email:     "updated@example.com",
@@ -317,7 +316,7 @@ func TestRepository_UpdateInbox(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.UpdateInbox(context.Background(), tt.inbox)
+			_, err := repo.UpdateInbox(tt.inbox)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -367,7 +366,7 @@ func TestRepository_DeleteInbox(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.DeleteInbox(context.Background(), tt.id)
+			err := repo.DeleteInbox(tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -462,7 +461,7 @@ func TestRepository_ListInboxesByProject(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, total, err := repo.ListInboxesByProject(context.Background(), tt.projectID, tt.limit, tt.offset)
+			got, total, err := repo.ListInboxesByProject(tt.projectID, tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

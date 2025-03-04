@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"database/sql"
 	"testing"
 	"time"
@@ -79,13 +78,13 @@ func TestRepository_CreateRule(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		rule    *models.ForwardRule
+		rule    models.ForwardRule
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful creation",
-			rule: &models.ForwardRule{
+			rule: models.ForwardRule{
 				InboxID:  1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
@@ -103,7 +102,7 @@ func TestRepository_CreateRule(t *testing.T) {
 		},
 		{
 			name: "database error",
-			rule: &models.ForwardRule{
+			rule: models.ForwardRule{
 				InboxID:  1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
@@ -125,16 +124,19 @@ func TestRepository_CreateRule(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.CreateRule(context.Background(), tt.rule)
+			got, err := repo.CreateRule(tt.rule)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.NotZero(t, tt.rule.ID)
-			assert.NotZero(t, tt.rule.CreatedAt)
-			assert.NotZero(t, tt.rule.UpdatedAt)
+			assert.NotZero(t, got.ID)
+			assert.NotZero(t, got.CreatedAt)
+			assert.NotZero(t, got.UpdatedAt)
+			assert.Equal(t, tt.rule.Subject, got.Subject)
+			assert.Equal(t, tt.rule.Sender, got.Sender)
+			assert.Equal(t, tt.rule.Receiver, got.Receiver)
 
 			err = mock.ExpectationsWereMet()
 			assert.NoError(t, err)
@@ -199,7 +201,7 @@ func TestRepository_GetRule(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, err := repo.GetRule(context.Background(), tt.id)
+			got, err := repo.GetRule(tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errType != nil {
@@ -220,13 +222,13 @@ func TestRepository_GetRule(t *testing.T) {
 func TestRepository_UpdateRule(t *testing.T) {
 	tests := []struct {
 		name    string
-		rule    *models.ForwardRule
+		rule    models.ForwardRule
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful update",
-			rule: &models.ForwardRule{
+			rule: models.ForwardRule{
 				Base:     models.Base{ID: 1},
 				InboxID:  1,
 				Sender:   "updated@example.com",
@@ -242,7 +244,7 @@ func TestRepository_UpdateRule(t *testing.T) {
 		},
 		{
 			name: "non-existent rule",
-			rule: &models.ForwardRule{
+			rule: models.ForwardRule{
 				Base:     models.Base{ID: 999},
 				InboxID:  1,
 				Sender:   "updated@example.com",
@@ -265,11 +267,15 @@ func TestRepository_UpdateRule(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.UpdateRule(context.Background(), tt.rule)
+			got, err := repo.UpdateRule(tt.rule)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
+
+			assert.Equal(t, tt.rule.Sender, got.Sender)
+			assert.Equal(t, tt.rule.Receiver, got.Receiver)
+			assert.Equal(t, tt.rule.Subject, got.Subject)
 
 			assert.NoError(t, err)
 
@@ -315,7 +321,7 @@ func TestRepository_DeleteRule(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.DeleteRule(context.Background(), tt.id)
+			err := repo.DeleteRule(tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -409,7 +415,7 @@ func TestRepository_ListRules(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, total, err := repo.ListRules(context.Background(), tt.limit, tt.offset)
+			got, total, err := repo.ListRules(tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -510,7 +516,7 @@ func TestRepository_ListRulesByInbox(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, total, err := repo.ListRulesByInbox(context.Background(), tt.inboxID, tt.limit, tt.offset)
+			got, total, err := repo.ListRulesByInbox(tt.inboxID, tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

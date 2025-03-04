@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"database/sql"
 	"testing"
 	"time"
@@ -78,13 +77,13 @@ func TestRepository_CreateMessage(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		message *models.Message
+		message models.Message
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful creation",
-			message: &models.Message{
+			message: models.Message{
 				InboxID:  1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
@@ -109,7 +108,7 @@ func TestRepository_CreateMessage(t *testing.T) {
 		},
 		{
 			name: "database error",
-			message: &models.Message{
+			message: models.Message{
 				InboxID:  1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
@@ -138,16 +137,21 @@ func TestRepository_CreateMessage(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.CreateMessage(context.Background(), tt.message)
+			got, err := repo.CreateMessage(tt.message)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.NotZero(t, tt.message.ID)
-			assert.NotZero(t, tt.message.CreatedAt)
-			assert.NotZero(t, tt.message.UpdatedAt)
+			assert.NotZero(t, got.ID)
+			assert.NotZero(t, got.CreatedAt)
+			assert.NotZero(t, got.UpdatedAt)
+			assert.Equal(t, tt.message.Subject, got.Subject)
+			assert.Equal(t, tt.message.Sender, got.Sender)
+			assert.Equal(t, tt.message.Body, got.Body)
+			assert.Equal(t, tt.message.Receiver, got.Receiver)
+			assert.Equal(t, tt.message.IsRead, got.IsRead)
 
 			err = mock.ExpectationsWereMet()
 			assert.NoError(t, err)
@@ -218,7 +222,7 @@ func TestRepository_GetMessage(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, err := repo.GetMessage(context.Background(), tt.id)
+			got, err := repo.GetMessage(tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errType != nil {
@@ -286,11 +290,13 @@ func TestRepository_UpdateMessageReadStatus(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.UpdateMessageReadStatus(context.Background(), tt.messageID, tt.isRead)
+			got, err := repo.UpdateMessageReadStatus(tt.messageID, tt.isRead)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
+
+			assert.Equal(t, tt.isRead, got.IsRead)
 
 			assert.NoError(t, err)
 
@@ -336,7 +342,7 @@ func TestRepository_DeleteMessage(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.DeleteMessage(context.Background(), tt.messageID)
+			err := repo.DeleteMessage(tt.messageID)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -488,7 +494,7 @@ func TestRepository_ListMessagesByInboxWithFilter(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, total, err := repo.ListMessagesByInboxWithFilter(context.Background(), tt.inboxID, tt.isRead, tt.limit, tt.offset)
+			got, total, err := repo.ListMessagesByInboxWithFilter(tt.inboxID, tt.isRead, tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -693,7 +699,7 @@ func TestRepository_ListMessagesByInbox(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, total, err := repo.ListMessagesByInbox(context.Background(), tt.inboxID, tt.limit, tt.offset)
+			got, total, err := repo.ListMessagesByInbox(tt.inboxID, tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

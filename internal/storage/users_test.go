@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"database/sql"
 	"testing"
 	"time"
@@ -153,7 +152,7 @@ func TestRepository_ListUsers(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, total, err := repo.ListUsers(context.Background(), tt.limit, tt.offset)
+			got, total, err := repo.ListUsers(tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -235,7 +234,7 @@ func TestRepository_GetUser(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, err := repo.GetUser(context.Background(), tt.userID)
+			got, err := repo.GetUser(tt.userID)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errType != nil {
@@ -258,13 +257,13 @@ func TestRepository_CreateUser(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		user    *models.User
+		user    models.User
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful creation",
-			user: &models.User{
+			user: models.User{
 				Name:          "Test User",
 				Username:      "testuser",
 				Password:      "hash",
@@ -293,7 +292,7 @@ func TestRepository_CreateUser(t *testing.T) {
 		},
 		{
 			name: "duplicate username",
-			user: &models.User{
+			user: models.User{
 				Name:          "Test User",
 				Username:      "existing",
 				Password:      "hash",
@@ -326,16 +325,23 @@ func TestRepository_CreateUser(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.CreateUser(context.Background(), tt.user)
+			got, err := repo.CreateUser(tt.user)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.NotZero(t, tt.user.ID)
-			assert.NotZero(t, tt.user.CreatedAt)
-			assert.NotZero(t, tt.user.UpdatedAt)
+			assert.NotZero(t, got.ID)
+			assert.NotZero(t, got.CreatedAt)
+			assert.NotZero(t, got.UpdatedAt)
+			assert.Equal(t, tt.user.Name, got.Name)
+			assert.Equal(t, tt.user.Username, got.Username)
+			assert.Equal(t, tt.user.Password, got.Password)
+			assert.Equal(t, tt.user.Email, got.Email)
+			assert.Equal(t, tt.user.Status, got.Status)
+			assert.Equal(t, tt.user.Role, got.Role)
+			assert.Equal(t, tt.user.PasswordLogin, got.PasswordLogin)
 
 			err = mock.ExpectationsWereMet()
 			assert.NoError(t, err)
@@ -348,13 +354,13 @@ func TestRepository_UpdateUser(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		user    *models.User
+		user    models.User
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful update",
-			user: &models.User{
+			user: models.User{
 				Base: models.Base{
 					ID: 1,
 				},
@@ -387,7 +393,7 @@ func TestRepository_UpdateUser(t *testing.T) {
 		},
 		{
 			name: "non-existent user",
-			user: &models.User{
+			user: models.User{
 				Base: models.Base{
 					ID: 999,
 				},
@@ -424,7 +430,7 @@ func TestRepository_UpdateUser(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.UpdateUser(context.Background(), tt.user)
+			got, err := repo.UpdateUser(tt.user)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -432,6 +438,13 @@ func TestRepository_UpdateUser(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.NotZero(t, tt.user.UpdatedAt)
+			assert.Equal(t, tt.user.Name, got.Name)
+			assert.Equal(t, tt.user.Username, got.Username)
+			assert.Equal(t, tt.user.Password, got.Password)
+			assert.Equal(t, tt.user.Email, got.Email)
+			assert.Equal(t, tt.user.Status, got.Status)
+			assert.Equal(t, tt.user.Role, got.Role)
+			assert.Equal(t, tt.user.PasswordLogin, got.PasswordLogin)
 
 			err = mock.ExpectationsWereMet()
 			assert.NoError(t, err)
@@ -475,7 +488,7 @@ func TestRepository_DeleteUser(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.DeleteUser(context.Background(), tt.userID)
+			err := repo.DeleteUser(tt.userID)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -564,7 +577,7 @@ func TestRepository_GetUserByUsername(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, err := repo.GetUserByUsername(context.Background(), tt.username)
+			got, err := repo.GetUserByUsername(tt.username)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

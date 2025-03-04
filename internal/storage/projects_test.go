@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"database/sql"
 	"testing"
 	"time"
@@ -88,13 +87,13 @@ func TestRepository_CreateProject(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		project *models.Project
+		project models.Project
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful creation",
-			project: &models.Project{
+			project: models.Project{
 				Name: "Test Project",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
@@ -109,7 +108,7 @@ func TestRepository_CreateProject(t *testing.T) {
 		},
 		{
 			name: "database error",
-			project: &models.Project{
+			project: models.Project{
 				Name: "Test Project",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
@@ -128,16 +127,17 @@ func TestRepository_CreateProject(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.CreateProject(context.Background(), tt.project)
+			got, err := repo.CreateProject(tt.project)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.NotZero(t, tt.project.ID)
-			assert.NotZero(t, tt.project.CreatedAt)
-			assert.NotZero(t, tt.project.UpdatedAt)
+			assert.NotZero(t, got.ID)
+			assert.NotZero(t, got.CreatedAt)
+			assert.NotZero(t, got.UpdatedAt)
+			assert.Equal(t, tt.project.Name, got.Name)
 
 			err = mock.ExpectationsWereMet()
 			assert.NoError(t, err)
@@ -152,7 +152,7 @@ func TestRepository_GetProject(t *testing.T) {
 		name    string
 		id      int
 		mockFn  func(sqlmock.Sqlmock)
-		want    *models.Project
+		want    models.Project
 		wantErr bool
 		errType error
 	}{
@@ -168,7 +168,7 @@ func TestRepository_GetProject(t *testing.T) {
 					WithArgs(1).
 					WillReturnRows(rows)
 			},
-			want: &models.Project{
+			want: models.Project{
 				Base: models.Base{
 					ID:        1,
 					CreatedAt: null.TimeFrom(now),
@@ -186,7 +186,7 @@ func TestRepository_GetProject(t *testing.T) {
 					WithArgs(999).
 					WillReturnError(sql.ErrNoRows)
 			},
-			want:    nil,
+			want:    models.Project{},
 			wantErr: true,
 			errType: ErrNotFound,
 		},
@@ -199,7 +199,7 @@ func TestRepository_GetProject(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, err := repo.GetProject(context.Background(), tt.id)
+			got, err := repo.GetProject(tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errType != nil {
@@ -222,13 +222,13 @@ func TestRepository_UpdateProject(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		project *models.Project
+		project models.Project
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful update",
-			project: &models.Project{
+			project: models.Project{
 				Base: models.Base{ID: 1},
 				Name: "Updated Project",
 			},
@@ -244,7 +244,7 @@ func TestRepository_UpdateProject(t *testing.T) {
 		},
 		{
 			name: "non-existent project",
-			project: &models.Project{
+			project: models.Project{
 				Base: models.Base{ID: 999},
 				Name: "Updated Project",
 			},
@@ -264,14 +264,14 @@ func TestRepository_UpdateProject(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.UpdateProject(context.Background(), tt.project)
+			got, err := repo.UpdateProject(tt.project)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.NotZero(t, tt.project.UpdatedAt)
+			assert.NotZero(t, got.UpdatedAt)
 
 			err = mock.ExpectationsWereMet()
 			assert.NoError(t, err)
@@ -315,7 +315,7 @@ func TestRepository_DeleteProject(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.DeleteProject(context.Background(), tt.id)
+			err := repo.DeleteProject(tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -403,7 +403,7 @@ func TestRepository_ListProjects(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, total, err := repo.ListProjects(context.Background(), tt.limit, tt.offset)
+			got, total, err := repo.ListProjects(tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -498,7 +498,7 @@ func TestRepository_ListProjectsByUser(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, total, err := repo.ListProjectsByUser(context.Background(), tt.userID, tt.limit, tt.offset)
+			got, total, err := repo.ListProjectsByUser(tt.userID, tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -519,13 +519,13 @@ func TestRepository_ProjectAddUser(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		projectUser *models.ProjectUser
+		projectUser models.ProjectUser
 		mockFn      func(sqlmock.Sqlmock)
 		wantErr     bool
 	}{
 		{
 			name: "successful add",
-			projectUser: &models.ProjectUser{
+			projectUser: models.ProjectUser{
 				ProjectID: 1,
 				UserID:    1,
 				Role:      "member",
@@ -542,7 +542,7 @@ func TestRepository_ProjectAddUser(t *testing.T) {
 		},
 		{
 			name: "duplicate user in project",
-			projectUser: &models.ProjectUser{
+			projectUser: models.ProjectUser{
 				ProjectID: 1,
 				UserID:    1,
 				Role:      "member",
@@ -563,15 +563,18 @@ func TestRepository_ProjectAddUser(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.ProjectAddUser(context.Background(), tt.projectUser)
+			got, err := repo.ProjectAddUser(tt.projectUser)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.NotZero(t, tt.projectUser.CreatedAt)
-			assert.NotZero(t, tt.projectUser.UpdatedAt)
+			assert.NotZero(t, got.CreatedAt)
+			assert.NotZero(t, got.UpdatedAt)
+			assert.Equal(t, tt.projectUser.ProjectID, got.ProjectID)
+			assert.Equal(t, tt.projectUser.UserID, got.UserID)
+			assert.Equal(t, tt.projectUser.Role, got.Role)
 
 			err = mock.ExpectationsWereMet()
 			assert.NoError(t, err)
@@ -618,7 +621,7 @@ func TestRepository_ProjectRemoveUser(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.ProjectRemoveUser(context.Background(), tt.projectID, tt.userID)
+			err := repo.ProjectRemoveUser(tt.projectID, tt.userID)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
