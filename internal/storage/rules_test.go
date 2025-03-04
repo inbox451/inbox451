@@ -91,12 +91,22 @@ func TestRepository_CreateRule(t *testing.T) {
 				Subject:  "Test Subject",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
+				// First mock the INSERT query that returns just the ID
 				mock.ExpectQuery("INSERT INTO forward_rules").
 					WithArgs(1, "sender@example.com", "receiver@example.com", "Test Subject").
 					WillReturnRows(
-						sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).
-							AddRow(1, now, now),
+						sqlmock.NewRows([]string{"id"}).
+							AddRow(1),
 					)
+
+				// Then mock the GetRule query that's called after the insert
+				rows := sqlmock.NewRows([]string{
+					"id", "inbox_id", "sender", "receiver", "subject", "created_at", "updated_at",
+				}).AddRow(1, 1, "sender@example.com", "receiver@example.com", "Test Subject", now, now)
+
+				mock.ExpectQuery("SELECT (.+) FROM forward_rules WHERE id").
+					WithArgs(1).
+					WillReturnRows(rows)
 			},
 			wantErr: false,
 		},
@@ -151,7 +161,7 @@ func TestRepository_GetRule(t *testing.T) {
 		name    string
 		id      int
 		mockFn  func(sqlmock.Sqlmock)
-		want    *models.ForwardRule
+		want    models.ForwardRule
 		wantErr bool
 		errType error
 	}{
@@ -167,7 +177,7 @@ func TestRepository_GetRule(t *testing.T) {
 					WithArgs(1).
 					WillReturnRows(rows)
 			},
-			want: &models.ForwardRule{
+			want: models.ForwardRule{
 				Base: models.Base{
 					ID:        1,
 					CreatedAt: null.TimeFrom(now),
@@ -188,7 +198,7 @@ func TestRepository_GetRule(t *testing.T) {
 					WithArgs(999).
 					WillReturnError(sql.ErrNoRows)
 			},
-			want:    nil,
+			want:    models.ForwardRule{},
 			wantErr: true,
 			errType: ErrNotFound,
 		},
@@ -220,6 +230,7 @@ func TestRepository_GetRule(t *testing.T) {
 }
 
 func TestRepository_UpdateRule(t *testing.T) {
+	now := time.Now()
 	tests := []struct {
 		name    string
 		rule    models.ForwardRule
@@ -236,9 +247,19 @@ func TestRepository_UpdateRule(t *testing.T) {
 				Subject:  "Updated Subject",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
+				// Mock the UPDATE query
 				mock.ExpectExec("UPDATE forward_rules").
 					WithArgs("updated@example.com", "newreceiver@example.com", "Updated Subject", 1).
 					WillReturnResult(sqlmock.NewResult(0, 1))
+
+				// Then mock the GetRule query that's called after the update
+				rows := sqlmock.NewRows([]string{
+					"id", "inbox_id", "sender", "receiver", "subject", "created_at", "updated_at",
+				}).AddRow(1, 1, "updated@example.com", "newreceiver@example.com", "Updated Subject", now, now)
+
+				mock.ExpectQuery("SELECT (.+) FROM forward_rules WHERE id").
+					WithArgs(1).
+					WillReturnRows(rows)
 			},
 			wantErr: false,
 		},
@@ -343,7 +364,7 @@ func TestRepository_ListRules(t *testing.T) {
 		limit   int
 		offset  int
 		mockFn  func(sqlmock.Sqlmock)
-		want    []*models.ForwardRule
+		want    []models.ForwardRule
 		total   int
 		wantErr bool
 	}{
@@ -366,7 +387,7 @@ func TestRepository_ListRules(t *testing.T) {
 					WithArgs(10, 0).
 					WillReturnRows(rows)
 			},
-			want: []*models.ForwardRule{
+			want: []models.ForwardRule{
 				{
 					Base: models.Base{
 						ID:        1,
@@ -401,8 +422,16 @@ func TestRepository_ListRules(t *testing.T) {
 				countRows := sqlmock.NewRows([]string{"count"}).AddRow(0)
 				mock.ExpectQuery("SELECT COUNT").
 					WillReturnRows(countRows)
+
+				// Add mock for empty result from ListRules query
+				emptyRows := sqlmock.NewRows([]string{
+					"id", "inbox_id", "sender", "receiver", "subject", "created_at", "updated_at",
+				})
+				mock.ExpectQuery("SELECT (.+) FROM forward_rules").
+					WithArgs(10, 0).
+					WillReturnRows(emptyRows)
 			},
-			want:    []*models.ForwardRule{},
+			want:    nil,
 			total:   0,
 			wantErr: false,
 		},
@@ -440,7 +469,7 @@ func TestRepository_ListRulesByInbox(t *testing.T) {
 		limit   int
 		offset  int
 		mockFn  func(sqlmock.Sqlmock)
-		want    []*models.ForwardRule
+		want    []models.ForwardRule
 		total   int
 		wantErr bool
 	}{
@@ -465,7 +494,7 @@ func TestRepository_ListRulesByInbox(t *testing.T) {
 					WithArgs(1, 10, 0).
 					WillReturnRows(rows)
 			},
-			want: []*models.ForwardRule{
+			want: []models.ForwardRule{
 				{
 					Base: models.Base{
 						ID:        1,
@@ -502,8 +531,16 @@ func TestRepository_ListRulesByInbox(t *testing.T) {
 				mock.ExpectQuery("SELECT COUNT").
 					WithArgs(2).
 					WillReturnRows(countRows)
+
+				// Add mock for empty result from ListRulesByInbox query
+				emptyRows := sqlmock.NewRows([]string{
+					"id", "inbox_id", "sender", "receiver", "subject", "created_at", "updated_at",
+				})
+				mock.ExpectQuery("SELECT (.+) FROM forward_rules").
+					WithArgs(2, 10, 0).
+					WillReturnRows(emptyRows)
 			},
-			want:    []*models.ForwardRule{},
+			want:    nil,
 			total:   0,
 			wantErr: false,
 		},
