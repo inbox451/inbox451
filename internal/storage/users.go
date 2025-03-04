@@ -37,9 +37,9 @@ func (r *repository) GetUserByUsername(username string) (models.User, error) {
 	err := r.queries.GetUserByUsername.Get(&user, username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return user, nil
+			return models.User{}, nil
 		}
-		return user, err
+		return models.User{}, err
 	}
 	return user, nil
 }
