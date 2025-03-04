@@ -1,16 +1,13 @@
 package storage
 
 import (
-	"database/sql"
-	"errors"
-
 	"inbox451/internal/models"
 )
 
 func (r *repository) CreateInbox(inbox models.Inbox) (models.Inbox, error) {
 	var inboxID int
 	err := r.queries.CreateInbox.QueryRow(inbox.ProjectID, inbox.Email).
-		Scan(&inbox.ID)
+		Scan(&inboxID)
 	if err != nil {
 		return models.Inbox{}, handleDBError(err)
 	}
@@ -30,10 +27,7 @@ func (r *repository) GetInboxByEmail(email string) (models.Inbox, error) {
 	var inbox models.Inbox
 	err := r.queries.GetInboxByEmail.Get(&inbox, email)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return models.Inbox{}, nil
-		}
-		return models.Inbox{}, err
+		return models.Inbox{}, handleDBError(err)
 	}
 	return inbox, nil
 }

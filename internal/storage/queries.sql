@@ -70,7 +70,7 @@ WHERE project_id = $1 AND user_id = $2;
 -- name: create-inbox
 INSERT INTO inboxes (project_id, email, created_at, updated_at)
 VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-RETURNING id, created_at, updated_at;
+RETURNING id;
 
 -- name: get-inbox
 SELECT id, project_id, email, created_at, updated_at
