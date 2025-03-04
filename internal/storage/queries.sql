@@ -260,7 +260,7 @@ WHERE id = $1 AND user_id = $2
 -- name: create-token
 INSERT INTO tokens (user_id, token, name, expires_at)
 VALUES ($1, $2, $3, $4)
-RETURNING id, user_id, token, name, expires_at, created_at, updated_at;
+RETURNING id;
 
 -- name: delete-token
 DELETE FROM tokens

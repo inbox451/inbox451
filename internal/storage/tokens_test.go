@@ -79,6 +79,13 @@ func TestRepository_CreateToken(t *testing.T) {
 				mock.ExpectQuery("INSERT INTO tokens").
 					WithArgs(1, "test-token", "Test Token", expiresAt).
 					WillReturnRows(
+						sqlmock.NewRows([]string{"id"}).AddRow(1),
+					)
+
+				// Then mock the SELECT query that gets the full token
+				mock.ExpectQuery("SELECT (.+) FROM tokens WHERE id").
+					WithArgs(1, 1).
+					WillReturnRows(
 						sqlmock.NewRows([]string{
 							"id", "user_id", "token", "name",
 							"expires_at", "created_at", "updated_at",
@@ -140,7 +147,7 @@ func TestRepository_GetTokenByUser(t *testing.T) {
 		tokenID int
 		userID  int
 		mockFn  func(sqlmock.Sqlmock)
-		want    *models.Token
+		want    models.Token
 		wantErr bool
 		errType error
 	}{
@@ -158,7 +165,7 @@ func TestRepository_GetTokenByUser(t *testing.T) {
 					WithArgs(1, 1).
 					WillReturnRows(rows)
 			},
-			want: &models.Token{
+			want: models.Token{
 				Base: models.Base{
 					ID:        1,
 					CreatedAt: null.TimeFrom(now),
@@ -180,7 +187,7 @@ func TestRepository_GetTokenByUser(t *testing.T) {
 					WithArgs(999, 1).
 					WillReturnError(sql.ErrNoRows)
 			},
-			want:    nil,
+			want:    models.Token{},
 			wantErr: true,
 			errType: ErrNotFound,
 		},
@@ -334,8 +341,18 @@ func TestRepository_ListTokensByUser(t *testing.T) {
 				mock.ExpectQuery("SELECT COUNT").
 					WithArgs(2).
 					WillReturnRows(countRows)
+
+				// Add empty result rows for the second query
+				emptyRows := sqlmock.NewRows([]string{
+					"id", "user_id", "token", "name",
+					"expires_at", "created_at", "updated_at",
+				})
+
+				mock.ExpectQuery("SELECT (.+) FROM tokens").
+					WithArgs(2, 10, 0).
+					WillReturnRows(emptyRows)
 			},
-			want:    []models.Token{},
+			want:    nil,
 			total:   0,
 			wantErr: false,
 		},
