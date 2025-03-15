@@ -1,8 +1,6 @@
 package core
 
 import (
-	"context"
-
 	"inbox451/internal/models"
 )
 
@@ -14,51 +12,48 @@ func NewUserService(core *Core) UserService {
 	return UserService{core: core}
 }
 
-func (s *UserService) Create(ctx context.Context, user *models.User) error {
+func (s *UserService) Create(user models.User) (models.User, error) {
 	s.core.Logger.Info("Creating new user: %s", user.Name)
 
-	if err := s.core.Repository.CreateUser(ctx, user); err != nil {
+	user, err := s.core.Repository.CreateUser(user)
+	if err != nil {
 		s.core.Logger.Error("Failed to create user: %v", err)
-		return err
+		return user, err
 	}
 
 	s.core.Logger.Info("Successfully created user with ID: %d", user.ID)
-	return nil
+	return user, nil
 }
 
-func (s *UserService) Get(ctx context.Context, userID int) (*models.User, error) {
+func (s *UserService) Get(userID int) (models.User, error) {
 	s.core.Logger.Debug("Fetching user with ID: %d", userID)
 
-	user, err := s.core.Repository.GetUser(ctx, userID)
+	user, err := s.core.Repository.GetUser(userID)
 	if err != nil {
 		s.core.Logger.Error("Failed to fetch user: %v", err)
-		return nil, err
-	}
-
-	if user == nil {
-		s.core.Logger.Info("User not found with ID: %d", userID)
-		return nil, ErrNotFound
+		return user, err
 	}
 
 	return user, nil
 }
 
-func (s *UserService) Update(ctx context.Context, user *models.User) error {
+func (s *UserService) Update(user models.User) (models.User, error) {
 	s.core.Logger.Info("Updating user with ID: %d", user.ID)
 
-	if err := s.core.Repository.UpdateUser(ctx, user); err != nil {
+	update, err := s.core.Repository.UpdateUser(user)
+	if err != nil {
 		s.core.Logger.Error("Failed to update user: %v", err)
-		return err
+		return update, err
 	}
 
 	s.core.Logger.Info("Successfully updated user with ID: %d", user.ID)
-	return nil
+	return update, nil
 }
 
-func (s *UserService) Delete(ctx context.Context, id int) error {
+func (s *UserService) Delete(id int) error {
 	s.core.Logger.Info("Deleting user with ID: %d", id)
 
-	if err := s.core.Repository.DeleteUser(ctx, id); err != nil {
+	if err := s.core.Repository.DeleteUser(id); err != nil {
 		s.core.Logger.Error("Failed to delete user: %v", err)
 		return err
 	}
@@ -67,16 +62,16 @@ func (s *UserService) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (s *UserService) List(ctx context.Context, limit, offset int) (*models.PaginatedResponse, error) {
+func (s *UserService) List(limit, offset int) (models.PaginatedResponse, error) {
 	s.core.Logger.Info("Listing users with limit: %d and offset: %d", limit, offset)
 
-	users, total, err := s.core.Repository.ListUsers(ctx, limit, offset)
+	users, total, err := s.core.Repository.ListUsers(limit, offset)
 	if err != nil {
 		s.core.Logger.Error("Failed to list users: %v", err)
-		return nil, err
+		return models.PaginatedResponse{}, err
 	}
 
-	response := &models.PaginatedResponse{
+	response := models.PaginatedResponse{
 		Data: users,
 		Pagination: models.Pagination{
 			Total:  total,

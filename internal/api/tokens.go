@@ -12,7 +12,6 @@ import (
 
 // GET /users/:userId/tokens/
 func (s *Server) ListTokensByUser(c echo.Context) error {
-	ctx := c.Request().Context()
 	userId, _ := strconv.Atoi(c.Param("userId"))
 
 	var query models.PaginationQuery
@@ -28,7 +27,7 @@ func (s *Server) ListTokensByUser(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	response, err := s.core.TokenService.ListByUser(ctx, userId, query.Limit, query.Offset)
+	response, err := s.core.TokenService.ListByUser(userId, query.Limit, query.Offset)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
@@ -53,7 +52,7 @@ func (s *Server) GetTokenByUser(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	response, err := s.core.TokenService.GetByUser(c.Request().Context(), tokenID, userID)
+	response, err := s.core.TokenService.GetByUser(tokenID, userID)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
@@ -62,8 +61,6 @@ func (s *Server) GetTokenByUser(c echo.Context) error {
 
 // POST /users/:userId/tokens/
 func (s *Server) CreateTokenForUser(c echo.Context) error {
-	ctx := c.Request().Context()
-
 	// Get user ID from URL
 	userID, _ := strconv.Atoi(c.Param("userId"))
 
@@ -82,13 +79,13 @@ func (s *Server) CreateTokenForUser(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	token := &models.Token{
+	token := models.Token{
 		UserID:    userID,
 		Name:      input.Name,
 		ExpiresAt: input.ExpiresAt,
 	}
 
-	newToken, err := s.core.TokenService.CreateForUser(ctx, userID, token)
+	newToken, err := s.core.TokenService.CreateForUser(userID, token)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
@@ -99,7 +96,7 @@ func (s *Server) CreateTokenForUser(c echo.Context) error {
 func (s *Server) DeleteTokenByUser(c echo.Context) error {
 	userID, _ := strconv.Atoi(c.Param("userId"))
 	tokenID, _ := strconv.Atoi(c.Param("tokenId"))
-	if err := s.core.TokenService.DeleteByUser(c.Request().Context(), userID, tokenID); err != nil {
+	if err := s.core.TokenService.DeleteByUser(userID, tokenID); err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 	return c.NoContent(http.StatusNoContent)

@@ -1,7 +1,6 @@
 package core
 
 import (
-	"context"
 	"errors"
 	"io"
 	"testing"
@@ -33,13 +32,13 @@ func setupTestCore(t *testing.T) (*Core, *mocks.Repository) {
 func TestUserService_Create(t *testing.T) {
 	tests := []struct {
 		name    string
-		user    *models.User
+		user    models.User
 		mockFn  func(*mocks.Repository)
 		wantErr bool
 	}{
 		{
 			name: "successful creation",
-			user: &models.User{
+			user: models.User{
 				Name:     "Test User",
 				Username: "testuser",
 				Email:    "test@example.com",
@@ -54,7 +53,7 @@ func TestUserService_Create(t *testing.T) {
 		},
 		{
 			name: "Repository error",
-			user: &models.User{
+			user: models.User{
 				Name:     "Test User",
 				Username: "testuser",
 				Email:    "test@example.com",
@@ -72,7 +71,7 @@ func TestUserService_Create(t *testing.T) {
 			core, mockRepo := setupTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.UserService.Create(context.Background(), tt.user)
+			_, err := core.UserService.Create(tt.user)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -90,7 +89,7 @@ func TestUserService_Get(t *testing.T) {
 		name    string
 		userID  int
 		mockFn  func(*mocks.Repository)
-		want    *models.User
+		want    models.User
 		wantErr bool
 		errType error
 	}{
@@ -98,7 +97,7 @@ func TestUserService_Get(t *testing.T) {
 			name:   "existing user",
 			userID: 1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetUser", mock.Anything, 1).Return(&models.User{
+				m.On("GetUser", mock.Anything, 1).Return(models.User{
 					Base: models.Base{
 						ID:        1,
 						CreatedAt: null.TimeFrom(now),
@@ -109,7 +108,7 @@ func TestUserService_Get(t *testing.T) {
 					Email:    "test@example.com",
 				}, nil)
 			},
-			want: &models.User{
+			want: models.User{
 				Base: models.Base{
 					ID:        1,
 					CreatedAt: null.TimeFrom(now),
@@ -127,7 +126,7 @@ func TestUserService_Get(t *testing.T) {
 			mockFn: func(m *mocks.Repository) {
 				m.On("GetUser", mock.Anything, 999).Return(nil, storage.ErrNotFound)
 			},
-			want:    nil,
+			want:    models.User{},
 			wantErr: true,
 			errType: storage.ErrNotFound,
 		},
@@ -138,7 +137,7 @@ func TestUserService_Get(t *testing.T) {
 			core, mockRepo := setupTestCore(t)
 			tt.mockFn(mockRepo)
 
-			got, err := core.UserService.Get(context.Background(), tt.userID)
+			got, err := core.UserService.Get(tt.userID)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errType != nil {
@@ -160,7 +159,7 @@ func TestUserService_List(t *testing.T) {
 		limit   int
 		offset  int
 		mockFn  func(*mocks.Repository)
-		want    *models.PaginatedResponse
+		want    models.PaginatedResponse
 		wantErr bool
 	}{
 		{
@@ -168,14 +167,14 @@ func TestUserService_List(t *testing.T) {
 			limit:  10,
 			offset: 0,
 			mockFn: func(m *mocks.Repository) {
-				users := []*models.User{
+				users := []models.User{
 					{Base: models.Base{ID: 1}, Name: "User 1"},
 					{Base: models.Base{ID: 2}, Name: "User 2"},
 				}
 				m.On("ListUsers", mock.Anything, 10, 0).Return(users, 2, nil)
 			},
-			want: &models.PaginatedResponse{
-				Data: []*models.User{
+			want: models.PaginatedResponse{
+				Data: []models.User{
 					{Base: models.Base{ID: 1}, Name: "User 1"},
 					{Base: models.Base{ID: 2}, Name: "User 2"},
 				},
@@ -194,7 +193,7 @@ func TestUserService_List(t *testing.T) {
 			mockFn: func(m *mocks.Repository) {
 				m.On("ListUsers", mock.Anything, 10, 0).Return([]*models.User(nil), 0, errors.New("database error"))
 			},
-			want:    nil,
+			want:    models.PaginatedResponse{},
 			wantErr: true,
 		},
 	}
@@ -204,7 +203,7 @@ func TestUserService_List(t *testing.T) {
 			core, mockRepo := setupTestCore(t)
 			tt.mockFn(mockRepo)
 
-			got, err := core.UserService.List(context.Background(), tt.limit, tt.offset)
+			got, err := core.UserService.List(tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -220,13 +219,13 @@ func TestUserService_List(t *testing.T) {
 func TestUserService_Update(t *testing.T) {
 	tests := []struct {
 		name    string
-		user    *models.User
+		user    models.User
 		mockFn  func(*mocks.Repository)
 		wantErr bool
 	}{
 		{
 			name: "successful update",
-			user: &models.User{
+			user: models.User{
 				Base: models.Base{ID: 1},
 				Name: "Updated Name",
 			},
@@ -238,7 +237,7 @@ func TestUserService_Update(t *testing.T) {
 		},
 		{
 			name: "update non-existent user",
-			user: &models.User{
+			user: models.User{
 				Base: models.Base{ID: 999},
 				Name: "Updated Name",
 			},
@@ -255,7 +254,7 @@ func TestUserService_Update(t *testing.T) {
 			core, mockRepo := setupTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.UserService.Update(context.Background(), tt.user)
+			_, err := core.UserService.Update(tt.user)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -297,7 +296,7 @@ func TestUserService_Delete(t *testing.T) {
 			core, mockRepo := setupTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.UserService.Delete(context.Background(), tt.userID)
+			err := core.UserService.Delete(tt.userID)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

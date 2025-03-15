@@ -1,7 +1,6 @@
 package core
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/base64"
 
@@ -29,16 +28,16 @@ func NewTokensService(core *Core) TokenService {
 // Returns:
 //   - *models.PaginatedResponse containing the tokens and pagination info
 //   - error if the operation fails
-func (s *TokenService) ListByUser(ctx context.Context, userId int, limit, offset int) (*models.PaginatedResponse, error) {
+func (s *TokenService) ListByUser(userId int, limit, offset int) (models.PaginatedResponse, error) {
 	s.core.Logger.Info("Listing tokens for userId %d with limit: %d and offset: %d", userId, limit, offset)
 
-	tokens, total, err := s.core.Repository.ListTokensByUser(ctx, userId, limit, offset)
+	tokens, total, err := s.core.Repository.ListTokensByUser(userId, limit, offset)
 	if err != nil {
 		s.core.Logger.Error("Failed to list tokens for userId %d: %v", userId, err)
-		return nil, err
+		return models.PaginatedResponse{}, err
 	}
 
-	response := &models.PaginatedResponse{
+	response := models.PaginatedResponse{
 		Data: tokens,
 		Pagination: models.Pagination{
 			Total:  total,
@@ -62,18 +61,13 @@ func (s *TokenService) ListByUser(ctx context.Context, userId int, limit, offset
 //   - *models.Token if found
 //   - ErrNotFound if token doesn't exist
 //   - error if the operation fails
-func (s *TokenService) GetByUser(ctx context.Context, tokenID int, userID int) (*models.Token, error) {
+func (s *TokenService) GetByUser(tokenID int, userID int) (models.Token, error) {
 	s.core.Logger.Debug("Fetching token with ID: %d for userID: %d ", tokenID, userID)
 
-	token, err := s.core.Repository.GetTokenByUser(ctx, tokenID, userID)
+	token, err := s.core.Repository.GetTokenByUser(tokenID, userID)
 	if err != nil {
 		s.core.Logger.Error("Failed to fetch token: %v", err)
-		return nil, err
-	}
-
-	if token == nil {
-		s.core.Logger.Info("Token not found with ID: %d for userID %d", tokenID, userID)
-		return nil, ErrNotFound
+		return token, err
 	}
 
 	return token, nil
@@ -89,14 +83,14 @@ func (s *TokenService) GetByUser(ctx context.Context, tokenID int, userID int) (
 // Returns:
 //   - *models.Token containing the newly created token
 //   - error if the operation fails
-func (s *TokenService) CreateForUser(ctx context.Context, userID int, tokenData *models.Token) (*models.Token, error) {
+func (s *TokenService) CreateForUser(userID int, tokenData models.Token) (models.Token, error) {
 	s.core.Logger.Debug("Creating token for userId: %d", userID)
 
 	newToken := models.Token{}
 	newToken.UserID = userID
 
 	// Use the provided name
-	if tokenData != nil && tokenData.Name != "" {
+	if tokenData.Name != "" {
 		newToken.Name = tokenData.Name
 	} else {
 		newToken.Name = "API Token"
@@ -105,21 +99,19 @@ func (s *TokenService) CreateForUser(ctx context.Context, userID int, tokenData 
 	tokenStr, err := generateSecureTokenBase64()
 	if err != nil {
 		s.core.Logger.Error("Failed to generate secure token: %v", err)
-		return nil, err
+		return models.Token{}, err
 	}
 	newToken.Token = tokenStr
 
 	// Set expires_at if provided
-	if tokenData != nil {
-		newToken.ExpiresAt = tokenData.ExpiresAt
-	}
+	newToken.ExpiresAt = tokenData.ExpiresAt
 
-	err = s.core.Repository.CreateToken(ctx, &newToken)
+	token, err := s.core.Repository.CreateToken(newToken)
 	if err != nil {
-		return nil, err
+		return token, err
 	}
 
-	return &newToken, nil
+	return token, nil
 }
 
 // DeleteByUser deletes a specific token belonging to a user
@@ -131,16 +123,16 @@ func (s *TokenService) CreateForUser(ctx context.Context, userID int, tokenData 
 //
 // Returns:
 //   - error if the operation fails or token doesn't exist
-func (s *TokenService) DeleteByUser(ctx context.Context, userID int, tokenID int) error {
+func (s *TokenService) DeleteByUser(userID int, tokenID int) error {
 	s.core.Logger.Debug("Deleting token with ID: %d for userID %d", tokenID, userID)
 
 	// Check if token exists for this user
-	_, err := s.GetByUser(ctx, userID, tokenID)
+	_, err := s.GetByUser(userID, tokenID)
 	if err != nil {
 		return err
 	}
 
-	if err := s.core.Repository.DeleteToken(ctx, tokenID); err != nil {
+	if err := s.core.Repository.DeleteToken(tokenID); err != nil {
 		s.core.Logger.Error("Failed to delete token: %v", err)
 		return err
 	}

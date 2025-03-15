@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+	"inbox451/internal/storage"
 	"net/http"
 	"strconv"
 
@@ -17,19 +19,21 @@ func (s *Server) createInbox(c echo.Context) error {
 	}
 	inbox.ProjectID = projectID
 
-	if err := c.Validate(&inbox); err != nil {
+	err := c.Validate(inbox)
+	if err != nil {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	if err := s.core.InboxService.Create(c.Request().Context(), &inbox); err != nil {
+	newInbox, err := s.core.InboxService.Create(inbox)
+	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 
-	return c.JSON(http.StatusCreated, inbox)
+	return c.JSON(http.StatusCreated, newInbox)
 }
 
 func (s *Server) getInboxes(c echo.Context) error {
-	accountID, _ := strconv.Atoi(c.Param("projectId"))
+	projectID, _ := strconv.Atoi(c.Param("projectId"))
 
 	var query models.PaginationQuery
 	if err := c.Bind(&query); err != nil {
@@ -44,7 +48,7 @@ func (s *Server) getInboxes(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	response, err := s.core.InboxService.ListByProject(c.Request().Context(), accountID, query.Limit, query.Offset)
+	response, err := s.core.InboxService.ListByProject(projectID, query.Limit, query.Offset)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
@@ -53,12 +57,12 @@ func (s *Server) getInboxes(c echo.Context) error {
 
 func (s *Server) getInbox(c echo.Context) error {
 	inboxID, _ := strconv.Atoi(c.Param("inboxId"))
-	inbox, err := s.core.InboxService.Get(c.Request().Context(), inboxID)
+	inbox, err := s.core.InboxService.Get(inboxID)
 	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return s.core.HandleError(nil, http.StatusNotFound)
+		}
 		return s.core.HandleError(err, http.StatusInternalServerError)
-	}
-	if inbox == nil {
-		return s.core.HandleError(nil, http.StatusNotFound)
 	}
 	return c.JSON(http.StatusOK, inbox)
 }
@@ -80,16 +84,17 @@ func (s *Server) updateInbox(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	if err := s.core.InboxService.Update(c.Request().Context(), &inbox); err != nil {
+	newInbox, err := s.core.InboxService.Update(inbox)
+	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, newInbox)
 }
 
 func (s *Server) deleteInbox(c echo.Context) error {
 	inboxID, _ := strconv.Atoi(c.Param("inboxId"))
-	if err := s.core.InboxService.Delete(c.Request().Context(), inboxID); err != nil {
+	if err := s.core.InboxService.Delete(inboxID); err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 	return c.NoContent(http.StatusNoContent)

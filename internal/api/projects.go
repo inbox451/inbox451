@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+	"inbox451/internal/storage"
 	"net/http"
 	"strconv"
 
@@ -10,8 +12,6 @@ import (
 )
 
 func (s *Server) createProject(c echo.Context) error {
-	ctx := c.Request().Context()
-
 	var project models.Project
 	if err := c.Bind(&project); err != nil {
 		return s.core.HandleError(err, http.StatusBadRequest)
@@ -21,16 +21,15 @@ func (s *Server) createProject(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	if err := s.core.ProjectService.Create(ctx, &project); err != nil {
+	newProject, err := s.core.ProjectService.Create(project)
+	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 
-	return c.JSON(http.StatusCreated, project)
+	return c.JSON(http.StatusCreated, newProject)
 }
 
 func (s *Server) getProjects(c echo.Context) error {
-	ctx := c.Request().Context()
-
 	var query models.PaginationQuery
 	if err := c.Bind(&query); err != nil {
 		return s.core.HandleError(err, http.StatusBadRequest)
@@ -44,7 +43,7 @@ func (s *Server) getProjects(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	response, err := s.core.ProjectService.List(ctx, query.Limit, query.Offset)
+	response, err := s.core.ProjectService.List(query.Limit, query.Offset)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
@@ -52,7 +51,6 @@ func (s *Server) getProjects(c echo.Context) error {
 }
 
 func (s *Server) getProjectsByUser(c echo.Context) error {
-	ctx := c.Request().Context()
 	userID, _ := strconv.Atoi(c.Param("userId"))
 
 	var query models.PaginationQuery
@@ -68,7 +66,7 @@ func (s *Server) getProjectsByUser(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	response, err := s.core.ProjectService.ListByUser(ctx, userID, query.Limit, query.Offset)
+	response, err := s.core.ProjectService.ListByUser(userID, query.Limit, query.Offset)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
@@ -77,12 +75,12 @@ func (s *Server) getProjectsByUser(c echo.Context) error {
 
 func (s *Server) getProject(c echo.Context) error {
 	projectID, _ := strconv.Atoi(c.Param("projectId"))
-	project, err := s.core.ProjectService.Get(c.Request().Context(), projectID)
+	project, err := s.core.ProjectService.Get(projectID)
 	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return s.core.HandleError(nil, http.StatusNotFound)
+		}
 		return s.core.HandleError(err, http.StatusInternalServerError)
-	}
-	if project == nil {
-		return s.core.HandleError(nil, http.StatusNotFound)
 	}
 	return c.JSON(http.StatusOK, project)
 }
@@ -99,11 +97,12 @@ func (s *Server) updateProject(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	if err := s.core.ProjectService.Update(c.Request().Context(), &project); err != nil {
+	updatedProject, err := s.core.ProjectService.Update(project)
+	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, updatedProject)
 }
 
 func (s *Server) projectAddUser(c echo.Context) error {
@@ -121,16 +120,17 @@ func (s *Server) projectAddUser(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	if err := s.core.ProjectService.AddUser(c.Request().Context(), &projectUser); err != nil {
+	newProjectUser, err := s.core.ProjectService.AddUser(projectUser)
+	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusCreated, newProjectUser)
 }
 
 func (s *Server) deleteProject(c echo.Context) error {
 	projectID, _ := strconv.Atoi(c.Param("projectId"))
-	if err := s.core.ProjectService.Delete(c.Request().Context(), projectID); err != nil {
+	if err := s.core.ProjectService.Delete(projectID); err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -139,7 +139,7 @@ func (s *Server) deleteProject(c echo.Context) error {
 func (s *Server) projectRemoveUser(c echo.Context) error {
 	projectID, _ := strconv.Atoi(c.Param("projectId"))
 	userID, _ := strconv.Atoi(c.Param("userId"))
-	if err := s.core.ProjectService.RemoveUser(c.Request().Context(), projectID, userID); err != nil {
+	if err := s.core.ProjectService.RemoveUser(projectID, userID); err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 	return c.NoContent(http.StatusNoContent)

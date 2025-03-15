@@ -1,7 +1,6 @@
 package core
 
 import (
-	"context"
 	"errors"
 	"io"
 	"testing"
@@ -37,7 +36,7 @@ func TestTokenService_ListByUser(t *testing.T) {
 		limit   int
 		offset  int
 		mockFn  func(*mocks.Repository)
-		want    *models.PaginatedResponse
+		want    models.PaginatedResponse
 		wantErr bool
 	}{
 		{
@@ -46,7 +45,7 @@ func TestTokenService_ListByUser(t *testing.T) {
 			limit:  10,
 			offset: 0,
 			mockFn: func(m *mocks.Repository) {
-				tokens := []*models.Token{
+				tokens := []models.Token{
 					{
 						Base:   models.Base{ID: 1},
 						UserID: 1,
@@ -62,8 +61,8 @@ func TestTokenService_ListByUser(t *testing.T) {
 				}
 				m.On("ListTokensByUser", mock.Anything, 1, 10, 0).Return(tokens, 2, nil)
 			},
-			want: &models.PaginatedResponse{
-				Data: []*models.Token{
+			want: models.PaginatedResponse{
+				Data: []models.Token{
 					{
 						Base:   models.Base{ID: 1},
 						UserID: 1,
@@ -92,9 +91,9 @@ func TestTokenService_ListByUser(t *testing.T) {
 			offset: 0,
 			mockFn: func(m *mocks.Repository) {
 				m.On("ListTokensByUser", mock.Anything, 1, 10, 0).
-					Return([]*models.Token(nil), 0, errors.New("database error"))
+					Return([]models.Token(nil), 0, errors.New("database error"))
 			},
-			want:    nil,
+			want:    models.PaginatedResponse{},
 			wantErr: true,
 		},
 		{
@@ -106,8 +105,8 @@ func TestTokenService_ListByUser(t *testing.T) {
 				m.On("ListTokensByUser", mock.Anything, 2, 10, 0).
 					Return([]*models.Token{}, 0, nil)
 			},
-			want: &models.PaginatedResponse{
-				Data: []*models.Token{},
+			want: models.PaginatedResponse{
+				Data: []models.Token{},
 				Pagination: models.Pagination{
 					Total:  0,
 					Limit:  10,
@@ -123,7 +122,7 @@ func TestTokenService_ListByUser(t *testing.T) {
 			core, mockRepo := setupTokenTestCore(t)
 			tt.mockFn(mockRepo)
 
-			got, err := core.TokenService.ListByUser(context.Background(), tt.userID, tt.limit, tt.offset)
+			got, err := core.TokenService.ListByUser(tt.userID, tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -143,7 +142,7 @@ func TestTokenService_GetByUser(t *testing.T) {
 		tokenID int
 		userID  int
 		mockFn  func(*mocks.Repository)
-		want    *models.Token
+		want    models.Token
 		wantErr bool
 		errType error
 	}{
@@ -163,7 +162,7 @@ func TestTokenService_GetByUser(t *testing.T) {
 					Token:  "test-token",
 				}, nil)
 			},
-			want: &models.Token{
+			want: models.Token{
 				Base: models.Base{
 					ID:        1,
 					CreatedAt: null.TimeFrom(now),
@@ -182,7 +181,7 @@ func TestTokenService_GetByUser(t *testing.T) {
 			mockFn: func(m *mocks.Repository) {
 				m.On("GetTokenByUser", mock.Anything, 999, 1).Return(nil, storage.ErrNotFound)
 			},
-			want:    nil,
+			want:    models.Token{},
 			wantErr: true,
 			errType: storage.ErrNotFound,
 		},
@@ -193,7 +192,7 @@ func TestTokenService_GetByUser(t *testing.T) {
 			core, mockRepo := setupTokenTestCore(t)
 			tt.mockFn(mockRepo)
 
-			got, err := core.TokenService.GetByUser(context.Background(), tt.tokenID, tt.userID)
+			got, err := core.TokenService.GetByUser(tt.tokenID, tt.userID)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errType != nil {
@@ -213,7 +212,7 @@ func TestTokenService_CreateForUser(t *testing.T) {
 	tests := []struct {
 		name      string
 		userID    int
-		tokenData *models.Token
+		tokenData models.Token
 		mockFn    func(*mocks.Repository)
 		wantErr   bool
 	}{
@@ -221,7 +220,7 @@ func TestTokenService_CreateForUser(t *testing.T) {
 			name:   "successful creation with default name",
 			userID: 1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("CreateToken", mock.Anything, mock.MatchedBy(func(token *models.Token) bool {
+				m.On("CreateToken", mock.Anything, mock.MatchedBy(func(token models.Token) bool {
 					return token.UserID == 1 &&
 						token.Name == "API Token" &&
 						len(token.Token) > 0 // Token should be generated
@@ -232,7 +231,7 @@ func TestTokenService_CreateForUser(t *testing.T) {
 		{
 			name:   "successful creation with custom name",
 			userID: 1,
-			tokenData: &models.Token{
+			tokenData: models.Token{
 				Name: "Custom Token",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -260,7 +259,7 @@ func TestTokenService_CreateForUser(t *testing.T) {
 			core, mockRepo := setupTokenTestCore(t)
 			tt.mockFn(mockRepo)
 
-			token, err := core.TokenService.CreateForUser(context.Background(), tt.userID, tt.tokenData)
+			token, err := core.TokenService.CreateForUser(tt.userID, tt.tokenData)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, token)
@@ -269,7 +268,7 @@ func TestTokenService_CreateForUser(t *testing.T) {
 				assert.NotNil(t, token)
 				assert.NotEmpty(t, token.Token)
 				assert.Equal(t, tt.userID, token.UserID)
-				if tt.tokenData != nil && tt.tokenData.Name != "" {
+				if tt.tokenData.Name != "" {
 					assert.Equal(t, tt.tokenData.Name, token.Name)
 				} else {
 					assert.Equal(t, "API Token", token.Name)
@@ -329,7 +328,7 @@ func TestTokenService_DeleteByUser(t *testing.T) {
 			core, mockRepo := setupTokenTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.TokenService.DeleteByUser(context.Background(), tt.userID, tt.tokenID)
+			err := core.TokenService.DeleteByUser(tt.userID, tt.tokenID)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

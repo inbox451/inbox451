@@ -1,7 +1,6 @@
 package core
 
 import (
-	"context"
 	"errors"
 	"io"
 	"testing"
@@ -33,13 +32,13 @@ func setupRuleTestCore(t *testing.T) (*Core, *mocks.Repository) {
 func TestRuleService_Create(t *testing.T) {
 	tests := []struct {
 		name    string
-		rule    *models.ForwardRule
+		rule    models.ForwardRule
 		mockFn  func(*mocks.Repository)
 		wantErr bool
 	}{
 		{
 			name: "successful creation",
-			rule: &models.ForwardRule{
+			rule: models.ForwardRule{
 				InboxID:  1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
@@ -53,7 +52,7 @@ func TestRuleService_Create(t *testing.T) {
 		},
 		{
 			name: "repository error",
-			rule: &models.ForwardRule{
+			rule: models.ForwardRule{
 				InboxID:  1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
@@ -72,7 +71,7 @@ func TestRuleService_Create(t *testing.T) {
 			core, mockRepo := setupRuleTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.RuleService.Create(context.Background(), tt.rule)
+			_, err := core.RuleService.Create(tt.rule)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -90,7 +89,7 @@ func TestRuleService_Get(t *testing.T) {
 		name    string
 		id      int
 		mockFn  func(*mocks.Repository)
-		want    *models.ForwardRule
+		want    models.ForwardRule
 		wantErr bool
 		errType error
 	}{
@@ -98,7 +97,7 @@ func TestRuleService_Get(t *testing.T) {
 			name: "existing rule",
 			id:   1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetRule", mock.Anything, 1).Return(&models.ForwardRule{
+				m.On("GetRule", mock.Anything, 1).Return(models.ForwardRule{
 					Base: models.Base{
 						ID:        1,
 						CreatedAt: null.TimeFrom(now),
@@ -110,7 +109,7 @@ func TestRuleService_Get(t *testing.T) {
 					Subject:  "Test Subject",
 				}, nil)
 			},
-			want: &models.ForwardRule{
+			want: models.ForwardRule{
 				Base: models.Base{
 					ID:        1,
 					CreatedAt: null.TimeFrom(now),
@@ -129,7 +128,7 @@ func TestRuleService_Get(t *testing.T) {
 			mockFn: func(m *mocks.Repository) {
 				m.On("GetRule", mock.Anything, 999).Return(nil, storage.ErrNotFound)
 			},
-			want:    nil,
+			want:    models.ForwardRule{},
 			wantErr: true,
 			errType: storage.ErrNotFound,
 		},
@@ -140,7 +139,7 @@ func TestRuleService_Get(t *testing.T) {
 			core, mockRepo := setupRuleTestCore(t)
 			tt.mockFn(mockRepo)
 
-			got, err := core.RuleService.Get(context.Background(), tt.id)
+			got, err := core.RuleService.Get(tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errType != nil {
@@ -159,13 +158,13 @@ func TestRuleService_Get(t *testing.T) {
 func TestRuleService_Update(t *testing.T) {
 	tests := []struct {
 		name    string
-		rule    *models.ForwardRule
+		rule    models.ForwardRule
 		mockFn  func(*mocks.Repository)
 		wantErr bool
 	}{
 		{
 			name: "successful update",
-			rule: &models.ForwardRule{
+			rule: models.ForwardRule{
 				Base:     models.Base{ID: 1},
 				InboxID:  1,
 				Sender:   "updated@example.com",
@@ -180,7 +179,7 @@ func TestRuleService_Update(t *testing.T) {
 		},
 		{
 			name: "update non-existent rule",
-			rule: &models.ForwardRule{
+			rule: models.ForwardRule{
 				Base:     models.Base{ID: 999},
 				InboxID:  1,
 				Sender:   "updated@example.com",
@@ -200,7 +199,7 @@ func TestRuleService_Update(t *testing.T) {
 			core, mockRepo := setupRuleTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.RuleService.Update(context.Background(), tt.rule)
+			_, err := core.RuleService.Update(tt.rule)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -242,7 +241,7 @@ func TestRuleService_Delete(t *testing.T) {
 			core, mockRepo := setupRuleTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.RuleService.Delete(context.Background(), tt.id)
+			err := core.RuleService.Delete(tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -261,7 +260,7 @@ func TestRuleService_ListByInbox(t *testing.T) {
 		limit   int
 		offset  int
 		mockFn  func(*mocks.Repository)
-		want    *models.PaginatedResponse
+		want    models.PaginatedResponse
 		wantErr bool
 	}{
 		{
@@ -270,7 +269,7 @@ func TestRuleService_ListByInbox(t *testing.T) {
 			limit:   10,
 			offset:  0,
 			mockFn: func(m *mocks.Repository) {
-				rules := []*models.ForwardRule{
+				rules := []models.ForwardRule{
 					{
 						Base:     models.Base{ID: 1},
 						InboxID:  1,
@@ -288,8 +287,8 @@ func TestRuleService_ListByInbox(t *testing.T) {
 				}
 				m.On("ListRulesByInbox", mock.Anything, 1, 10, 0).Return(rules, 2, nil)
 			},
-			want: &models.PaginatedResponse{
-				Data: []*models.ForwardRule{
+			want: models.PaginatedResponse{
+				Data: []models.ForwardRule{
 					{
 						Base:     models.Base{ID: 1},
 						InboxID:  1,
@@ -320,9 +319,9 @@ func TestRuleService_ListByInbox(t *testing.T) {
 			offset:  0,
 			mockFn: func(m *mocks.Repository) {
 				m.On("ListRulesByInbox", mock.Anything, 1, 10, 0).
-					Return([]*models.ForwardRule(nil), 0, errors.New("database error"))
+					Return([]models.ForwardRule(nil), 0, errors.New("database error"))
 			},
-			want:    nil,
+			want:    models.PaginatedResponse{},
 			wantErr: true,
 		},
 		{
@@ -334,8 +333,8 @@ func TestRuleService_ListByInbox(t *testing.T) {
 				m.On("ListRulesByInbox", mock.Anything, 2, 10, 0).
 					Return([]*models.ForwardRule{}, 0, nil)
 			},
-			want: &models.PaginatedResponse{
-				Data: []*models.ForwardRule{},
+			want: models.PaginatedResponse{
+				Data: []models.ForwardRule{},
 				Pagination: models.Pagination{
 					Total:  0,
 					Limit:  10,
@@ -351,7 +350,7 @@ func TestRuleService_ListByInbox(t *testing.T) {
 			core, mockRepo := setupRuleTestCore(t)
 			tt.mockFn(mockRepo)
 
-			got, err := core.RuleService.ListByInbox(context.Background(), tt.inboxID, tt.limit, tt.offset)
+			got, err := core.RuleService.ListByInbox(tt.inboxID, tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

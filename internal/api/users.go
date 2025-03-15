@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+	"inbox451/internal/storage"
 	"net/http"
 	"strconv"
 
@@ -10,8 +12,6 @@ import (
 )
 
 func (s *Server) createUser(c echo.Context) error {
-	ctx := c.Request().Context()
-
 	var input models.User
 	if err := c.Bind(&input); err != nil {
 		return s.core.HandleError(err, http.StatusBadRequest)
@@ -21,16 +21,15 @@ func (s *Server) createUser(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	if err := s.core.UserService.Create(ctx, &input); err != nil {
+	newUser, err := s.core.UserService.Create(input)
+	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 
-	return c.JSON(http.StatusCreated, input)
+	return c.JSON(http.StatusCreated, newUser)
 }
 
 func (s *Server) getUsers(c echo.Context) error {
-	ctx := c.Request().Context()
-
 	var query models.PaginationQuery
 	if err := c.Bind(&query); err != nil {
 		return s.core.HandleError(err, http.StatusBadRequest)
@@ -44,7 +43,7 @@ func (s *Server) getUsers(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	response, err := s.core.UserService.List(ctx, query.Limit, query.Offset)
+	response, err := s.core.UserService.List(query.Limit, query.Offset)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
@@ -53,12 +52,12 @@ func (s *Server) getUsers(c echo.Context) error {
 
 func (s *Server) getUser(c echo.Context) error {
 	userID, _ := strconv.Atoi(c.Param("userId"))
-	user, err := s.core.UserService.Get(c.Request().Context(), userID)
+	user, err := s.core.UserService.Get(userID)
 	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return s.core.HandleError(nil, http.StatusNotFound)
+		}
 		return s.core.HandleError(err, http.StatusInternalServerError)
-	}
-	if user == nil {
-		return s.core.HandleError(nil, http.StatusNotFound)
 	}
 	return c.JSON(http.StatusOK, user)
 }
@@ -75,16 +74,20 @@ func (s *Server) updateUser(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	if err := s.core.UserService.Update(c.Request().Context(), &user); err != nil {
+	updatedUser, err := s.core.UserService.Update(user)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return s.core.HandleError(nil, http.StatusNotFound)
+		}
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, updatedUser)
 }
 
 func (s *Server) deleteUser(c echo.Context) error {
 	userID, _ := strconv.Atoi(c.Param("userId"))
-	if err := s.core.UserService.Delete(c.Request().Context(), userID); err != nil {
+	if err := s.core.UserService.Delete(userID); err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 	return c.NoContent(http.StatusNoContent)

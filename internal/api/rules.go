@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+	"inbox451/internal/storage"
 	"net/http"
 	"strconv"
 
@@ -21,11 +23,12 @@ func (s *Server) createRule(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	if err := s.core.RuleService.Create(c.Request().Context(), &rule); err != nil {
+	newRule, err := s.core.RuleService.Create(rule)
+	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 
-	return c.JSON(http.StatusCreated, rule)
+	return c.JSON(http.StatusCreated, newRule)
 }
 
 func (s *Server) getRules(c echo.Context) error {
@@ -44,7 +47,7 @@ func (s *Server) getRules(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	response, err := s.core.RuleService.ListByInbox(c.Request().Context(), inboxID, query.Limit, query.Offset)
+	response, err := s.core.RuleService.ListByInbox(inboxID, query.Limit, query.Offset)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
@@ -53,12 +56,12 @@ func (s *Server) getRules(c echo.Context) error {
 
 func (s *Server) getRule(c echo.Context) error {
 	ruleID, _ := strconv.Atoi(c.Param("ruleId"))
-	rule, err := s.core.RuleService.Get(c.Request().Context(), ruleID)
+	rule, err := s.core.RuleService.Get(ruleID)
 	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return s.core.HandleError(nil, http.StatusNotFound)
+		}
 		return s.core.HandleError(err, http.StatusInternalServerError)
-	}
-	if rule == nil {
-		return s.core.HandleError(nil, http.StatusNotFound)
 	}
 	return c.JSON(http.StatusOK, rule)
 }
@@ -80,16 +83,17 @@ func (s *Server) updateRule(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	if err := s.core.RuleService.Update(c.Request().Context(), &rule); err != nil {
+	updatedRule, err := s.core.RuleService.Update(rule)
+	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, updatedRule)
 }
 
 func (s *Server) deleteRule(c echo.Context) error {
 	ruleID, _ := strconv.Atoi(c.Param("ruleId"))
-	if err := s.core.RuleService.Delete(c.Request().Context(), ruleID); err != nil {
+	if err := s.core.RuleService.Delete(ruleID); err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 	return c.NoContent(http.StatusNoContent)

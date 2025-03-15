@@ -1,8 +1,6 @@
 package core
 
 import (
-	"context"
-
 	"inbox451/internal/models"
 )
 
@@ -14,51 +12,48 @@ func NewInboxService(core *Core) InboxService {
 	return InboxService{core: core}
 }
 
-func (s *InboxService) Create(ctx context.Context, inbox *models.Inbox) error {
+func (s *InboxService) Create(inbox models.Inbox) (models.Inbox, error) {
 	s.core.Logger.Info("Creating new inbox for project %d: %s", inbox.ProjectID, inbox.Email)
 
-	if err := s.core.Repository.CreateInbox(ctx, inbox); err != nil {
+	newInbox, err := s.core.Repository.CreateInbox(inbox)
+	if err != nil {
 		s.core.Logger.Error("Failed to create inbox: %v", err)
-		return err
+		return models.Inbox{}, err
 	}
 
-	s.core.Logger.Info("Successfully created inbox with ID: %d", inbox.ID)
-	return nil
+	s.core.Logger.Info("Successfully created inbox with ID: %d", newInbox.ID)
+	return newInbox, nil
 }
 
-func (s *InboxService) Get(ctx context.Context, id int) (*models.Inbox, error) {
+func (s *InboxService) Get(id int) (models.Inbox, error) {
 	s.core.Logger.Debug("Fetching inbox with ID: %d", id)
 
-	inbox, err := s.core.Repository.GetInbox(ctx, id)
+	inbox, err := s.core.Repository.GetInbox(id)
 	if err != nil {
 		s.core.Logger.Error("Failed to fetch inbox: %v", err)
-		return nil, err
-	}
-
-	if inbox == nil {
-		s.core.Logger.Info("Inbox not found with ID: %d", id)
-		return nil, ErrNotFound
+		return inbox, err
 	}
 
 	return inbox, nil
 }
 
-func (s *InboxService) Update(ctx context.Context, inbox *models.Inbox) error {
+func (s *InboxService) Update(inbox models.Inbox) (models.Inbox, error) {
 	s.core.Logger.Info("Updating inbox with ID: %d", inbox.ID)
 
-	if err := s.core.Repository.UpdateInbox(ctx, inbox); err != nil {
+	update, err := s.core.Repository.UpdateInbox(inbox)
+	if err != nil {
 		s.core.Logger.Error("Failed to update inbox: %v", err)
-		return err
+		return update, err
 	}
 
 	s.core.Logger.Info("Successfully updated inbox with ID: %d", inbox.ID)
-	return nil
+	return update, nil
 }
 
-func (s *InboxService) Delete(ctx context.Context, id int) error {
+func (s *InboxService) Delete(id int) error {
 	s.core.Logger.Info("Deleting inbox with ID: %d", id)
 
-	if err := s.core.Repository.DeleteInbox(ctx, id); err != nil {
+	if err := s.core.Repository.DeleteInbox(id); err != nil {
 		s.core.Logger.Error("Failed to delete inbox: %v", err)
 		return err
 	}
@@ -67,16 +62,16 @@ func (s *InboxService) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (s *InboxService) ListByProject(ctx context.Context, projectID, limit, offset int) (*models.PaginatedResponse, error) {
+func (s *InboxService) ListByProject(projectID, limit, offset int) (models.PaginatedResponse, error) {
 	s.core.Logger.Info("Listing inboxes for project %d with limit: %d and offset: %d", projectID, limit, offset)
 
-	inboxes, total, err := s.core.Repository.ListInboxesByProject(ctx, projectID, limit, offset)
+	inboxes, total, err := s.core.Repository.ListInboxesByProject(projectID, limit, offset)
 	if err != nil {
 		s.core.Logger.Error("Failed to list inboxes: %v", err)
-		return nil, err
+		return models.PaginatedResponse{}, err
 	}
 
-	response := &models.PaginatedResponse{
+	response := models.PaginatedResponse{
 		Data: inboxes,
 	}
 	response.Pagination.Total = total
