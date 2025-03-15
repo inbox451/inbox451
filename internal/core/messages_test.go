@@ -46,7 +46,7 @@ func TestMessageService_Store(t *testing.T) {
 				Body:     "Test Body",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("CreateMessage", mock.Anything, mock.AnythingOfType("*models.Message")).
+				m.On("CreateMessage", mock.Anything, mock.AnythingOfType("models.Message")).
 					Return(nil)
 			},
 			wantErr: false,
@@ -61,7 +61,7 @@ func TestMessageService_Store(t *testing.T) {
 				Body:     "Test Body",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("CreateMessage", mock.Anything, mock.AnythingOfType("*models.Message")).
+				m.On("CreateMessage", mock.Anything, mock.AnythingOfType("models.Message")).
 					Return(errors.New("database error"))
 			},
 			wantErr: true,
@@ -99,7 +99,7 @@ func TestMessageService_Get(t *testing.T) {
 			name: "existing message",
 			id:   1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetMessage", mock.Anything, 1).Return(&models.Message{
+				m.On("GetMessage", mock.Anything, 1).Return(models.Message{
 					Base: models.Base{
 						ID:        1,
 						CreatedAt: null.TimeFrom(now),
