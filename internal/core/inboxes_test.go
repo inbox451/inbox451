@@ -279,7 +279,7 @@ func TestInboxService_ListByProject(t *testing.T) {
 				m.On("ListInboxesByProject", 1, 10, 0).Return(inboxes, 2, nil)
 			},
 			want: models.PaginatedResponse{
-				Data: []*models.Inbox{
+				Data: []models.Inbox{
 					{
 						Base:      models.Base{ID: 1},
 						ProjectID: 1,
@@ -306,7 +306,7 @@ func TestInboxService_ListByProject(t *testing.T) {
 			offset:    0,
 			mockFn: func(m *mocks.Repository) {
 				m.On("ListInboxesByProject", 1, 10, 0).
-					Return([]*models.Inbox(nil), 0, errors.New("database error"))
+					Return([]models.Inbox{}, 0, errors.New("database error"))
 			},
 			want:    models.PaginatedResponse{},
 			wantErr: true,
@@ -318,7 +318,7 @@ func TestInboxService_ListByProject(t *testing.T) {
 			offset:    0,
 			mockFn: func(m *mocks.Repository) {
 				m.On("ListInboxesByProject", 2, 10, 0).
-					Return([]*models.Inbox{}, 0, nil)
+					Return([]models.Inbox{}, 0, nil)
 			},
 			want: models.PaginatedResponse{
 				Data: []models.Inbox{},
