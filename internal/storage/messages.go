@@ -30,8 +30,8 @@ func (r *repository) GetMessage(messageId int) (models.Message, error) {
 }
 
 func (r *repository) ListMessagesByInbox(inboxId, limit, offset int) ([]models.Message, int, error) {
+	messages := []models.Message{}
 	var total int
-	var messages []models.Message
 
 	err := r.queries.CountMessagesByInbox.Get(&total, inboxId)
 	if err != nil {
@@ -69,9 +69,9 @@ func (r *repository) DeleteMessage(messageId int) error {
 }
 
 func (r *repository) ListMessagesByInboxWithFilter(inboxId int, isRead *bool, limit, offset int) ([]models.Message, int, error) {
+	messages := []models.Message{}
 	var total int
 	var err error
-	var messages []models.Message
 
 	if isRead == nil {
 		err = r.queries.CountMessagesByInbox.Get(&total, &inboxId)

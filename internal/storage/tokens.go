@@ -7,8 +7,9 @@ import (
 )
 
 func (r *repository) ListTokensByUser(userId int, limit, offset int) ([]models.Token, int, error) {
+	tokens := []models.Token{}
 	var total int
-	var tokens []models.Token
+
 	err := r.queries.CountTokensByUser.Get(&total, userId)
 	if err != nil {
 		return nil, 0, err

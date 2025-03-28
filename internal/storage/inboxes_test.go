@@ -467,7 +467,7 @@ func TestRepository_ListInboxesByProject(t *testing.T) {
 						"id", "project_id", "email", "created_at", "updated_at",
 					}))
 			},
-			want:    nil,
+			want:    []models.Inbox{},
 			total:   0,
 			wantErr: false,
 		},

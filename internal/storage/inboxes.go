@@ -52,8 +52,8 @@ func (r *repository) DeleteInbox(id int) error {
 }
 
 func (r *repository) ListInboxesByProject(projectID, limit, offset int) ([]models.Inbox, int, error) {
+	inboxes := []models.Inbox{}
 	var total int
-	var inboxes []models.Inbox
 
 	err := r.queries.CountInboxesByProject.Get(&total, projectID)
 	if err != nil {

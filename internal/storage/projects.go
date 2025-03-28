@@ -5,25 +5,25 @@ import (
 )
 
 func (r *repository) ListProjects(limit int, offset int) ([]models.Project, int, error) {
-	var projects []models.Project
+	projects := []models.Project{}
 	var total int
 
 	err := r.queries.CountProjects.Get(&total)
 	if err != nil {
-		return nil, 0, err
+		return []models.Project{}, 0, err
 	}
 
 	err = r.queries.ListProjects.Select(&projects, limit, offset)
 	if err != nil {
-		return nil, 0, err
+		return []models.Project{}, 0, err
 	}
 
 	return projects, total, nil
 }
 
 func (r *repository) ListProjectsByUser(userId int, limit int, offset int) ([]models.Project, int, error) {
+	projects := []models.Project{}
 	var total int
-	var projects []models.Project
 
 	err := r.queries.CountProjectsByUser.Get(&total, userId)
 	if err != nil {

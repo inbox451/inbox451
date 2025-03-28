@@ -431,7 +431,7 @@ func TestRepository_ListRules(t *testing.T) {
 					WithArgs(10, 0).
 					WillReturnRows(emptyRows)
 			},
-			want:    nil,
+			want:    []models.ForwardRule{},
 			total:   0,
 			wantErr: false,
 		},
@@ -540,7 +540,7 @@ func TestRepository_ListRulesByInbox(t *testing.T) {
 					WithArgs(2, 10, 0).
 					WillReturnRows(emptyRows)
 			},
-			want:    nil,
+			want:    []models.ForwardRule{},
 			total:   0,
 			wantErr: false,
 		},

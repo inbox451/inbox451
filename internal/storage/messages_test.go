@@ -503,7 +503,7 @@ func TestRepository_ListMessagesByInboxWithFilter(t *testing.T) {
 					WithArgs(2, true).
 					WillReturnRows(countRows)
 
-					// But have the actual query return an empty result set (no rows)
+				// But have the actual query return an empty result set (no rows)
 				emptyRows := sqlmock.NewRows([]string{
 					"id", "inbox_id", "sender", "receiver", "subject",
 					"body", "is_read", "created_at", "updated_at",
@@ -514,7 +514,7 @@ func TestRepository_ListMessagesByInboxWithFilter(t *testing.T) {
 					WillReturnRows(emptyRows)
 
 			},
-			want:    nil,
+			want:    []models.Message{},
 			total:   0,
 			wantErr: false,
 		},
@@ -634,7 +634,7 @@ func TestRepository_ListMessagesByInbox(t *testing.T) {
 					WithArgs(2, 10, 0).
 					WillReturnRows(emptyRows)
 			},
-			want:    nil,
+			want:    []models.Message{},
 			total:   0,
 			wantErr: false,
 		},

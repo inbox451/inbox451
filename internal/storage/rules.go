@@ -5,8 +5,8 @@ import (
 )
 
 func (r *repository) ListRules(limit, offset int) ([]models.ForwardRule, int, error) {
+	rules := []models.ForwardRule{}
 	var total int
-	var rules []models.ForwardRule
 
 	err := r.queries.CountRules.Get(&total)
 	if err != nil {
@@ -22,8 +22,8 @@ func (r *repository) ListRules(limit, offset int) ([]models.ForwardRule, int, er
 }
 
 func (r *repository) ListRulesByInbox(inboxId, limit, offset int) ([]models.ForwardRule, int, error) {
+	rules := []models.ForwardRule{}
 	var total int
-	var rules []models.ForwardRule
 
 	err := r.queries.CountRulesByInbox.Get(&total, inboxId)
 	if err != nil {

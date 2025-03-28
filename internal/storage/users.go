@@ -10,8 +10,8 @@ import (
 )
 
 func (r *repository) ListUsers(limit int, offset int) ([]models.User, int, error) {
+	users := []models.User{}
 	var total int
-	var users []models.User
 
 	err := r.queries.CountUsers.Get(&total)
 	if err != nil {

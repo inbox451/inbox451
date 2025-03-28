@@ -352,7 +352,7 @@ func TestRepository_ListTokensByUser(t *testing.T) {
 					WithArgs(2, 10, 0).
 					WillReturnRows(emptyRows)
 			},
-			want:    nil,
+			want:    []models.Token{},
 			total:   0,
 			wantErr: false,
 		},

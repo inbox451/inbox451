@@ -422,7 +422,7 @@ func TestRepository_ListProjects(t *testing.T) {
 					WithArgs(10, 0).
 					WillReturnRows(rows)
 			},
-			want:    nil,
+			want:    []models.Project{},
 			total:   0,
 			wantErr: false,
 		},
@@ -527,7 +527,7 @@ func TestRepository_ListProjectsByUser(t *testing.T) {
 					WithArgs(2, 10, 0). // Fixed the arguments here - need 3 args: userID, limit, offset
 					WillReturnRows(rows)
 			},
-			want:    nil,
+			want:    []models.Project{},
 			total:   0,
 			wantErr: false,
 		},
