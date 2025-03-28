@@ -235,7 +235,7 @@ func TestTokenService_CreateForUser(t *testing.T) {
 				Name: "Custom Token",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("CreateToken", mock.MatchedBy(func(token *models.Token) bool {
+				m.On("CreateToken", mock.MatchedBy(func(token models.Token) bool {
 					return token.UserID == 1 &&
 						token.Name == "Custom Token" &&
 						len(token.Token) > 0
@@ -262,7 +262,6 @@ func TestTokenService_CreateForUser(t *testing.T) {
 			token, err := core.TokenService.CreateForUser(tt.userID, tt.tokenData)
 			if tt.wantErr {
 				assert.Error(t, err)
-				assert.Nil(t, token)
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, token)
@@ -294,7 +293,7 @@ func TestTokenService_DeleteByUser(t *testing.T) {
 			userID:  1,
 			mockFn: func(m *mocks.Repository) {
 				m.On("GetTokenByUser", 1, 1).
-					Return(&models.Token{Base: models.Base{ID: 1}, UserID: 1}, nil)
+					Return(models.Token{Base: models.Base{ID: 1}, UserID: 1}, nil)
 				m.On("DeleteToken", 1).Return(nil)
 			},
 			wantErr: false,
@@ -315,7 +314,7 @@ func TestTokenService_DeleteByUser(t *testing.T) {
 			userID:  1,
 			mockFn: func(m *mocks.Repository) {
 				m.On("GetTokenByUser", 1, 1).
-					Return(&models.Token{Base: models.Base{ID: 1}, UserID: 1}, nil)
+					Return(models.Token{Base: models.Base{ID: 1}, UserID: 1}, nil)
 				m.On("DeleteToken", 1).
 					Return(errors.New("database error"))
 			},

@@ -46,8 +46,19 @@ func TestUserService_Create(t *testing.T) {
 				Role:     "user",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("CreateUser", mock.Anything, mock.AnythingOfType("*models.User")).
-					Return(nil)
+				m.On("CreateUser", mock.AnythingOfType("models.User")).
+					Return(models.User{
+						Base: models.Base{
+							ID:        1,
+							CreatedAt: null.TimeFrom(time.Now()),
+							UpdatedAt: null.TimeFrom(time.Now()),
+						},
+						Name:     "Test User",
+						Username: "testuser",
+						Email:    "test@example.com",
+						Status:   "active",
+						Role:     "user",
+					}, nil)
 			},
 			wantErr: false,
 		},
@@ -59,8 +70,8 @@ func TestUserService_Create(t *testing.T) {
 				Email:    "test@example.com",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("CreateUser", mock.Anything, mock.AnythingOfType("*models.User")).
-					Return(errors.New("database error"))
+				m.On("CreateUser", mock.AnythingOfType("models.User")).
+					Return(models.User{}, errors.New("database error"))
 			},
 			wantErr: true,
 		},
@@ -97,7 +108,7 @@ func TestUserService_Get(t *testing.T) {
 			name:   "existing user",
 			userID: 1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetUser", mock.Anything, 1).Return(models.User{
+				m.On("GetUser", 1).Return(models.User{
 					Base: models.Base{
 						ID:        1,
 						CreatedAt: null.TimeFrom(now),
@@ -124,7 +135,7 @@ func TestUserService_Get(t *testing.T) {
 			name:   "non-existent user",
 			userID: 999,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetUser", mock.Anything, 999).Return(nil, storage.ErrNotFound)
+				m.On("GetUser", 999).Return(models.User{}, storage.ErrNotFound)
 			},
 			want:    models.User{},
 			wantErr: true,
@@ -171,7 +182,7 @@ func TestUserService_List(t *testing.T) {
 					{Base: models.Base{ID: 1}, Name: "User 1"},
 					{Base: models.Base{ID: 2}, Name: "User 2"},
 				}
-				m.On("ListUsers", mock.Anything, 10, 0).Return(users, 2, nil)
+				m.On("ListUsers", 10, 0).Return(users, 2, nil)
 			},
 			want: models.PaginatedResponse{
 				Data: []models.User{
@@ -191,7 +202,7 @@ func TestUserService_List(t *testing.T) {
 			limit:  10,
 			offset: 0,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListUsers", mock.Anything, 10, 0).Return([]*models.User(nil), 0, errors.New("database error"))
+				m.On("ListUsers", 10, 0).Return([]models.User(nil), 0, errors.New("database error"))
 			},
 			want:    models.PaginatedResponse{},
 			wantErr: true,
@@ -230,8 +241,11 @@ func TestUserService_Update(t *testing.T) {
 				Name: "Updated Name",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).
-					Return(nil)
+				m.On("UpdateUser", mock.AnythingOfType("models.User")).
+					Return(models.User{
+						Base: models.Base{ID: 1, CreatedAt: null.TimeFrom(time.Now())},
+						Name: "Updated Name",
+					}, nil)
 			},
 			wantErr: false,
 		},
@@ -242,8 +256,8 @@ func TestUserService_Update(t *testing.T) {
 				Name: "Updated Name",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateUser", mock.Anything, mock.AnythingOfType("*models.User")).
-					Return(storage.ErrNotFound)
+				m.On("UpdateUser", mock.AnythingOfType("models.User")).
+					Return(models.User{}, storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -277,7 +291,7 @@ func TestUserService_Delete(t *testing.T) {
 			name:   "successful deletion",
 			userID: 1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteUser", mock.Anything, 1).Return(nil)
+				m.On("DeleteUser", 1).Return(nil)
 			},
 			wantErr: false,
 		},
@@ -285,7 +299,7 @@ func TestUserService_Delete(t *testing.T) {
 			name:   "delete non-existent user",
 			userID: 999,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteUser", mock.Anything, 999).Return(storage.ErrNotFound)
+				m.On("DeleteUser", 999).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
