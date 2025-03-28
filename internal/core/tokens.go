@@ -127,7 +127,7 @@ func (s *TokenService) DeleteByUser(userID int, tokenID int) error {
 	s.core.Logger.Debug("Deleting token with ID: %d for userID %d", tokenID, userID)
 
 	// Check if token exists for this user
-	_, err := s.GetByUser(userID, tokenID)
+	_, err := s.GetByUser(tokenID, userID)
 	if err != nil {
 		return err
 	}
