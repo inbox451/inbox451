@@ -24,6 +24,7 @@ type Queries struct {
 	DeleteProject       *sqlx.Stmt `query:"delete-project"`
 
 	// ProjectUser queries
+	GetProjectUser        *sqlx.Stmt `query:"get-project-user"`
 	AddUserToProject      *sqlx.Stmt `query:"add-user-to-project"`
 	RemoveUserFromProject *sqlx.Stmt `query:"remove-user-from-project"`
 

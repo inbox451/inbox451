@@ -2,12 +2,12 @@ package smtp
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"io"
-	"time"
-
 	"inbox451/internal/core"
 	"inbox451/internal/models"
+	"inbox451/internal/storage"
+	"io"
 
 	"github.com/emersion/go-message"
 	"github.com/emersion/go-smtp"
@@ -62,10 +62,6 @@ func (s *SmtpSession) Rcpt(to string, _ *smtp.RcptOptions) error {
 }
 
 func (s *SmtpSession) Data(r io.Reader) error {
-	// Create a context with timeout for the email processing
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
 	// Parse the email to get the subject
 	buf := new(bytes.Buffer)
 	if _, err := buf.ReadFrom(r); err != nil {
@@ -86,7 +82,7 @@ func (s *SmtpSession) Data(r io.Reader) error {
 		return err
 	}
 
-	message := &models.Message{
+	newMessage := models.Message{
 		Body:     body.String(),
 		Sender:   s.from,
 		Receiver: s.to,
@@ -95,26 +91,25 @@ func (s *SmtpSession) Data(r io.Reader) error {
 	}
 
 	// Look up the inbox ID based on the recipient email
-	inbox, err := s.core.Repository.GetInboxByEmail(ctx, s.to)
+	inbox, err := s.core.Repository.GetInboxByEmail(s.to)
 	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			s.core.Logger.Error("No inbox found for email %s", s.to)
+			return fmt.Errorf("no inbox found for recipient")
+		}
 		s.core.Logger.Error("Failed to find inbox for email %s: %v", s.to, err)
 		return err
 	}
-	if inbox == nil {
-		s.core.Logger.Error("No inbox found for email %s", s.to)
-		return fmt.Errorf("no inbox found for recipient")
-	}
-
-	message.InboxID = inbox.ID
-
 	s.core.Logger.Info("Received email from %s to %s", s.from, s.to)
 
-	if err := s.core.StoreMessage(message); err != nil {
+	newMessage.InboxID = inbox.ID
+	persistedMessage, err := s.core.StoreMessage(newMessage)
+	if err != nil {
 		s.core.Logger.Error("Failed to store message: %v", err)
 		return err
 	}
 
-	s.core.Logger.Debug("Stored message successfully")
+	s.core.Logger.Debug("Stored message successfully id=%d", persistedMessage.ID)
 	return nil
 }
 

@@ -1,7 +1,6 @@
 package core
 
 import (
-	"context"
 	"errors"
 	"io"
 	"testing"
@@ -31,31 +30,39 @@ func setupProjectTestCore(t *testing.T) (*Core, *mocks.Repository) {
 }
 
 func TestProjectService_Create(t *testing.T) {
+	now := time.Now()
 	tests := []struct {
 		name    string
-		project *models.Project
+		project models.Project
 		mockFn  func(*mocks.Repository)
 		wantErr bool
 	}{
 		{
 			name: "successful creation",
-			project: &models.Project{
+			project: models.Project{
 				Name: "Test Project",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("CreateProject", mock.Anything, mock.AnythingOfType("*models.Project")).
-					Return(nil)
+				m.On("CreateProject", mock.AnythingOfType("models.Project")).
+					Return(models.Project{
+						Base: models.Base{
+							ID:        1,
+							CreatedAt: null.TimeFrom(now),
+							UpdatedAt: null.TimeFrom(now),
+						},
+						Name: "Test Project",
+					}, nil)
 			},
 			wantErr: false,
 		},
 		{
 			name: "repository error",
-			project: &models.Project{
+			project: models.Project{
 				Name: "Test Project",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("CreateProject", mock.Anything, mock.AnythingOfType("*models.Project")).
-					Return(errors.New("database error"))
+				m.On("CreateProject", mock.AnythingOfType("models.Project")).
+					Return(models.Project{}, errors.New("database error"))
 			},
 			wantErr: true,
 		},
@@ -66,7 +73,7 @@ func TestProjectService_Create(t *testing.T) {
 			core, mockRepo := setupProjectTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.ProjectService.Create(context.Background(), tt.project)
+			_, err := core.ProjectService.Create(tt.project)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -84,7 +91,7 @@ func TestProjectService_Get(t *testing.T) {
 		name    string
 		id      int
 		mockFn  func(*mocks.Repository)
-		want    *models.Project
+		want    models.Project
 		wantErr bool
 		errType error
 	}{
@@ -92,7 +99,7 @@ func TestProjectService_Get(t *testing.T) {
 			name: "existing project",
 			id:   1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetProject", mock.Anything, 1).Return(&models.Project{
+				m.On("GetProject", 1).Return(models.Project{
 					Base: models.Base{
 						ID:        1,
 						CreatedAt: null.TimeFrom(now),
@@ -101,7 +108,7 @@ func TestProjectService_Get(t *testing.T) {
 					Name: "Test Project",
 				}, nil)
 			},
-			want: &models.Project{
+			want: models.Project{
 				Base: models.Base{
 					ID:        1,
 					CreatedAt: null.TimeFrom(now),
@@ -115,9 +122,9 @@ func TestProjectService_Get(t *testing.T) {
 			name: "non-existent project",
 			id:   999,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetProject", mock.Anything, 999).Return(nil, storage.ErrNotFound)
+				m.On("GetProject", 999).Return(models.Project{}, storage.ErrNotFound)
 			},
-			want:    nil,
+			want:    models.Project{},
 			wantErr: true,
 			errType: storage.ErrNotFound,
 		},
@@ -128,7 +135,7 @@ func TestProjectService_Get(t *testing.T) {
 			core, mockRepo := setupProjectTestCore(t)
 			tt.mockFn(mockRepo)
 
-			got, err := core.ProjectService.Get(context.Background(), tt.id)
+			got, err := core.ProjectService.Get(tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errType != nil {
@@ -150,7 +157,7 @@ func TestProjectService_List(t *testing.T) {
 		limit   int
 		offset  int
 		mockFn  func(*mocks.Repository)
-		want    *models.PaginatedResponse
+		want    models.PaginatedResponse
 		wantErr bool
 	}{
 		{
@@ -158,14 +165,14 @@ func TestProjectService_List(t *testing.T) {
 			limit:  10,
 			offset: 0,
 			mockFn: func(m *mocks.Repository) {
-				projects := []*models.Project{
+				projects := []models.Project{
 					{Base: models.Base{ID: 1}, Name: "Project 1"},
 					{Base: models.Base{ID: 2}, Name: "Project 2"},
 				}
-				m.On("ListProjects", mock.Anything, 10, 0).Return(projects, 2, nil)
+				m.On("ListProjects", 10, 0).Return(projects, 2, nil)
 			},
-			want: &models.PaginatedResponse{
-				Data: []*models.Project{
+			want: models.PaginatedResponse{
+				Data: []models.Project{
 					{Base: models.Base{ID: 1}, Name: "Project 1"},
 					{Base: models.Base{ID: 2}, Name: "Project 2"},
 				},
@@ -182,9 +189,9 @@ func TestProjectService_List(t *testing.T) {
 			limit:  10,
 			offset: 0,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListProjects", mock.Anything, 10, 0).Return([]*models.Project(nil), 0, errors.New("database error"))
+				m.On("ListProjects", 10, 0).Return(nil, 0, errors.New("database error"))
 			},
-			want:    nil,
+			want:    models.PaginatedResponse{},
 			wantErr: true,
 		},
 	}
@@ -194,7 +201,7 @@ func TestProjectService_List(t *testing.T) {
 			core, mockRepo := setupProjectTestCore(t)
 			tt.mockFn(mockRepo)
 
-			got, err := core.ProjectService.List(context.Background(), tt.limit, tt.offset)
+			got, err := core.ProjectService.List(tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -208,33 +215,37 @@ func TestProjectService_List(t *testing.T) {
 }
 
 func TestProjectService_Update(t *testing.T) {
+	now := time.Now()
 	tests := []struct {
 		name    string
-		project *models.Project
+		project models.Project
 		mockFn  func(*mocks.Repository)
 		wantErr bool
 	}{
 		{
 			name: "successful update",
-			project: &models.Project{
+			project: models.Project{
 				Base: models.Base{ID: 1},
 				Name: "Updated Project",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateProject", mock.Anything, mock.AnythingOfType("*models.Project")).
-					Return(nil)
+				m.On("UpdateProject", mock.AnythingOfType("models.Project")).
+					Return(models.Project{
+						Base: models.Base{ID: 1, CreatedAt: null.TimeFrom(now), UpdatedAt: null.TimeFrom(now)},
+						Name: "Updated Project",
+					}, nil)
 			},
 			wantErr: false,
 		},
 		{
 			name: "update non-existent project",
-			project: &models.Project{
+			project: models.Project{
 				Base: models.Base{ID: 999},
 				Name: "Updated Project",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateProject", mock.Anything, mock.AnythingOfType("*models.Project")).
-					Return(storage.ErrNotFound)
+				m.On("UpdateProject", mock.AnythingOfType("models.Project")).
+					Return(models.Project{}, storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -245,7 +256,7 @@ func TestProjectService_Update(t *testing.T) {
 			core, mockRepo := setupProjectTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.ProjectService.Update(context.Background(), tt.project)
+			_, err := core.ProjectService.Update(tt.project)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -268,7 +279,7 @@ func TestProjectService_Delete(t *testing.T) {
 			name: "successful deletion",
 			id:   1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteProject", mock.Anything, 1).Return(nil)
+				m.On("DeleteProject", 1).Return(nil)
 			},
 			wantErr: false,
 		},
@@ -276,7 +287,7 @@ func TestProjectService_Delete(t *testing.T) {
 			name: "delete non-existent project",
 			id:   999,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteProject", mock.Anything, 999).Return(storage.ErrNotFound)
+				m.On("DeleteProject", 999).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -287,7 +298,7 @@ func TestProjectService_Delete(t *testing.T) {
 			core, mockRepo := setupProjectTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.ProjectService.Delete(context.Background(), tt.id)
+			err := core.ProjectService.Delete(tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -300,36 +311,42 @@ func TestProjectService_Delete(t *testing.T) {
 }
 
 func TestProjectService_AddUser(t *testing.T) {
+	now := time.Now()
 	tests := []struct {
 		name        string
-		projectUser *models.ProjectUser
+		projectUser models.ProjectUser
 		mockFn      func(*mocks.Repository)
 		wantErr     bool
 	}{
 		{
 			name: "successful add user",
-			projectUser: &models.ProjectUser{
+			projectUser: models.ProjectUser{
 				ProjectID: 1,
 				UserID:    1,
 				Role:      "member",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("ProjectAddUser", mock.Anything, mock.MatchedBy(func(pu *models.ProjectUser) bool {
+				m.On("ProjectAddUser", mock.MatchedBy(func(pu models.ProjectUser) bool {
 					return pu.ProjectID == 1 && pu.UserID == 1 && pu.Role == "member"
-				})).Return(nil)
+				})).Return(models.ProjectUser{
+					Base:      models.Base{ID: 1, CreatedAt: null.TimeFrom(now), UpdatedAt: null.TimeFrom(now)},
+					ProjectID: 1,
+					UserID:    1,
+					Role:      "member",
+				}, nil)
 			},
 			wantErr: false,
 		},
 		{
 			name: "repository error",
-			projectUser: &models.ProjectUser{
+			projectUser: models.ProjectUser{
 				ProjectID: 1,
 				UserID:    1,
 				Role:      "member",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("ProjectAddUser", mock.Anything, mock.Anything).
-					Return(errors.New("database error"))
+				m.On("ProjectAddUser", mock.Anything).
+					Return(models.ProjectUser{}, errors.New("database error"))
 			},
 			wantErr: true,
 		},
@@ -340,7 +357,7 @@ func TestProjectService_AddUser(t *testing.T) {
 			core, mockRepo := setupProjectTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.ProjectService.AddUser(context.Background(), tt.projectUser)
+			_, err := core.ProjectService.AddUser(tt.projectUser)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -365,7 +382,7 @@ func TestProjectService_RemoveUser(t *testing.T) {
 			projectID: 1,
 			userID:    1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ProjectRemoveUser", mock.Anything, 1, 1).Return(nil)
+				m.On("ProjectRemoveUser", 1, 1).Return(nil)
 			},
 			wantErr: false,
 		},
@@ -374,7 +391,7 @@ func TestProjectService_RemoveUser(t *testing.T) {
 			projectID: 1,
 			userID:    1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ProjectRemoveUser", mock.Anything, 1, 1).
+				m.On("ProjectRemoveUser", 1, 1).
 					Return(errors.New("database error"))
 			},
 			wantErr: true,
@@ -386,7 +403,7 @@ func TestProjectService_RemoveUser(t *testing.T) {
 			core, mockRepo := setupProjectTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.ProjectService.RemoveUser(context.Background(), tt.projectID, tt.userID)
+			err := core.ProjectService.RemoveUser(tt.projectID, tt.userID)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -406,7 +423,7 @@ func TestProjectService_ListByUser(t *testing.T) {
 		limit   int
 		offset  int
 		mockFn  func(*mocks.Repository)
-		want    *models.PaginatedResponse
+		want    models.PaginatedResponse
 		wantErr bool
 	}{
 		{
@@ -415,7 +432,7 @@ func TestProjectService_ListByUser(t *testing.T) {
 			limit:  10,
 			offset: 0,
 			mockFn: func(m *mocks.Repository) {
-				projects := []*models.Project{
+				projects := []models.Project{
 					{
 						Base: models.Base{
 							ID:        1,
@@ -433,10 +450,10 @@ func TestProjectService_ListByUser(t *testing.T) {
 						Name: "Project 2",
 					},
 				}
-				m.On("ListProjectsByUser", mock.Anything, 1, 10, 0).Return(projects, 2, nil)
+				m.On("ListProjectsByUser", 1, 10, 0).Return(projects, 2, nil)
 			},
-			want: &models.PaginatedResponse{
-				Data: []*models.Project{
+			want: models.PaginatedResponse{
+				Data: []models.Project{
 					{
 						Base: models.Base{
 							ID:        1,
@@ -468,10 +485,10 @@ func TestProjectService_ListByUser(t *testing.T) {
 			limit:  10,
 			offset: 0,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListProjectsByUser", mock.Anything, 1, 10, 0).
-					Return([]*models.Project(nil), 0, errors.New("database error"))
+				m.On("ListProjectsByUser", 1, 10, 0).
+					Return(nil, 0, errors.New("database error"))
 			},
-			want:    nil,
+			want:    models.PaginatedResponse{},
 			wantErr: true,
 		},
 	}
@@ -481,7 +498,7 @@ func TestProjectService_ListByUser(t *testing.T) {
 			core, mockRepo := setupProjectTestCore(t)
 			tt.mockFn(mockRepo)
 
-			got, err := core.ProjectService.ListByUser(context.Background(), tt.userID, tt.limit, tt.offset)
+			got, err := core.ProjectService.ListByUser(tt.userID, tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

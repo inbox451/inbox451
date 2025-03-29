@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"database/sql"
 	"testing"
 	"time"
@@ -74,17 +73,15 @@ func setupMessageTestDB(t *testing.T) (*repository, sqlmock.Sqlmock) {
 }
 
 func TestRepository_CreateMessage(t *testing.T) {
-	now := time.Now()
-
 	tests := []struct {
 		name    string
-		message *models.Message
+		message models.Message
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful creation",
-			message: &models.Message{
+			message: models.Message{
 				InboxID:  1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
@@ -92,24 +89,27 @@ func TestRepository_CreateMessage(t *testing.T) {
 				Body:     "Test Body",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
+				now := time.Now()
 				mock.ExpectQuery("INSERT INTO messages").
-					WithArgs(
-						1,
-						"sender@example.com",
-						"receiver@example.com",
-						"Test Subject",
-						"Test Body",
-					).
+					WithArgs(1, "sender@example.com", "receiver@example.com", "Test Subject", "Test Body").
 					WillReturnRows(
-						sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).
-							AddRow(1, now, now),
+						sqlmock.NewRows([]string{"id"}).
+							AddRow(1),
+					)
+				// The createMessage function calls GetMessage after insertion
+				mock.ExpectQuery("SELECT (.+) FROM messages WHERE id").
+					WithArgs(1).
+					WillReturnRows(
+						sqlmock.NewRows([]string{
+							"id", "inbox_id", "sender", "receiver", "subject", "body", "is_read", "created_at", "updated_at"}).
+							AddRow(1, 1, "sender@example.com", "receiver@example.com", "Test Subject", "Test Body", false, now, now),
 					)
 			},
 			wantErr: false,
 		},
 		{
 			name: "database error",
-			message: &models.Message{
+			message: models.Message{
 				InboxID:  1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
@@ -138,16 +138,21 @@ func TestRepository_CreateMessage(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.CreateMessage(context.Background(), tt.message)
+			got, err := repo.CreateMessage(tt.message)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.NotZero(t, tt.message.ID)
-			assert.NotZero(t, tt.message.CreatedAt)
-			assert.NotZero(t, tt.message.UpdatedAt)
+			assert.NotZero(t, got.ID)
+			assert.NotZero(t, got.CreatedAt)
+			assert.NotZero(t, got.UpdatedAt)
+			assert.Equal(t, tt.message.Subject, got.Subject)
+			assert.Equal(t, tt.message.Sender, got.Sender)
+			assert.Equal(t, tt.message.Body, got.Body)
+			assert.Equal(t, tt.message.Receiver, got.Receiver)
+			assert.Equal(t, tt.message.IsRead, got.IsRead)
 
 			err = mock.ExpectationsWereMet()
 			assert.NoError(t, err)
@@ -162,7 +167,7 @@ func TestRepository_GetMessage(t *testing.T) {
 		name    string
 		id      int
 		mockFn  func(sqlmock.Sqlmock)
-		want    *models.Message
+		want    models.Message
 		wantErr bool
 		errType error
 	}{
@@ -182,7 +187,7 @@ func TestRepository_GetMessage(t *testing.T) {
 					WithArgs(1).
 					WillReturnRows(rows)
 			},
-			want: &models.Message{
+			want: models.Message{
 				Base: models.Base{
 					ID:        1,
 					CreatedAt: null.TimeFrom(now),
@@ -205,7 +210,7 @@ func TestRepository_GetMessage(t *testing.T) {
 					WithArgs(999).
 					WillReturnError(sql.ErrNoRows)
 			},
-			want:    nil,
+			want:    models.Message{},
 			wantErr: true,
 			errType: ErrNotFound,
 		},
@@ -218,7 +223,7 @@ func TestRepository_GetMessage(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, err := repo.GetMessage(context.Background(), tt.id)
+			got, err := repo.GetMessage(tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errType != nil {
@@ -252,6 +257,16 @@ func TestRepository_UpdateMessageReadStatus(t *testing.T) {
 				mock.ExpectExec("UPDATE messages").
 					WithArgs(true, 1).
 					WillReturnResult(sqlmock.NewResult(0, 1))
+
+				// Mock the follow-up GetMessage query
+				now := time.Now()
+				mock.ExpectQuery("SELECT (.+) FROM messages WHERE id").
+					WithArgs(1).
+					WillReturnRows(
+						sqlmock.NewRows([]string{
+							"id", "inbox_id", "sender", "receiver", "subject", "body", "is_read", "created_at", "updated_at"}).
+							AddRow(1, 1, "sender@example.com", "receiver@example.com", "Test Subject", "Test Body", true, now, now),
+					)
 			},
 			wantErr: false,
 		},
@@ -260,9 +275,20 @@ func TestRepository_UpdateMessageReadStatus(t *testing.T) {
 			messageID: 1,
 			isRead:    false,
 			mockFn: func(mock sqlmock.Sqlmock) {
+				// Mock the update
 				mock.ExpectExec("UPDATE messages").
 					WithArgs(false, 1).
 					WillReturnResult(sqlmock.NewResult(0, 1))
+
+				// Mock the follow-up GetMessage query
+				now := time.Now()
+				mock.ExpectQuery("SELECT (.+) FROM messages WHERE id").
+					WithArgs(1).
+					WillReturnRows(
+						sqlmock.NewRows([]string{
+							"id", "inbox_id", "sender", "receiver", "subject", "body", "is_read", "created_at", "updated_at"}).
+							AddRow(1, 1, "sender@example.com", "receiver@example.com", "Test Subject", "Test Body", false, now, now),
+					)
 			},
 			wantErr: false,
 		},
@@ -286,11 +312,13 @@ func TestRepository_UpdateMessageReadStatus(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.UpdateMessageReadStatus(context.Background(), tt.messageID, tt.isRead)
+			got, err := repo.UpdateMessageReadStatus(tt.messageID, tt.isRead)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
+
+			assert.Equal(t, tt.isRead, got.IsRead)
 
 			assert.NoError(t, err)
 
@@ -336,7 +364,7 @@ func TestRepository_DeleteMessage(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.DeleteMessage(context.Background(), tt.messageID)
+			err := repo.DeleteMessage(tt.messageID)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -361,7 +389,7 @@ func TestRepository_ListMessagesByInboxWithFilter(t *testing.T) {
 		limit   int
 		offset  int
 		mockFn  func(sqlmock.Sqlmock)
-		want    []*models.Message
+		want    []models.Message
 		total   int
 		wantErr bool
 	}{
@@ -389,7 +417,7 @@ func TestRepository_ListMessagesByInboxWithFilter(t *testing.T) {
 					WithArgs(1, true, 10, 0).
 					WillReturnRows(rows)
 			},
-			want: []*models.Message{
+			want: []models.Message{
 				{
 					Base: models.Base{
 						ID:        1,
@@ -432,7 +460,7 @@ func TestRepository_ListMessagesByInboxWithFilter(t *testing.T) {
 					WithArgs(1, 10, 0).
 					WillReturnRows(rows)
 			},
-			want: []*models.Message{
+			want: []models.Message{
 				{
 					Base: models.Base{
 						ID:        1,
@@ -474,8 +502,19 @@ func TestRepository_ListMessagesByInboxWithFilter(t *testing.T) {
 				mock.ExpectQuery("SELECT COUNT").
 					WithArgs(2, true).
 					WillReturnRows(countRows)
+
+				// But have the actual query return an empty result set (no rows)
+				emptyRows := sqlmock.NewRows([]string{
+					"id", "inbox_id", "sender", "receiver", "subject",
+					"body", "is_read", "created_at", "updated_at",
+				}) // No AddRow calls means empty result set
+
+				mock.ExpectQuery("SELECT (.+) FROM messages").
+					WithArgs(2, true, 10, 0).
+					WillReturnRows(emptyRows)
+
 			},
-			want:    []*models.Message{},
+			want:    []models.Message{},
 			total:   0,
 			wantErr: false,
 		},
@@ -488,7 +527,7 @@ func TestRepository_ListMessagesByInboxWithFilter(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, total, err := repo.ListMessagesByInboxWithFilter(context.Background(), tt.inboxID, tt.isRead, tt.limit, tt.offset)
+			got, total, err := repo.ListMessagesByInboxWithFilter(tt.inboxID, tt.isRead, tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -513,7 +552,7 @@ func TestRepository_ListMessagesByInbox(t *testing.T) {
 		limit   int
 		offset  int
 		mockFn  func(sqlmock.Sqlmock)
-		want    []*models.Message
+		want    []models.Message
 		total   int
 		wantErr bool
 	}{
@@ -543,7 +582,7 @@ func TestRepository_ListMessagesByInbox(t *testing.T) {
 					WithArgs(1, 10, 0).
 					WillReturnRows(rows)
 			},
-			want: []*models.Message{
+			want: []models.Message{
 				{
 					Base: models.Base{
 						ID:        1,
@@ -586,9 +625,16 @@ func TestRepository_ListMessagesByInbox(t *testing.T) {
 					WithArgs(2).
 					WillReturnRows(countRows)
 
-				// No need to expect list query when count is 0
+				// Mock list query returning no rows
+				emptyRows := sqlmock.NewRows([]string{
+					"id", "inbox_id", "sender", "receiver", "subject",
+					"body", "is_read", "created_at", "updated_at",
+				})
+				mock.ExpectQuery("SELECT (.+) FROM messages").
+					WithArgs(2, 10, 0).
+					WillReturnRows(emptyRows)
 			},
-			want:    []*models.Message{},
+			want:    []models.Message{},
 			total:   0,
 			wantErr: false,
 		},
@@ -653,7 +699,7 @@ func TestRepository_ListMessagesByInbox(t *testing.T) {
 					WithArgs(1, 2, 2).
 					WillReturnRows(rows)
 			},
-			want: []*models.Message{
+			want: []models.Message{
 				{
 					Base: models.Base{
 						ID:        3,
@@ -693,7 +739,7 @@ func TestRepository_ListMessagesByInbox(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, total, err := repo.ListMessagesByInbox(context.Background(), tt.inboxID, tt.limit, tt.offset)
+			got, total, err := repo.ListMessagesByInbox(tt.inboxID, tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

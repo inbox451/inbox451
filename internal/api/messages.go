@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -26,7 +27,7 @@ func (s *Server) getMessages(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	response, err := s.core.MessageService.ListByInbox(c.Request().Context(), inboxID, query.Limit, query.Offset, query.IsRead)
+	response, err := s.core.MessageService.ListByInbox(inboxID, query.Limit, query.Offset, query.IsRead)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
@@ -36,25 +37,24 @@ func (s *Server) getMessages(c echo.Context) error {
 func (s *Server) getMessage(c echo.Context) error {
 	messageID, _ := strconv.Atoi(c.Param("messageId"))
 
-	message, err := s.core.MessageService.Get(c.Request().Context(), messageID)
+	message, err := s.core.MessageService.Get(messageID)
 	if err != nil {
-		if err == storage.ErrNotFound {
+		if errors.Is(err, storage.ErrNotFound) {
+
 			return s.core.HandleError(err, http.StatusNotFound)
 		}
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
-	if message == nil {
-		return s.core.HandleError(storage.ErrNotFound, http.StatusNotFound)
-	}
+
 	return c.JSON(http.StatusOK, message)
 }
 
 func (s *Server) markMessageRead(c echo.Context) error {
 	messageID, _ := strconv.Atoi(c.Param("messageId"))
 
-	err := s.core.MessageService.MarkAsRead(c.Request().Context(), messageID)
+	_, err := s.core.MessageService.MarkAsRead(messageID)
 	if err != nil {
-		if err == storage.ErrNotFound {
+		if errors.Is(err, storage.ErrNotFound) {
 			return s.core.HandleError(err, http.StatusNotFound)
 		}
 		return s.core.HandleError(err, http.StatusInternalServerError)
@@ -65,9 +65,9 @@ func (s *Server) markMessageRead(c echo.Context) error {
 func (s *Server) markMessageUnread(c echo.Context) error {
 	messageID, _ := strconv.Atoi(c.Param("messageId"))
 
-	err := s.core.MessageService.MarkAsUnread(c.Request().Context(), messageID)
+	_, err := s.core.MessageService.MarkAsUnread(messageID)
 	if err != nil {
-		if err == storage.ErrNotFound {
+		if errors.Is(err, storage.ErrNotFound) {
 			return s.core.HandleError(err, http.StatusNotFound)
 		}
 		return s.core.HandleError(err, http.StatusInternalServerError)
@@ -78,9 +78,9 @@ func (s *Server) markMessageUnread(c echo.Context) error {
 func (s *Server) deleteMessage(c echo.Context) error {
 	messageID, _ := strconv.Atoi(c.Param("messageId"))
 
-	err := s.core.MessageService.Delete(c.Request().Context(), messageID)
+	err := s.core.MessageService.Delete(messageID)
 	if err != nil {
-		if err == storage.ErrNotFound {
+		if errors.Is(err, storage.ErrNotFound) {
 			return s.core.HandleError(err, http.StatusNotFound)
 		}
 		return s.core.HandleError(err, http.StatusInternalServerError)

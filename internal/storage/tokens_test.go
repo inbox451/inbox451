@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"database/sql"
 	"testing"
 	"time"
@@ -64,13 +63,13 @@ func TestRepository_CreateToken(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		token   *models.Token
+		token   models.Token
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful creation",
-			token: &models.Token{
+			token: models.Token{
 				UserID:    1,
 				Token:     "test-token",
 				Name:      "Test Token",
@@ -79,6 +78,13 @@ func TestRepository_CreateToken(t *testing.T) {
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("INSERT INTO tokens").
 					WithArgs(1, "test-token", "Test Token", expiresAt).
+					WillReturnRows(
+						sqlmock.NewRows([]string{"id"}).AddRow(1),
+					)
+
+				// Then mock the SELECT query that gets the full token
+				mock.ExpectQuery("SELECT (.+) FROM tokens WHERE id").
+					WithArgs(1, 1).
 					WillReturnRows(
 						sqlmock.NewRows([]string{
 							"id", "user_id", "token", "name",
@@ -90,7 +96,7 @@ func TestRepository_CreateToken(t *testing.T) {
 		},
 		{
 			name: "database error",
-			token: &models.Token{
+			token: models.Token{
 				UserID:    1,
 				Token:     "test-token",
 				Name:      "Test Token",
@@ -112,16 +118,19 @@ func TestRepository_CreateToken(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.CreateToken(context.Background(), tt.token)
+			got, err := repo.CreateToken(tt.token)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.NotZero(t, tt.token.ID)
-			assert.NotZero(t, tt.token.CreatedAt)
-			assert.NotZero(t, tt.token.UpdatedAt)
+			assert.NotZero(t, got.ID)
+			assert.NotZero(t, got.CreatedAt)
+			assert.NotZero(t, got.UpdatedAt)
+			assert.Equal(t, tt.token.Name, got.Name)
+			assert.Equal(t, tt.token.Token, got.Token)
+			assert.Equal(t, tt.token.UserID, got.UserID)
 
 			err = mock.ExpectationsWereMet()
 			assert.NoError(t, err)
@@ -138,7 +147,7 @@ func TestRepository_GetTokenByUser(t *testing.T) {
 		tokenID int
 		userID  int
 		mockFn  func(sqlmock.Sqlmock)
-		want    *models.Token
+		want    models.Token
 		wantErr bool
 		errType error
 	}{
@@ -156,7 +165,7 @@ func TestRepository_GetTokenByUser(t *testing.T) {
 					WithArgs(1, 1).
 					WillReturnRows(rows)
 			},
-			want: &models.Token{
+			want: models.Token{
 				Base: models.Base{
 					ID:        1,
 					CreatedAt: null.TimeFrom(now),
@@ -178,7 +187,7 @@ func TestRepository_GetTokenByUser(t *testing.T) {
 					WithArgs(999, 1).
 					WillReturnError(sql.ErrNoRows)
 			},
-			want:    nil,
+			want:    models.Token{},
 			wantErr: true,
 			errType: ErrNotFound,
 		},
@@ -191,7 +200,7 @@ func TestRepository_GetTokenByUser(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, err := repo.GetTokenByUser(context.Background(), tt.tokenID, tt.userID)
+			got, err := repo.GetTokenByUser(tt.tokenID, tt.userID)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errType != nil {
@@ -245,7 +254,7 @@ func TestRepository_DeleteToken(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			err := repo.DeleteToken(context.Background(), tt.tokenID)
+			err := repo.DeleteToken(tt.tokenID)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -269,7 +278,7 @@ func TestRepository_ListTokensByUser(t *testing.T) {
 		limit   int
 		offset  int
 		mockFn  func(sqlmock.Sqlmock)
-		want    []*models.Token
+		want    []models.Token
 		total   int
 		wantErr bool
 	}{
@@ -295,7 +304,7 @@ func TestRepository_ListTokensByUser(t *testing.T) {
 					WithArgs(1, 10, 0).
 					WillReturnRows(rows)
 			},
-			want: []*models.Token{
+			want: []models.Token{
 				{
 					Base: models.Base{
 						ID:        1,
@@ -332,8 +341,18 @@ func TestRepository_ListTokensByUser(t *testing.T) {
 				mock.ExpectQuery("SELECT COUNT").
 					WithArgs(2).
 					WillReturnRows(countRows)
+
+				// Add empty result rows for the second query
+				emptyRows := sqlmock.NewRows([]string{
+					"id", "user_id", "token", "name",
+					"expires_at", "created_at", "updated_at",
+				})
+
+				mock.ExpectQuery("SELECT (.+) FROM tokens").
+					WithArgs(2, 10, 0).
+					WillReturnRows(emptyRows)
 			},
-			want:    []*models.Token{},
+			want:    []models.Token{},
 			total:   0,
 			wantErr: false,
 		},
@@ -346,7 +365,7 @@ func TestRepository_ListTokensByUser(t *testing.T) {
 
 			tt.mockFn(mock)
 
-			got, total, err := repo.ListTokensByUser(context.Background(), tt.userID, tt.limit, tt.offset)
+			got, total, err := repo.ListTokensByUser(tt.userID, tt.limit, tt.offset)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

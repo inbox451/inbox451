@@ -30,7 +30,7 @@ WHERE id = $1;
 -- name: create-project
 INSERT INTO projects (name, created_at, updated_at)
 VALUES ($1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-RETURNING id, created_at, updated_at;
+RETURNING id;
 
 -- name: update-project
 UPDATE projects
@@ -57,6 +57,12 @@ RETURNING created_at, updated_at;
 DELETE FROM project_users
 WHERE user_id = $1 AND project_id = $2;
 
+-- name: get-project-user
+SELECT user_id, project_id, role, created_at, updated_at
+FROM project_users
+WHERE project_id = $1 AND user_id = $2;
+
+
 --- ------------------------------------------
 -- Inboxes
 -- -------------------------------------------
@@ -64,7 +70,7 @@ WHERE user_id = $1 AND project_id = $2;
 -- name: create-inbox
 INSERT INTO inboxes (project_id, email, created_at, updated_at)
 VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-RETURNING id, created_at, updated_at;
+RETURNING id;
 
 -- name: get-inbox
 SELECT id, project_id, email, created_at, updated_at
@@ -146,7 +152,7 @@ SELECT COUNT(*) FROM forward_rules;
 -- name: create-message
 INSERT INTO messages (inbox_id, sender, receiver, subject, body, is_read, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-RETURNING id, created_at, updated_at;
+RETURNING id;
 
 -- name: get-message
 SELECT id, inbox_id, sender, receiver, subject, body, is_read, created_at, updated_at
@@ -254,7 +260,7 @@ WHERE id = $1 AND user_id = $2
 -- name: create-token
 INSERT INTO tokens (user_id, token, name, expires_at)
 VALUES ($1, $2, $3, $4)
-RETURNING id, user_id, token, name, expires_at, created_at, updated_at;
+RETURNING id;
 
 -- name: delete-token
 DELETE FROM tokens

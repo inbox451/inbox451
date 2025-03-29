@@ -1,8 +1,6 @@
 package core
 
 import (
-	"context"
-
 	"inbox451/internal/models"
 )
 
@@ -14,51 +12,48 @@ func NewRuleService(core *Core) RuleService {
 	return RuleService{core: core}
 }
 
-func (s *RuleService) Create(ctx context.Context, rule *models.ForwardRule) error {
+func (s *RuleService) Create(rule models.ForwardRule) (models.ForwardRule, error) {
 	s.core.Logger.Info("Creating new rule for inbox %d", rule.InboxID)
 
-	if err := s.core.Repository.CreateRule(ctx, rule); err != nil {
+	rule, err := s.core.Repository.CreateRule(rule)
+	if err != nil {
 		s.core.Logger.Error("Failed to create rule: %v", err)
-		return err
+		return rule, err
 	}
 
 	s.core.Logger.Info("Successfully created rule with ID: %d", rule.ID)
-	return nil
+	return rule, nil
 }
 
-func (s *RuleService) Get(ctx context.Context, id int) (*models.ForwardRule, error) {
+func (s *RuleService) Get(id int) (models.ForwardRule, error) {
 	s.core.Logger.Debug("Fetching rule with ID: %d", id)
 
-	rule, err := s.core.Repository.GetRule(ctx, id)
+	rule, err := s.core.Repository.GetRule(id)
 	if err != nil {
 		s.core.Logger.Error("Failed to fetch rule: %v", err)
-		return nil, err
-	}
-
-	if rule == nil {
-		s.core.Logger.Info("Rule not found with ID: %d", id)
-		return nil, ErrNotFound
+		return rule, err
 	}
 
 	return rule, nil
 }
 
-func (s *RuleService) Update(ctx context.Context, rule *models.ForwardRule) error {
+func (s *RuleService) Update(rule models.ForwardRule) (models.ForwardRule, error) {
 	s.core.Logger.Info("Updating rule with ID: %d", rule.ID)
 
-	if err := s.core.Repository.UpdateRule(ctx, rule); err != nil {
+	rule, err := s.core.Repository.UpdateRule(rule)
+	if err != nil {
 		s.core.Logger.Error("Failed to update rule: %v", err)
-		return err
+		return models.ForwardRule{}, err
 	}
 
 	s.core.Logger.Info("Successfully updated rule with ID: %d", rule.ID)
-	return nil
+	return rule, nil
 }
 
-func (s *RuleService) Delete(ctx context.Context, id int) error {
+func (s *RuleService) Delete(id int) error {
 	s.core.Logger.Info("Deleting rule with ID: %d", id)
 
-	if err := s.core.Repository.DeleteRule(ctx, id); err != nil {
+	if err := s.core.Repository.DeleteRule(id); err != nil {
 		s.core.Logger.Error("Failed to delete rule: %v", err)
 		return err
 	}
@@ -67,16 +62,16 @@ func (s *RuleService) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (s *RuleService) ListByInbox(ctx context.Context, inboxID, limit, offset int) (*models.PaginatedResponse, error) {
+func (s *RuleService) ListByInbox(inboxID, limit, offset int) (models.PaginatedResponse, error) {
 	s.core.Logger.Info("Listing rules for inbox %d with limit: %d and offset: %d", inboxID, limit, offset)
 
-	rules, total, err := s.core.Repository.ListRulesByInbox(ctx, inboxID, limit, offset)
+	rules, total, err := s.core.Repository.ListRulesByInbox(inboxID, limit, offset)
 	if err != nil {
 		s.core.Logger.Error("Failed to list rules: %v", err)
-		return nil, err
+		return models.PaginatedResponse{}, err
 	}
 
-	response := &models.PaginatedResponse{
+	response := models.PaginatedResponse{
 		Data: rules,
 	}
 	response.Pagination.Total = total

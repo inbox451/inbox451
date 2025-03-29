@@ -3,7 +3,6 @@
 package mocks
 
 import (
-	context "context"
 	models "inbox451/internal/models"
 
 	mock "github.com/stretchr/testify/mock"
@@ -22,22 +21,32 @@ func (_m *Repository) EXPECT() *Repository_Expecter {
 	return &Repository_Expecter{mock: &_m.Mock}
 }
 
-// CreateInbox provides a mock function with given fields: ctx, inbox
-func (_m *Repository) CreateInbox(ctx context.Context, inbox *models.Inbox) error {
-	ret := _m.Called(ctx, inbox)
+// CreateInbox provides a mock function with given fields: inbox
+func (_m *Repository) CreateInbox(inbox models.Inbox) (models.Inbox, error) {
+	ret := _m.Called(inbox)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateInbox")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Inbox) error); ok {
-		r0 = rf(ctx, inbox)
+	var r0 models.Inbox
+	var r1 error
+	if rf, ok := ret.Get(0).(func(models.Inbox) (models.Inbox, error)); ok {
+		return rf(inbox)
+	}
+	if rf, ok := ret.Get(0).(func(models.Inbox) models.Inbox); ok {
+		r0 = rf(inbox)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(models.Inbox)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(models.Inbox) error); ok {
+		r1 = rf(inbox)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Repository_CreateInbox_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateInbox'
@@ -46,45 +55,54 @@ type Repository_CreateInbox_Call struct {
 }
 
 // CreateInbox is a helper method to define mock.On call
-//   - ctx context.Context
-//   - inbox *models.Inbox
-func (_e *Repository_Expecter) CreateInbox(ctx interface{}, inbox interface{}) *Repository_CreateInbox_Call {
-	return &Repository_CreateInbox_Call{Call: _e.mock.On("CreateInbox", ctx, inbox)}
+//   - inbox models.Inbox
+func (_e *Repository_Expecter) CreateInbox(inbox interface{}) *Repository_CreateInbox_Call {
+	return &Repository_CreateInbox_Call{Call: _e.mock.On("CreateInbox", inbox)}
 }
 
-func (_c *Repository_CreateInbox_Call) Run(run func(ctx context.Context, inbox *models.Inbox)) *Repository_CreateInbox_Call {
+func (_c *Repository_CreateInbox_Call) Run(run func(inbox models.Inbox)) *Repository_CreateInbox_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.Inbox))
+		run(args[0].(models.Inbox))
 	})
 	return _c
 }
 
-func (_c *Repository_CreateInbox_Call) Return(_a0 error) *Repository_CreateInbox_Call {
-	_c.Call.Return(_a0)
+func (_c *Repository_CreateInbox_Call) Return(_a0 models.Inbox, _a1 error) *Repository_CreateInbox_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_CreateInbox_Call) RunAndReturn(run func(context.Context, *models.Inbox) error) *Repository_CreateInbox_Call {
+func (_c *Repository_CreateInbox_Call) RunAndReturn(run func(models.Inbox) (models.Inbox, error)) *Repository_CreateInbox_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CreateMessage provides a mock function with given fields: ctx, message
-func (_m *Repository) CreateMessage(ctx context.Context, message *models.Message) error {
-	ret := _m.Called(ctx, message)
+// CreateMessage provides a mock function with given fields: message
+func (_m *Repository) CreateMessage(message models.Message) (models.Message, error) {
+	ret := _m.Called(message)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateMessage")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Message) error); ok {
-		r0 = rf(ctx, message)
+	var r0 models.Message
+	var r1 error
+	if rf, ok := ret.Get(0).(func(models.Message) (models.Message, error)); ok {
+		return rf(message)
+	}
+	if rf, ok := ret.Get(0).(func(models.Message) models.Message); ok {
+		r0 = rf(message)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(models.Message)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(models.Message) error); ok {
+		r1 = rf(message)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Repository_CreateMessage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateMessage'
@@ -93,45 +111,54 @@ type Repository_CreateMessage_Call struct {
 }
 
 // CreateMessage is a helper method to define mock.On call
-//   - ctx context.Context
-//   - message *models.Message
-func (_e *Repository_Expecter) CreateMessage(ctx interface{}, message interface{}) *Repository_CreateMessage_Call {
-	return &Repository_CreateMessage_Call{Call: _e.mock.On("CreateMessage", ctx, message)}
+//   - message models.Message
+func (_e *Repository_Expecter) CreateMessage(message interface{}) *Repository_CreateMessage_Call {
+	return &Repository_CreateMessage_Call{Call: _e.mock.On("CreateMessage", message)}
 }
 
-func (_c *Repository_CreateMessage_Call) Run(run func(ctx context.Context, message *models.Message)) *Repository_CreateMessage_Call {
+func (_c *Repository_CreateMessage_Call) Run(run func(message models.Message)) *Repository_CreateMessage_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.Message))
+		run(args[0].(models.Message))
 	})
 	return _c
 }
 
-func (_c *Repository_CreateMessage_Call) Return(_a0 error) *Repository_CreateMessage_Call {
-	_c.Call.Return(_a0)
+func (_c *Repository_CreateMessage_Call) Return(_a0 models.Message, _a1 error) *Repository_CreateMessage_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_CreateMessage_Call) RunAndReturn(run func(context.Context, *models.Message) error) *Repository_CreateMessage_Call {
+func (_c *Repository_CreateMessage_Call) RunAndReturn(run func(models.Message) (models.Message, error)) *Repository_CreateMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CreateProject provides a mock function with given fields: ctx, project
-func (_m *Repository) CreateProject(ctx context.Context, project *models.Project) error {
-	ret := _m.Called(ctx, project)
+// CreateProject provides a mock function with given fields: project
+func (_m *Repository) CreateProject(project models.Project) (models.Project, error) {
+	ret := _m.Called(project)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateProject")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Project) error); ok {
-		r0 = rf(ctx, project)
+	var r0 models.Project
+	var r1 error
+	if rf, ok := ret.Get(0).(func(models.Project) (models.Project, error)); ok {
+		return rf(project)
+	}
+	if rf, ok := ret.Get(0).(func(models.Project) models.Project); ok {
+		r0 = rf(project)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(models.Project)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(models.Project) error); ok {
+		r1 = rf(project)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Repository_CreateProject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateProject'
@@ -140,45 +167,54 @@ type Repository_CreateProject_Call struct {
 }
 
 // CreateProject is a helper method to define mock.On call
-//   - ctx context.Context
-//   - project *models.Project
-func (_e *Repository_Expecter) CreateProject(ctx interface{}, project interface{}) *Repository_CreateProject_Call {
-	return &Repository_CreateProject_Call{Call: _e.mock.On("CreateProject", ctx, project)}
+//   - project models.Project
+func (_e *Repository_Expecter) CreateProject(project interface{}) *Repository_CreateProject_Call {
+	return &Repository_CreateProject_Call{Call: _e.mock.On("CreateProject", project)}
 }
 
-func (_c *Repository_CreateProject_Call) Run(run func(ctx context.Context, project *models.Project)) *Repository_CreateProject_Call {
+func (_c *Repository_CreateProject_Call) Run(run func(project models.Project)) *Repository_CreateProject_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.Project))
+		run(args[0].(models.Project))
 	})
 	return _c
 }
 
-func (_c *Repository_CreateProject_Call) Return(_a0 error) *Repository_CreateProject_Call {
-	_c.Call.Return(_a0)
+func (_c *Repository_CreateProject_Call) Return(_a0 models.Project, _a1 error) *Repository_CreateProject_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_CreateProject_Call) RunAndReturn(run func(context.Context, *models.Project) error) *Repository_CreateProject_Call {
+func (_c *Repository_CreateProject_Call) RunAndReturn(run func(models.Project) (models.Project, error)) *Repository_CreateProject_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CreateRule provides a mock function with given fields: ctx, rule
-func (_m *Repository) CreateRule(ctx context.Context, rule *models.ForwardRule) error {
-	ret := _m.Called(ctx, rule)
+// CreateRule provides a mock function with given fields: rule
+func (_m *Repository) CreateRule(rule models.ForwardRule) (models.ForwardRule, error) {
+	ret := _m.Called(rule)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateRule")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.ForwardRule) error); ok {
-		r0 = rf(ctx, rule)
+	var r0 models.ForwardRule
+	var r1 error
+	if rf, ok := ret.Get(0).(func(models.ForwardRule) (models.ForwardRule, error)); ok {
+		return rf(rule)
+	}
+	if rf, ok := ret.Get(0).(func(models.ForwardRule) models.ForwardRule); ok {
+		r0 = rf(rule)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(models.ForwardRule)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(models.ForwardRule) error); ok {
+		r1 = rf(rule)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Repository_CreateRule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateRule'
@@ -187,45 +223,54 @@ type Repository_CreateRule_Call struct {
 }
 
 // CreateRule is a helper method to define mock.On call
-//   - ctx context.Context
-//   - rule *models.ForwardRule
-func (_e *Repository_Expecter) CreateRule(ctx interface{}, rule interface{}) *Repository_CreateRule_Call {
-	return &Repository_CreateRule_Call{Call: _e.mock.On("CreateRule", ctx, rule)}
+//   - rule models.ForwardRule
+func (_e *Repository_Expecter) CreateRule(rule interface{}) *Repository_CreateRule_Call {
+	return &Repository_CreateRule_Call{Call: _e.mock.On("CreateRule", rule)}
 }
 
-func (_c *Repository_CreateRule_Call) Run(run func(ctx context.Context, rule *models.ForwardRule)) *Repository_CreateRule_Call {
+func (_c *Repository_CreateRule_Call) Run(run func(rule models.ForwardRule)) *Repository_CreateRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.ForwardRule))
+		run(args[0].(models.ForwardRule))
 	})
 	return _c
 }
 
-func (_c *Repository_CreateRule_Call) Return(_a0 error) *Repository_CreateRule_Call {
-	_c.Call.Return(_a0)
+func (_c *Repository_CreateRule_Call) Return(_a0 models.ForwardRule, _a1 error) *Repository_CreateRule_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_CreateRule_Call) RunAndReturn(run func(context.Context, *models.ForwardRule) error) *Repository_CreateRule_Call {
+func (_c *Repository_CreateRule_Call) RunAndReturn(run func(models.ForwardRule) (models.ForwardRule, error)) *Repository_CreateRule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CreateToken provides a mock function with given fields: ctx, token
-func (_m *Repository) CreateToken(ctx context.Context, token *models.Token) error {
-	ret := _m.Called(ctx, token)
+// CreateToken provides a mock function with given fields: token
+func (_m *Repository) CreateToken(token models.Token) (models.Token, error) {
+	ret := _m.Called(token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateToken")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Token) error); ok {
-		r0 = rf(ctx, token)
+	var r0 models.Token
+	var r1 error
+	if rf, ok := ret.Get(0).(func(models.Token) (models.Token, error)); ok {
+		return rf(token)
+	}
+	if rf, ok := ret.Get(0).(func(models.Token) models.Token); ok {
+		r0 = rf(token)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(models.Token)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(models.Token) error); ok {
+		r1 = rf(token)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Repository_CreateToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateToken'
@@ -234,45 +279,54 @@ type Repository_CreateToken_Call struct {
 }
 
 // CreateToken is a helper method to define mock.On call
-//   - ctx context.Context
-//   - token *models.Token
-func (_e *Repository_Expecter) CreateToken(ctx interface{}, token interface{}) *Repository_CreateToken_Call {
-	return &Repository_CreateToken_Call{Call: _e.mock.On("CreateToken", ctx, token)}
+//   - token models.Token
+func (_e *Repository_Expecter) CreateToken(token interface{}) *Repository_CreateToken_Call {
+	return &Repository_CreateToken_Call{Call: _e.mock.On("CreateToken", token)}
 }
 
-func (_c *Repository_CreateToken_Call) Run(run func(ctx context.Context, token *models.Token)) *Repository_CreateToken_Call {
+func (_c *Repository_CreateToken_Call) Run(run func(token models.Token)) *Repository_CreateToken_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.Token))
+		run(args[0].(models.Token))
 	})
 	return _c
 }
 
-func (_c *Repository_CreateToken_Call) Return(_a0 error) *Repository_CreateToken_Call {
-	_c.Call.Return(_a0)
+func (_c *Repository_CreateToken_Call) Return(_a0 models.Token, _a1 error) *Repository_CreateToken_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_CreateToken_Call) RunAndReturn(run func(context.Context, *models.Token) error) *Repository_CreateToken_Call {
+func (_c *Repository_CreateToken_Call) RunAndReturn(run func(models.Token) (models.Token, error)) *Repository_CreateToken_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CreateUser provides a mock function with given fields: ctx, user
-func (_m *Repository) CreateUser(ctx context.Context, user *models.User) error {
-	ret := _m.Called(ctx, user)
+// CreateUser provides a mock function with given fields: user
+func (_m *Repository) CreateUser(user models.User) (models.User, error) {
+	ret := _m.Called(user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateUser")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.User) error); ok {
-		r0 = rf(ctx, user)
+	var r0 models.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(models.User) (models.User, error)); ok {
+		return rf(user)
+	}
+	if rf, ok := ret.Get(0).(func(models.User) models.User); ok {
+		r0 = rf(user)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(models.User)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(models.User) error); ok {
+		r1 = rf(user)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Repository_CreateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateUser'
@@ -281,40 +335,39 @@ type Repository_CreateUser_Call struct {
 }
 
 // CreateUser is a helper method to define mock.On call
-//   - ctx context.Context
-//   - user *models.User
-func (_e *Repository_Expecter) CreateUser(ctx interface{}, user interface{}) *Repository_CreateUser_Call {
-	return &Repository_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, user)}
+//   - user models.User
+func (_e *Repository_Expecter) CreateUser(user interface{}) *Repository_CreateUser_Call {
+	return &Repository_CreateUser_Call{Call: _e.mock.On("CreateUser", user)}
 }
 
-func (_c *Repository_CreateUser_Call) Run(run func(ctx context.Context, user *models.User)) *Repository_CreateUser_Call {
+func (_c *Repository_CreateUser_Call) Run(run func(user models.User)) *Repository_CreateUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.User))
+		run(args[0].(models.User))
 	})
 	return _c
 }
 
-func (_c *Repository_CreateUser_Call) Return(_a0 error) *Repository_CreateUser_Call {
-	_c.Call.Return(_a0)
+func (_c *Repository_CreateUser_Call) Return(_a0 models.User, _a1 error) *Repository_CreateUser_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_CreateUser_Call) RunAndReturn(run func(context.Context, *models.User) error) *Repository_CreateUser_Call {
+func (_c *Repository_CreateUser_Call) RunAndReturn(run func(models.User) (models.User, error)) *Repository_CreateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteInbox provides a mock function with given fields: ctx, id
-func (_m *Repository) DeleteInbox(ctx context.Context, id int) error {
-	ret := _m.Called(ctx, id)
+// DeleteInbox provides a mock function with given fields: id
+func (_m *Repository) DeleteInbox(id int) error {
+	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteInbox")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) error); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(int) error); ok {
+		r0 = rf(id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -328,15 +381,14 @@ type Repository_DeleteInbox_Call struct {
 }
 
 // DeleteInbox is a helper method to define mock.On call
-//   - ctx context.Context
 //   - id int
-func (_e *Repository_Expecter) DeleteInbox(ctx interface{}, id interface{}) *Repository_DeleteInbox_Call {
-	return &Repository_DeleteInbox_Call{Call: _e.mock.On("DeleteInbox", ctx, id)}
+func (_e *Repository_Expecter) DeleteInbox(id interface{}) *Repository_DeleteInbox_Call {
+	return &Repository_DeleteInbox_Call{Call: _e.mock.On("DeleteInbox", id)}
 }
 
-func (_c *Repository_DeleteInbox_Call) Run(run func(ctx context.Context, id int)) *Repository_DeleteInbox_Call {
+func (_c *Repository_DeleteInbox_Call) Run(run func(id int)) *Repository_DeleteInbox_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
+		run(args[0].(int))
 	})
 	return _c
 }
@@ -346,22 +398,22 @@ func (_c *Repository_DeleteInbox_Call) Return(_a0 error) *Repository_DeleteInbox
 	return _c
 }
 
-func (_c *Repository_DeleteInbox_Call) RunAndReturn(run func(context.Context, int) error) *Repository_DeleteInbox_Call {
+func (_c *Repository_DeleteInbox_Call) RunAndReturn(run func(int) error) *Repository_DeleteInbox_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteMessage provides a mock function with given fields: ctx, messageID
-func (_m *Repository) DeleteMessage(ctx context.Context, messageID int) error {
-	ret := _m.Called(ctx, messageID)
+// DeleteMessage provides a mock function with given fields: messageID
+func (_m *Repository) DeleteMessage(messageID int) error {
+	ret := _m.Called(messageID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteMessage")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) error); ok {
-		r0 = rf(ctx, messageID)
+	if rf, ok := ret.Get(0).(func(int) error); ok {
+		r0 = rf(messageID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -375,15 +427,14 @@ type Repository_DeleteMessage_Call struct {
 }
 
 // DeleteMessage is a helper method to define mock.On call
-//   - ctx context.Context
 //   - messageID int
-func (_e *Repository_Expecter) DeleteMessage(ctx interface{}, messageID interface{}) *Repository_DeleteMessage_Call {
-	return &Repository_DeleteMessage_Call{Call: _e.mock.On("DeleteMessage", ctx, messageID)}
+func (_e *Repository_Expecter) DeleteMessage(messageID interface{}) *Repository_DeleteMessage_Call {
+	return &Repository_DeleteMessage_Call{Call: _e.mock.On("DeleteMessage", messageID)}
 }
 
-func (_c *Repository_DeleteMessage_Call) Run(run func(ctx context.Context, messageID int)) *Repository_DeleteMessage_Call {
+func (_c *Repository_DeleteMessage_Call) Run(run func(messageID int)) *Repository_DeleteMessage_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
+		run(args[0].(int))
 	})
 	return _c
 }
@@ -393,22 +444,22 @@ func (_c *Repository_DeleteMessage_Call) Return(_a0 error) *Repository_DeleteMes
 	return _c
 }
 
-func (_c *Repository_DeleteMessage_Call) RunAndReturn(run func(context.Context, int) error) *Repository_DeleteMessage_Call {
+func (_c *Repository_DeleteMessage_Call) RunAndReturn(run func(int) error) *Repository_DeleteMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteProject provides a mock function with given fields: ctx, id
-func (_m *Repository) DeleteProject(ctx context.Context, id int) error {
-	ret := _m.Called(ctx, id)
+// DeleteProject provides a mock function with given fields: id
+func (_m *Repository) DeleteProject(id int) error {
+	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteProject")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) error); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(int) error); ok {
+		r0 = rf(id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -422,15 +473,14 @@ type Repository_DeleteProject_Call struct {
 }
 
 // DeleteProject is a helper method to define mock.On call
-//   - ctx context.Context
 //   - id int
-func (_e *Repository_Expecter) DeleteProject(ctx interface{}, id interface{}) *Repository_DeleteProject_Call {
-	return &Repository_DeleteProject_Call{Call: _e.mock.On("DeleteProject", ctx, id)}
+func (_e *Repository_Expecter) DeleteProject(id interface{}) *Repository_DeleteProject_Call {
+	return &Repository_DeleteProject_Call{Call: _e.mock.On("DeleteProject", id)}
 }
 
-func (_c *Repository_DeleteProject_Call) Run(run func(ctx context.Context, id int)) *Repository_DeleteProject_Call {
+func (_c *Repository_DeleteProject_Call) Run(run func(id int)) *Repository_DeleteProject_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
+		run(args[0].(int))
 	})
 	return _c
 }
@@ -440,22 +490,22 @@ func (_c *Repository_DeleteProject_Call) Return(_a0 error) *Repository_DeletePro
 	return _c
 }
 
-func (_c *Repository_DeleteProject_Call) RunAndReturn(run func(context.Context, int) error) *Repository_DeleteProject_Call {
+func (_c *Repository_DeleteProject_Call) RunAndReturn(run func(int) error) *Repository_DeleteProject_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteRule provides a mock function with given fields: ctx, id
-func (_m *Repository) DeleteRule(ctx context.Context, id int) error {
-	ret := _m.Called(ctx, id)
+// DeleteRule provides a mock function with given fields: id
+func (_m *Repository) DeleteRule(id int) error {
+	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteRule")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) error); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(int) error); ok {
+		r0 = rf(id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -469,15 +519,14 @@ type Repository_DeleteRule_Call struct {
 }
 
 // DeleteRule is a helper method to define mock.On call
-//   - ctx context.Context
 //   - id int
-func (_e *Repository_Expecter) DeleteRule(ctx interface{}, id interface{}) *Repository_DeleteRule_Call {
-	return &Repository_DeleteRule_Call{Call: _e.mock.On("DeleteRule", ctx, id)}
+func (_e *Repository_Expecter) DeleteRule(id interface{}) *Repository_DeleteRule_Call {
+	return &Repository_DeleteRule_Call{Call: _e.mock.On("DeleteRule", id)}
 }
 
-func (_c *Repository_DeleteRule_Call) Run(run func(ctx context.Context, id int)) *Repository_DeleteRule_Call {
+func (_c *Repository_DeleteRule_Call) Run(run func(id int)) *Repository_DeleteRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
+		run(args[0].(int))
 	})
 	return _c
 }
@@ -487,22 +536,22 @@ func (_c *Repository_DeleteRule_Call) Return(_a0 error) *Repository_DeleteRule_C
 	return _c
 }
 
-func (_c *Repository_DeleteRule_Call) RunAndReturn(run func(context.Context, int) error) *Repository_DeleteRule_Call {
+func (_c *Repository_DeleteRule_Call) RunAndReturn(run func(int) error) *Repository_DeleteRule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteToken provides a mock function with given fields: ctx, tokenID
-func (_m *Repository) DeleteToken(ctx context.Context, tokenID int) error {
-	ret := _m.Called(ctx, tokenID)
+// DeleteToken provides a mock function with given fields: tokenID
+func (_m *Repository) DeleteToken(tokenID int) error {
+	ret := _m.Called(tokenID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteToken")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) error); ok {
-		r0 = rf(ctx, tokenID)
+	if rf, ok := ret.Get(0).(func(int) error); ok {
+		r0 = rf(tokenID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -516,15 +565,14 @@ type Repository_DeleteToken_Call struct {
 }
 
 // DeleteToken is a helper method to define mock.On call
-//   - ctx context.Context
 //   - tokenID int
-func (_e *Repository_Expecter) DeleteToken(ctx interface{}, tokenID interface{}) *Repository_DeleteToken_Call {
-	return &Repository_DeleteToken_Call{Call: _e.mock.On("DeleteToken", ctx, tokenID)}
+func (_e *Repository_Expecter) DeleteToken(tokenID interface{}) *Repository_DeleteToken_Call {
+	return &Repository_DeleteToken_Call{Call: _e.mock.On("DeleteToken", tokenID)}
 }
 
-func (_c *Repository_DeleteToken_Call) Run(run func(ctx context.Context, tokenID int)) *Repository_DeleteToken_Call {
+func (_c *Repository_DeleteToken_Call) Run(run func(tokenID int)) *Repository_DeleteToken_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
+		run(args[0].(int))
 	})
 	return _c
 }
@@ -534,22 +582,22 @@ func (_c *Repository_DeleteToken_Call) Return(_a0 error) *Repository_DeleteToken
 	return _c
 }
 
-func (_c *Repository_DeleteToken_Call) RunAndReturn(run func(context.Context, int) error) *Repository_DeleteToken_Call {
+func (_c *Repository_DeleteToken_Call) RunAndReturn(run func(int) error) *Repository_DeleteToken_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteUser provides a mock function with given fields: ctx, userId
-func (_m *Repository) DeleteUser(ctx context.Context, userId int) error {
-	ret := _m.Called(ctx, userId)
+// DeleteUser provides a mock function with given fields: userId
+func (_m *Repository) DeleteUser(userId int) error {
+	ret := _m.Called(userId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteUser")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) error); ok {
-		r0 = rf(ctx, userId)
+	if rf, ok := ret.Get(0).(func(int) error); ok {
+		r0 = rf(userId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -563,15 +611,14 @@ type Repository_DeleteUser_Call struct {
 }
 
 // DeleteUser is a helper method to define mock.On call
-//   - ctx context.Context
 //   - userId int
-func (_e *Repository_Expecter) DeleteUser(ctx interface{}, userId interface{}) *Repository_DeleteUser_Call {
-	return &Repository_DeleteUser_Call{Call: _e.mock.On("DeleteUser", ctx, userId)}
+func (_e *Repository_Expecter) DeleteUser(userId interface{}) *Repository_DeleteUser_Call {
+	return &Repository_DeleteUser_Call{Call: _e.mock.On("DeleteUser", userId)}
 }
 
-func (_c *Repository_DeleteUser_Call) Run(run func(ctx context.Context, userId int)) *Repository_DeleteUser_Call {
+func (_c *Repository_DeleteUser_Call) Run(run func(userId int)) *Repository_DeleteUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
+		run(args[0].(int))
 	})
 	return _c
 }
@@ -581,34 +628,32 @@ func (_c *Repository_DeleteUser_Call) Return(_a0 error) *Repository_DeleteUser_C
 	return _c
 }
 
-func (_c *Repository_DeleteUser_Call) RunAndReturn(run func(context.Context, int) error) *Repository_DeleteUser_Call {
+func (_c *Repository_DeleteUser_Call) RunAndReturn(run func(int) error) *Repository_DeleteUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetInbox provides a mock function with given fields: ctx, id
-func (_m *Repository) GetInbox(ctx context.Context, id int) (*models.Inbox, error) {
-	ret := _m.Called(ctx, id)
+// GetInbox provides a mock function with given fields: id
+func (_m *Repository) GetInbox(id int) (models.Inbox, error) {
+	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetInbox")
 	}
 
-	var r0 *models.Inbox
+	var r0 models.Inbox
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) (*models.Inbox, error)); ok {
-		return rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(int) (models.Inbox, error)); ok {
+		return rf(id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int) *models.Inbox); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(int) models.Inbox); ok {
+		r0 = rf(id)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Inbox)
-		}
+		r0 = ret.Get(0).(models.Inbox)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
-		r1 = rf(ctx, id)
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -622,52 +667,49 @@ type Repository_GetInbox_Call struct {
 }
 
 // GetInbox is a helper method to define mock.On call
-//   - ctx context.Context
 //   - id int
-func (_e *Repository_Expecter) GetInbox(ctx interface{}, id interface{}) *Repository_GetInbox_Call {
-	return &Repository_GetInbox_Call{Call: _e.mock.On("GetInbox", ctx, id)}
+func (_e *Repository_Expecter) GetInbox(id interface{}) *Repository_GetInbox_Call {
+	return &Repository_GetInbox_Call{Call: _e.mock.On("GetInbox", id)}
 }
 
-func (_c *Repository_GetInbox_Call) Run(run func(ctx context.Context, id int)) *Repository_GetInbox_Call {
+func (_c *Repository_GetInbox_Call) Run(run func(id int)) *Repository_GetInbox_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
+		run(args[0].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_GetInbox_Call) Return(_a0 *models.Inbox, _a1 error) *Repository_GetInbox_Call {
+func (_c *Repository_GetInbox_Call) Return(_a0 models.Inbox, _a1 error) *Repository_GetInbox_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_GetInbox_Call) RunAndReturn(run func(context.Context, int) (*models.Inbox, error)) *Repository_GetInbox_Call {
+func (_c *Repository_GetInbox_Call) RunAndReturn(run func(int) (models.Inbox, error)) *Repository_GetInbox_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetInboxByEmail provides a mock function with given fields: ctx, email
-func (_m *Repository) GetInboxByEmail(ctx context.Context, email string) (*models.Inbox, error) {
-	ret := _m.Called(ctx, email)
+// GetInboxByEmail provides a mock function with given fields: email
+func (_m *Repository) GetInboxByEmail(email string) (models.Inbox, error) {
+	ret := _m.Called(email)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetInboxByEmail")
 	}
 
-	var r0 *models.Inbox
+	var r0 models.Inbox
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.Inbox, error)); ok {
-		return rf(ctx, email)
+	if rf, ok := ret.Get(0).(func(string) (models.Inbox, error)); ok {
+		return rf(email)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *models.Inbox); ok {
-		r0 = rf(ctx, email)
+	if rf, ok := ret.Get(0).(func(string) models.Inbox); ok {
+		r0 = rf(email)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Inbox)
-		}
+		r0 = ret.Get(0).(models.Inbox)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, email)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(email)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -681,52 +723,49 @@ type Repository_GetInboxByEmail_Call struct {
 }
 
 // GetInboxByEmail is a helper method to define mock.On call
-//   - ctx context.Context
 //   - email string
-func (_e *Repository_Expecter) GetInboxByEmail(ctx interface{}, email interface{}) *Repository_GetInboxByEmail_Call {
-	return &Repository_GetInboxByEmail_Call{Call: _e.mock.On("GetInboxByEmail", ctx, email)}
+func (_e *Repository_Expecter) GetInboxByEmail(email interface{}) *Repository_GetInboxByEmail_Call {
+	return &Repository_GetInboxByEmail_Call{Call: _e.mock.On("GetInboxByEmail", email)}
 }
 
-func (_c *Repository_GetInboxByEmail_Call) Run(run func(ctx context.Context, email string)) *Repository_GetInboxByEmail_Call {
+func (_c *Repository_GetInboxByEmail_Call) Run(run func(email string)) *Repository_GetInboxByEmail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(string))
 	})
 	return _c
 }
 
-func (_c *Repository_GetInboxByEmail_Call) Return(_a0 *models.Inbox, _a1 error) *Repository_GetInboxByEmail_Call {
+func (_c *Repository_GetInboxByEmail_Call) Return(_a0 models.Inbox, _a1 error) *Repository_GetInboxByEmail_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_GetInboxByEmail_Call) RunAndReturn(run func(context.Context, string) (*models.Inbox, error)) *Repository_GetInboxByEmail_Call {
+func (_c *Repository_GetInboxByEmail_Call) RunAndReturn(run func(string) (models.Inbox, error)) *Repository_GetInboxByEmail_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetMessage provides a mock function with given fields: ctx, id
-func (_m *Repository) GetMessage(ctx context.Context, id int) (*models.Message, error) {
-	ret := _m.Called(ctx, id)
+// GetMessage provides a mock function with given fields: id
+func (_m *Repository) GetMessage(id int) (models.Message, error) {
+	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetMessage")
 	}
 
-	var r0 *models.Message
+	var r0 models.Message
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) (*models.Message, error)); ok {
-		return rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(int) (models.Message, error)); ok {
+		return rf(id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int) *models.Message); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(int) models.Message); ok {
+		r0 = rf(id)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Message)
-		}
+		r0 = ret.Get(0).(models.Message)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
-		r1 = rf(ctx, id)
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -740,52 +779,49 @@ type Repository_GetMessage_Call struct {
 }
 
 // GetMessage is a helper method to define mock.On call
-//   - ctx context.Context
 //   - id int
-func (_e *Repository_Expecter) GetMessage(ctx interface{}, id interface{}) *Repository_GetMessage_Call {
-	return &Repository_GetMessage_Call{Call: _e.mock.On("GetMessage", ctx, id)}
+func (_e *Repository_Expecter) GetMessage(id interface{}) *Repository_GetMessage_Call {
+	return &Repository_GetMessage_Call{Call: _e.mock.On("GetMessage", id)}
 }
 
-func (_c *Repository_GetMessage_Call) Run(run func(ctx context.Context, id int)) *Repository_GetMessage_Call {
+func (_c *Repository_GetMessage_Call) Run(run func(id int)) *Repository_GetMessage_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
+		run(args[0].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_GetMessage_Call) Return(_a0 *models.Message, _a1 error) *Repository_GetMessage_Call {
+func (_c *Repository_GetMessage_Call) Return(_a0 models.Message, _a1 error) *Repository_GetMessage_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_GetMessage_Call) RunAndReturn(run func(context.Context, int) (*models.Message, error)) *Repository_GetMessage_Call {
+func (_c *Repository_GetMessage_Call) RunAndReturn(run func(int) (models.Message, error)) *Repository_GetMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetProject provides a mock function with given fields: ctx, id
-func (_m *Repository) GetProject(ctx context.Context, id int) (*models.Project, error) {
-	ret := _m.Called(ctx, id)
+// GetProject provides a mock function with given fields: id
+func (_m *Repository) GetProject(id int) (models.Project, error) {
+	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProject")
 	}
 
-	var r0 *models.Project
+	var r0 models.Project
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) (*models.Project, error)); ok {
-		return rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(int) (models.Project, error)); ok {
+		return rf(id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int) *models.Project); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(int) models.Project); ok {
+		r0 = rf(id)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Project)
-		}
+		r0 = ret.Get(0).(models.Project)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
-		r1 = rf(ctx, id)
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -799,52 +835,106 @@ type Repository_GetProject_Call struct {
 }
 
 // GetProject is a helper method to define mock.On call
-//   - ctx context.Context
 //   - id int
-func (_e *Repository_Expecter) GetProject(ctx interface{}, id interface{}) *Repository_GetProject_Call {
-	return &Repository_GetProject_Call{Call: _e.mock.On("GetProject", ctx, id)}
+func (_e *Repository_Expecter) GetProject(id interface{}) *Repository_GetProject_Call {
+	return &Repository_GetProject_Call{Call: _e.mock.On("GetProject", id)}
 }
 
-func (_c *Repository_GetProject_Call) Run(run func(ctx context.Context, id int)) *Repository_GetProject_Call {
+func (_c *Repository_GetProject_Call) Run(run func(id int)) *Repository_GetProject_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
+		run(args[0].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_GetProject_Call) Return(_a0 *models.Project, _a1 error) *Repository_GetProject_Call {
+func (_c *Repository_GetProject_Call) Return(_a0 models.Project, _a1 error) *Repository_GetProject_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_GetProject_Call) RunAndReturn(run func(context.Context, int) (*models.Project, error)) *Repository_GetProject_Call {
+func (_c *Repository_GetProject_Call) RunAndReturn(run func(int) (models.Project, error)) *Repository_GetProject_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetRule provides a mock function with given fields: ctx, id
-func (_m *Repository) GetRule(ctx context.Context, id int) (*models.ForwardRule, error) {
-	ret := _m.Called(ctx, id)
+// GetProjectUser provides a mock function with given fields: projectId, userId
+func (_m *Repository) GetProjectUser(projectId int, userId int) (models.ProjectUser, error) {
+	ret := _m.Called(projectId, userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetProjectUser")
+	}
+
+	var r0 models.ProjectUser
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int, int) (models.ProjectUser, error)); ok {
+		return rf(projectId, userId)
+	}
+	if rf, ok := ret.Get(0).(func(int, int) models.ProjectUser); ok {
+		r0 = rf(projectId, userId)
+	} else {
+		r0 = ret.Get(0).(models.ProjectUser)
+	}
+
+	if rf, ok := ret.Get(1).(func(int, int) error); ok {
+		r1 = rf(projectId, userId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Repository_GetProjectUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProjectUser'
+type Repository_GetProjectUser_Call struct {
+	*mock.Call
+}
+
+// GetProjectUser is a helper method to define mock.On call
+//   - projectId int
+//   - userId int
+func (_e *Repository_Expecter) GetProjectUser(projectId interface{}, userId interface{}) *Repository_GetProjectUser_Call {
+	return &Repository_GetProjectUser_Call{Call: _e.mock.On("GetProjectUser", projectId, userId)}
+}
+
+func (_c *Repository_GetProjectUser_Call) Run(run func(projectId int, userId int)) *Repository_GetProjectUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(int), args[1].(int))
+	})
+	return _c
+}
+
+func (_c *Repository_GetProjectUser_Call) Return(_a0 models.ProjectUser, _a1 error) *Repository_GetProjectUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Repository_GetProjectUser_Call) RunAndReturn(run func(int, int) (models.ProjectUser, error)) *Repository_GetProjectUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetRule provides a mock function with given fields: id
+func (_m *Repository) GetRule(id int) (models.ForwardRule, error) {
+	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetRule")
 	}
 
-	var r0 *models.ForwardRule
+	var r0 models.ForwardRule
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) (*models.ForwardRule, error)); ok {
-		return rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(int) (models.ForwardRule, error)); ok {
+		return rf(id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int) *models.ForwardRule); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(int) models.ForwardRule); ok {
+		r0 = rf(id)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.ForwardRule)
-		}
+		r0 = ret.Get(0).(models.ForwardRule)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
-		r1 = rf(ctx, id)
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -858,52 +948,49 @@ type Repository_GetRule_Call struct {
 }
 
 // GetRule is a helper method to define mock.On call
-//   - ctx context.Context
 //   - id int
-func (_e *Repository_Expecter) GetRule(ctx interface{}, id interface{}) *Repository_GetRule_Call {
-	return &Repository_GetRule_Call{Call: _e.mock.On("GetRule", ctx, id)}
+func (_e *Repository_Expecter) GetRule(id interface{}) *Repository_GetRule_Call {
+	return &Repository_GetRule_Call{Call: _e.mock.On("GetRule", id)}
 }
 
-func (_c *Repository_GetRule_Call) Run(run func(ctx context.Context, id int)) *Repository_GetRule_Call {
+func (_c *Repository_GetRule_Call) Run(run func(id int)) *Repository_GetRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
+		run(args[0].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_GetRule_Call) Return(_a0 *models.ForwardRule, _a1 error) *Repository_GetRule_Call {
+func (_c *Repository_GetRule_Call) Return(_a0 models.ForwardRule, _a1 error) *Repository_GetRule_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_GetRule_Call) RunAndReturn(run func(context.Context, int) (*models.ForwardRule, error)) *Repository_GetRule_Call {
+func (_c *Repository_GetRule_Call) RunAndReturn(run func(int) (models.ForwardRule, error)) *Repository_GetRule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetTokenByUser provides a mock function with given fields: ctx, userID, tokenID
-func (_m *Repository) GetTokenByUser(ctx context.Context, userID int, tokenID int) (*models.Token, error) {
-	ret := _m.Called(ctx, userID, tokenID)
+// GetTokenByUser provides a mock function with given fields: userID, tokenID
+func (_m *Repository) GetTokenByUser(userID int, tokenID int) (models.Token, error) {
+	ret := _m.Called(userID, tokenID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTokenByUser")
 	}
 
-	var r0 *models.Token
+	var r0 models.Token
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) (*models.Token, error)); ok {
-		return rf(ctx, userID, tokenID)
+	if rf, ok := ret.Get(0).(func(int, int) (models.Token, error)); ok {
+		return rf(userID, tokenID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) *models.Token); ok {
-		r0 = rf(ctx, userID, tokenID)
+	if rf, ok := ret.Get(0).(func(int, int) models.Token); ok {
+		r0 = rf(userID, tokenID)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Token)
-		}
+		r0 = ret.Get(0).(models.Token)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, int) error); ok {
-		r1 = rf(ctx, userID, tokenID)
+	if rf, ok := ret.Get(1).(func(int, int) error); ok {
+		r1 = rf(userID, tokenID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -917,53 +1004,50 @@ type Repository_GetTokenByUser_Call struct {
 }
 
 // GetTokenByUser is a helper method to define mock.On call
-//   - ctx context.Context
 //   - userID int
 //   - tokenID int
-func (_e *Repository_Expecter) GetTokenByUser(ctx interface{}, userID interface{}, tokenID interface{}) *Repository_GetTokenByUser_Call {
-	return &Repository_GetTokenByUser_Call{Call: _e.mock.On("GetTokenByUser", ctx, userID, tokenID)}
+func (_e *Repository_Expecter) GetTokenByUser(userID interface{}, tokenID interface{}) *Repository_GetTokenByUser_Call {
+	return &Repository_GetTokenByUser_Call{Call: _e.mock.On("GetTokenByUser", userID, tokenID)}
 }
 
-func (_c *Repository_GetTokenByUser_Call) Run(run func(ctx context.Context, userID int, tokenID int)) *Repository_GetTokenByUser_Call {
+func (_c *Repository_GetTokenByUser_Call) Run(run func(userID int, tokenID int)) *Repository_GetTokenByUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(int))
+		run(args[0].(int), args[1].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_GetTokenByUser_Call) Return(_a0 *models.Token, _a1 error) *Repository_GetTokenByUser_Call {
+func (_c *Repository_GetTokenByUser_Call) Return(_a0 models.Token, _a1 error) *Repository_GetTokenByUser_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_GetTokenByUser_Call) RunAndReturn(run func(context.Context, int, int) (*models.Token, error)) *Repository_GetTokenByUser_Call {
+func (_c *Repository_GetTokenByUser_Call) RunAndReturn(run func(int, int) (models.Token, error)) *Repository_GetTokenByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetUser provides a mock function with given fields: ctx, id
-func (_m *Repository) GetUser(ctx context.Context, id int) (*models.User, error) {
-	ret := _m.Called(ctx, id)
+// GetUser provides a mock function with given fields: id
+func (_m *Repository) GetUser(id int) (models.User, error) {
+	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUser")
 	}
 
-	var r0 *models.User
+	var r0 models.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) (*models.User, error)); ok {
-		return rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(int) (models.User, error)); ok {
+		return rf(id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int) *models.User); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(int) models.User); ok {
+		r0 = rf(id)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.User)
-		}
+		r0 = ret.Get(0).(models.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
-		r1 = rf(ctx, id)
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -977,52 +1061,49 @@ type Repository_GetUser_Call struct {
 }
 
 // GetUser is a helper method to define mock.On call
-//   - ctx context.Context
 //   - id int
-func (_e *Repository_Expecter) GetUser(ctx interface{}, id interface{}) *Repository_GetUser_Call {
-	return &Repository_GetUser_Call{Call: _e.mock.On("GetUser", ctx, id)}
+func (_e *Repository_Expecter) GetUser(id interface{}) *Repository_GetUser_Call {
+	return &Repository_GetUser_Call{Call: _e.mock.On("GetUser", id)}
 }
 
-func (_c *Repository_GetUser_Call) Run(run func(ctx context.Context, id int)) *Repository_GetUser_Call {
+func (_c *Repository_GetUser_Call) Run(run func(id int)) *Repository_GetUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
+		run(args[0].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_GetUser_Call) Return(_a0 *models.User, _a1 error) *Repository_GetUser_Call {
+func (_c *Repository_GetUser_Call) Return(_a0 models.User, _a1 error) *Repository_GetUser_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_GetUser_Call) RunAndReturn(run func(context.Context, int) (*models.User, error)) *Repository_GetUser_Call {
+func (_c *Repository_GetUser_Call) RunAndReturn(run func(int) (models.User, error)) *Repository_GetUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetUserByUsername provides a mock function with given fields: ctx, username
-func (_m *Repository) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
-	ret := _m.Called(ctx, username)
+// GetUserByUsername provides a mock function with given fields: username
+func (_m *Repository) GetUserByUsername(username string) (models.User, error) {
+	ret := _m.Called(username)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUserByUsername")
 	}
 
-	var r0 *models.User
+	var r0 models.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.User, error)); ok {
-		return rf(ctx, username)
+	if rf, ok := ret.Get(0).(func(string) (models.User, error)); ok {
+		return rf(username)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *models.User); ok {
-		r0 = rf(ctx, username)
+	if rf, ok := ret.Get(0).(func(string) models.User); ok {
+		r0 = rf(username)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.User)
-		}
+		r0 = ret.Get(0).(models.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, username)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(username)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1036,59 +1117,58 @@ type Repository_GetUserByUsername_Call struct {
 }
 
 // GetUserByUsername is a helper method to define mock.On call
-//   - ctx context.Context
 //   - username string
-func (_e *Repository_Expecter) GetUserByUsername(ctx interface{}, username interface{}) *Repository_GetUserByUsername_Call {
-	return &Repository_GetUserByUsername_Call{Call: _e.mock.On("GetUserByUsername", ctx, username)}
+func (_e *Repository_Expecter) GetUserByUsername(username interface{}) *Repository_GetUserByUsername_Call {
+	return &Repository_GetUserByUsername_Call{Call: _e.mock.On("GetUserByUsername", username)}
 }
 
-func (_c *Repository_GetUserByUsername_Call) Run(run func(ctx context.Context, username string)) *Repository_GetUserByUsername_Call {
+func (_c *Repository_GetUserByUsername_Call) Run(run func(username string)) *Repository_GetUserByUsername_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(string))
 	})
 	return _c
 }
 
-func (_c *Repository_GetUserByUsername_Call) Return(_a0 *models.User, _a1 error) *Repository_GetUserByUsername_Call {
+func (_c *Repository_GetUserByUsername_Call) Return(_a0 models.User, _a1 error) *Repository_GetUserByUsername_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_GetUserByUsername_Call) RunAndReturn(run func(context.Context, string) (*models.User, error)) *Repository_GetUserByUsername_Call {
+func (_c *Repository_GetUserByUsername_Call) RunAndReturn(run func(string) (models.User, error)) *Repository_GetUserByUsername_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListInboxesByProject provides a mock function with given fields: ctx, projectID, limit, offset
-func (_m *Repository) ListInboxesByProject(ctx context.Context, projectID int, limit int, offset int) ([]*models.Inbox, int, error) {
-	ret := _m.Called(ctx, projectID, limit, offset)
+// ListInboxesByProject provides a mock function with given fields: projectID, limit, offset
+func (_m *Repository) ListInboxesByProject(projectID int, limit int, offset int) ([]models.Inbox, int, error) {
+	ret := _m.Called(projectID, limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListInboxesByProject")
 	}
 
-	var r0 []*models.Inbox
+	var r0 []models.Inbox
 	var r1 int
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, int) ([]*models.Inbox, int, error)); ok {
-		return rf(ctx, projectID, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int, int) ([]models.Inbox, int, error)); ok {
+		return rf(projectID, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, int) []*models.Inbox); ok {
-		r0 = rf(ctx, projectID, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int, int) []models.Inbox); ok {
+		r0 = rf(projectID, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.Inbox)
+			r0 = ret.Get(0).([]models.Inbox)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, int, int) int); ok {
-		r1 = rf(ctx, projectID, limit, offset)
+	if rf, ok := ret.Get(1).(func(int, int, int) int); ok {
+		r1 = rf(projectID, limit, offset)
 	} else {
 		r1 = ret.Get(1).(int)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, int, int, int) error); ok {
-		r2 = rf(ctx, projectID, limit, offset)
+	if rf, ok := ret.Get(2).(func(int, int, int) error); ok {
+		r2 = rf(projectID, limit, offset)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -1102,61 +1182,60 @@ type Repository_ListInboxesByProject_Call struct {
 }
 
 // ListInboxesByProject is a helper method to define mock.On call
-//   - ctx context.Context
 //   - projectID int
 //   - limit int
 //   - offset int
-func (_e *Repository_Expecter) ListInboxesByProject(ctx interface{}, projectID interface{}, limit interface{}, offset interface{}) *Repository_ListInboxesByProject_Call {
-	return &Repository_ListInboxesByProject_Call{Call: _e.mock.On("ListInboxesByProject", ctx, projectID, limit, offset)}
+func (_e *Repository_Expecter) ListInboxesByProject(projectID interface{}, limit interface{}, offset interface{}) *Repository_ListInboxesByProject_Call {
+	return &Repository_ListInboxesByProject_Call{Call: _e.mock.On("ListInboxesByProject", projectID, limit, offset)}
 }
 
-func (_c *Repository_ListInboxesByProject_Call) Run(run func(ctx context.Context, projectID int, limit int, offset int)) *Repository_ListInboxesByProject_Call {
+func (_c *Repository_ListInboxesByProject_Call) Run(run func(projectID int, limit int, offset int)) *Repository_ListInboxesByProject_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(int), args[3].(int))
+		run(args[0].(int), args[1].(int), args[2].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_ListInboxesByProject_Call) Return(_a0 []*models.Inbox, _a1 int, _a2 error) *Repository_ListInboxesByProject_Call {
+func (_c *Repository_ListInboxesByProject_Call) Return(_a0 []models.Inbox, _a1 int, _a2 error) *Repository_ListInboxesByProject_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *Repository_ListInboxesByProject_Call) RunAndReturn(run func(context.Context, int, int, int) ([]*models.Inbox, int, error)) *Repository_ListInboxesByProject_Call {
+func (_c *Repository_ListInboxesByProject_Call) RunAndReturn(run func(int, int, int) ([]models.Inbox, int, error)) *Repository_ListInboxesByProject_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListMessagesByInbox provides a mock function with given fields: ctx, inboxID, limit, offset
-func (_m *Repository) ListMessagesByInbox(ctx context.Context, inboxID int, limit int, offset int) ([]*models.Message, int, error) {
-	ret := _m.Called(ctx, inboxID, limit, offset)
+// ListMessagesByInbox provides a mock function with given fields: inboxID, limit, offset
+func (_m *Repository) ListMessagesByInbox(inboxID int, limit int, offset int) ([]models.Message, int, error) {
+	ret := _m.Called(inboxID, limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListMessagesByInbox")
 	}
 
-	var r0 []*models.Message
+	var r0 []models.Message
 	var r1 int
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, int) ([]*models.Message, int, error)); ok {
-		return rf(ctx, inboxID, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int, int) ([]models.Message, int, error)); ok {
+		return rf(inboxID, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, int) []*models.Message); ok {
-		r0 = rf(ctx, inboxID, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int, int) []models.Message); ok {
+		r0 = rf(inboxID, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.Message)
+			r0 = ret.Get(0).([]models.Message)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, int, int) int); ok {
-		r1 = rf(ctx, inboxID, limit, offset)
+	if rf, ok := ret.Get(1).(func(int, int, int) int); ok {
+		r1 = rf(inboxID, limit, offset)
 	} else {
 		r1 = ret.Get(1).(int)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, int, int, int) error); ok {
-		r2 = rf(ctx, inboxID, limit, offset)
+	if rf, ok := ret.Get(2).(func(int, int, int) error); ok {
+		r2 = rf(inboxID, limit, offset)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -1170,61 +1249,60 @@ type Repository_ListMessagesByInbox_Call struct {
 }
 
 // ListMessagesByInbox is a helper method to define mock.On call
-//   - ctx context.Context
 //   - inboxID int
 //   - limit int
 //   - offset int
-func (_e *Repository_Expecter) ListMessagesByInbox(ctx interface{}, inboxID interface{}, limit interface{}, offset interface{}) *Repository_ListMessagesByInbox_Call {
-	return &Repository_ListMessagesByInbox_Call{Call: _e.mock.On("ListMessagesByInbox", ctx, inboxID, limit, offset)}
+func (_e *Repository_Expecter) ListMessagesByInbox(inboxID interface{}, limit interface{}, offset interface{}) *Repository_ListMessagesByInbox_Call {
+	return &Repository_ListMessagesByInbox_Call{Call: _e.mock.On("ListMessagesByInbox", inboxID, limit, offset)}
 }
 
-func (_c *Repository_ListMessagesByInbox_Call) Run(run func(ctx context.Context, inboxID int, limit int, offset int)) *Repository_ListMessagesByInbox_Call {
+func (_c *Repository_ListMessagesByInbox_Call) Run(run func(inboxID int, limit int, offset int)) *Repository_ListMessagesByInbox_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(int), args[3].(int))
+		run(args[0].(int), args[1].(int), args[2].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_ListMessagesByInbox_Call) Return(_a0 []*models.Message, _a1 int, _a2 error) *Repository_ListMessagesByInbox_Call {
+func (_c *Repository_ListMessagesByInbox_Call) Return(_a0 []models.Message, _a1 int, _a2 error) *Repository_ListMessagesByInbox_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *Repository_ListMessagesByInbox_Call) RunAndReturn(run func(context.Context, int, int, int) ([]*models.Message, int, error)) *Repository_ListMessagesByInbox_Call {
+func (_c *Repository_ListMessagesByInbox_Call) RunAndReturn(run func(int, int, int) ([]models.Message, int, error)) *Repository_ListMessagesByInbox_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListMessagesByInboxWithFilter provides a mock function with given fields: ctx, inboxID, isRead, limit, offset
-func (_m *Repository) ListMessagesByInboxWithFilter(ctx context.Context, inboxID int, isRead *bool, limit int, offset int) ([]*models.Message, int, error) {
-	ret := _m.Called(ctx, inboxID, isRead, limit, offset)
+// ListMessagesByInboxWithFilter provides a mock function with given fields: inboxID, isRead, limit, offset
+func (_m *Repository) ListMessagesByInboxWithFilter(inboxID int, isRead *bool, limit int, offset int) ([]models.Message, int, error) {
+	ret := _m.Called(inboxID, isRead, limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListMessagesByInboxWithFilter")
 	}
 
-	var r0 []*models.Message
+	var r0 []models.Message
 	var r1 int
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, *bool, int, int) ([]*models.Message, int, error)); ok {
-		return rf(ctx, inboxID, isRead, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, *bool, int, int) ([]models.Message, int, error)); ok {
+		return rf(inboxID, isRead, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, *bool, int, int) []*models.Message); ok {
-		r0 = rf(ctx, inboxID, isRead, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, *bool, int, int) []models.Message); ok {
+		r0 = rf(inboxID, isRead, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.Message)
+			r0 = ret.Get(0).([]models.Message)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, *bool, int, int) int); ok {
-		r1 = rf(ctx, inboxID, isRead, limit, offset)
+	if rf, ok := ret.Get(1).(func(int, *bool, int, int) int); ok {
+		r1 = rf(inboxID, isRead, limit, offset)
 	} else {
 		r1 = ret.Get(1).(int)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, int, *bool, int, int) error); ok {
-		r2 = rf(ctx, inboxID, isRead, limit, offset)
+	if rf, ok := ret.Get(2).(func(int, *bool, int, int) error); ok {
+		r2 = rf(inboxID, isRead, limit, offset)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -1238,62 +1316,61 @@ type Repository_ListMessagesByInboxWithFilter_Call struct {
 }
 
 // ListMessagesByInboxWithFilter is a helper method to define mock.On call
-//   - ctx context.Context
 //   - inboxID int
 //   - isRead *bool
 //   - limit int
 //   - offset int
-func (_e *Repository_Expecter) ListMessagesByInboxWithFilter(ctx interface{}, inboxID interface{}, isRead interface{}, limit interface{}, offset interface{}) *Repository_ListMessagesByInboxWithFilter_Call {
-	return &Repository_ListMessagesByInboxWithFilter_Call{Call: _e.mock.On("ListMessagesByInboxWithFilter", ctx, inboxID, isRead, limit, offset)}
+func (_e *Repository_Expecter) ListMessagesByInboxWithFilter(inboxID interface{}, isRead interface{}, limit interface{}, offset interface{}) *Repository_ListMessagesByInboxWithFilter_Call {
+	return &Repository_ListMessagesByInboxWithFilter_Call{Call: _e.mock.On("ListMessagesByInboxWithFilter", inboxID, isRead, limit, offset)}
 }
 
-func (_c *Repository_ListMessagesByInboxWithFilter_Call) Run(run func(ctx context.Context, inboxID int, isRead *bool, limit int, offset int)) *Repository_ListMessagesByInboxWithFilter_Call {
+func (_c *Repository_ListMessagesByInboxWithFilter_Call) Run(run func(inboxID int, isRead *bool, limit int, offset int)) *Repository_ListMessagesByInboxWithFilter_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(*bool), args[3].(int), args[4].(int))
+		run(args[0].(int), args[1].(*bool), args[2].(int), args[3].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_ListMessagesByInboxWithFilter_Call) Return(_a0 []*models.Message, _a1 int, _a2 error) *Repository_ListMessagesByInboxWithFilter_Call {
+func (_c *Repository_ListMessagesByInboxWithFilter_Call) Return(_a0 []models.Message, _a1 int, _a2 error) *Repository_ListMessagesByInboxWithFilter_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *Repository_ListMessagesByInboxWithFilter_Call) RunAndReturn(run func(context.Context, int, *bool, int, int) ([]*models.Message, int, error)) *Repository_ListMessagesByInboxWithFilter_Call {
+func (_c *Repository_ListMessagesByInboxWithFilter_Call) RunAndReturn(run func(int, *bool, int, int) ([]models.Message, int, error)) *Repository_ListMessagesByInboxWithFilter_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListProjects provides a mock function with given fields: ctx, limit, offset
-func (_m *Repository) ListProjects(ctx context.Context, limit int, offset int) ([]*models.Project, int, error) {
-	ret := _m.Called(ctx, limit, offset)
+// ListProjects provides a mock function with given fields: limit, offset
+func (_m *Repository) ListProjects(limit int, offset int) ([]models.Project, int, error) {
+	ret := _m.Called(limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListProjects")
 	}
 
-	var r0 []*models.Project
+	var r0 []models.Project
 	var r1 int
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) ([]*models.Project, int, error)); ok {
-		return rf(ctx, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int) ([]models.Project, int, error)); ok {
+		return rf(limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) []*models.Project); ok {
-		r0 = rf(ctx, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int) []models.Project); ok {
+		r0 = rf(limit, offset)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.Project)
+			r0 = ret.Get(0).([]models.Project)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, int) int); ok {
-		r1 = rf(ctx, limit, offset)
+	if rf, ok := ret.Get(1).(func(int, int) int); ok {
+		r1 = rf(limit, offset)
 	} else {
 		r1 = ret.Get(1).(int)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, int, int) error); ok {
-		r2 = rf(ctx, limit, offset)
+	if rf, ok := ret.Get(2).(func(int, int) error); ok {
+		r2 = rf(limit, offset)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -1307,60 +1384,59 @@ type Repository_ListProjects_Call struct {
 }
 
 // ListProjects is a helper method to define mock.On call
-//   - ctx context.Context
 //   - limit int
 //   - offset int
-func (_e *Repository_Expecter) ListProjects(ctx interface{}, limit interface{}, offset interface{}) *Repository_ListProjects_Call {
-	return &Repository_ListProjects_Call{Call: _e.mock.On("ListProjects", ctx, limit, offset)}
+func (_e *Repository_Expecter) ListProjects(limit interface{}, offset interface{}) *Repository_ListProjects_Call {
+	return &Repository_ListProjects_Call{Call: _e.mock.On("ListProjects", limit, offset)}
 }
 
-func (_c *Repository_ListProjects_Call) Run(run func(ctx context.Context, limit int, offset int)) *Repository_ListProjects_Call {
+func (_c *Repository_ListProjects_Call) Run(run func(limit int, offset int)) *Repository_ListProjects_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(int))
+		run(args[0].(int), args[1].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_ListProjects_Call) Return(_a0 []*models.Project, _a1 int, _a2 error) *Repository_ListProjects_Call {
+func (_c *Repository_ListProjects_Call) Return(_a0 []models.Project, _a1 int, _a2 error) *Repository_ListProjects_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *Repository_ListProjects_Call) RunAndReturn(run func(context.Context, int, int) ([]*models.Project, int, error)) *Repository_ListProjects_Call {
+func (_c *Repository_ListProjects_Call) RunAndReturn(run func(int, int) ([]models.Project, int, error)) *Repository_ListProjects_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListProjectsByUser provides a mock function with given fields: ctx, userID, limit, offset
-func (_m *Repository) ListProjectsByUser(ctx context.Context, userID int, limit int, offset int) ([]*models.Project, int, error) {
-	ret := _m.Called(ctx, userID, limit, offset)
+// ListProjectsByUser provides a mock function with given fields: userID, limit, offset
+func (_m *Repository) ListProjectsByUser(userID int, limit int, offset int) ([]models.Project, int, error) {
+	ret := _m.Called(userID, limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListProjectsByUser")
 	}
 
-	var r0 []*models.Project
+	var r0 []models.Project
 	var r1 int
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, int) ([]*models.Project, int, error)); ok {
-		return rf(ctx, userID, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int, int) ([]models.Project, int, error)); ok {
+		return rf(userID, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, int) []*models.Project); ok {
-		r0 = rf(ctx, userID, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int, int) []models.Project); ok {
+		r0 = rf(userID, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.Project)
+			r0 = ret.Get(0).([]models.Project)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, int, int) int); ok {
-		r1 = rf(ctx, userID, limit, offset)
+	if rf, ok := ret.Get(1).(func(int, int, int) int); ok {
+		r1 = rf(userID, limit, offset)
 	} else {
 		r1 = ret.Get(1).(int)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, int, int, int) error); ok {
-		r2 = rf(ctx, userID, limit, offset)
+	if rf, ok := ret.Get(2).(func(int, int, int) error); ok {
+		r2 = rf(userID, limit, offset)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -1374,61 +1450,60 @@ type Repository_ListProjectsByUser_Call struct {
 }
 
 // ListProjectsByUser is a helper method to define mock.On call
-//   - ctx context.Context
 //   - userID int
 //   - limit int
 //   - offset int
-func (_e *Repository_Expecter) ListProjectsByUser(ctx interface{}, userID interface{}, limit interface{}, offset interface{}) *Repository_ListProjectsByUser_Call {
-	return &Repository_ListProjectsByUser_Call{Call: _e.mock.On("ListProjectsByUser", ctx, userID, limit, offset)}
+func (_e *Repository_Expecter) ListProjectsByUser(userID interface{}, limit interface{}, offset interface{}) *Repository_ListProjectsByUser_Call {
+	return &Repository_ListProjectsByUser_Call{Call: _e.mock.On("ListProjectsByUser", userID, limit, offset)}
 }
 
-func (_c *Repository_ListProjectsByUser_Call) Run(run func(ctx context.Context, userID int, limit int, offset int)) *Repository_ListProjectsByUser_Call {
+func (_c *Repository_ListProjectsByUser_Call) Run(run func(userID int, limit int, offset int)) *Repository_ListProjectsByUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(int), args[3].(int))
+		run(args[0].(int), args[1].(int), args[2].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_ListProjectsByUser_Call) Return(_a0 []*models.Project, _a1 int, _a2 error) *Repository_ListProjectsByUser_Call {
+func (_c *Repository_ListProjectsByUser_Call) Return(_a0 []models.Project, _a1 int, _a2 error) *Repository_ListProjectsByUser_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *Repository_ListProjectsByUser_Call) RunAndReturn(run func(context.Context, int, int, int) ([]*models.Project, int, error)) *Repository_ListProjectsByUser_Call {
+func (_c *Repository_ListProjectsByUser_Call) RunAndReturn(run func(int, int, int) ([]models.Project, int, error)) *Repository_ListProjectsByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListRules provides a mock function with given fields: ctx, limit, offset
-func (_m *Repository) ListRules(ctx context.Context, limit int, offset int) ([]*models.ForwardRule, int, error) {
-	ret := _m.Called(ctx, limit, offset)
+// ListRules provides a mock function with given fields: limit, offset
+func (_m *Repository) ListRules(limit int, offset int) ([]models.ForwardRule, int, error) {
+	ret := _m.Called(limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListRules")
 	}
 
-	var r0 []*models.ForwardRule
+	var r0 []models.ForwardRule
 	var r1 int
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) ([]*models.ForwardRule, int, error)); ok {
-		return rf(ctx, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int) ([]models.ForwardRule, int, error)); ok {
+		return rf(limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) []*models.ForwardRule); ok {
-		r0 = rf(ctx, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int) []models.ForwardRule); ok {
+		r0 = rf(limit, offset)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.ForwardRule)
+			r0 = ret.Get(0).([]models.ForwardRule)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, int) int); ok {
-		r1 = rf(ctx, limit, offset)
+	if rf, ok := ret.Get(1).(func(int, int) int); ok {
+		r1 = rf(limit, offset)
 	} else {
 		r1 = ret.Get(1).(int)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, int, int) error); ok {
-		r2 = rf(ctx, limit, offset)
+	if rf, ok := ret.Get(2).(func(int, int) error); ok {
+		r2 = rf(limit, offset)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -1442,60 +1517,59 @@ type Repository_ListRules_Call struct {
 }
 
 // ListRules is a helper method to define mock.On call
-//   - ctx context.Context
 //   - limit int
 //   - offset int
-func (_e *Repository_Expecter) ListRules(ctx interface{}, limit interface{}, offset interface{}) *Repository_ListRules_Call {
-	return &Repository_ListRules_Call{Call: _e.mock.On("ListRules", ctx, limit, offset)}
+func (_e *Repository_Expecter) ListRules(limit interface{}, offset interface{}) *Repository_ListRules_Call {
+	return &Repository_ListRules_Call{Call: _e.mock.On("ListRules", limit, offset)}
 }
 
-func (_c *Repository_ListRules_Call) Run(run func(ctx context.Context, limit int, offset int)) *Repository_ListRules_Call {
+func (_c *Repository_ListRules_Call) Run(run func(limit int, offset int)) *Repository_ListRules_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(int))
+		run(args[0].(int), args[1].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_ListRules_Call) Return(_a0 []*models.ForwardRule, _a1 int, _a2 error) *Repository_ListRules_Call {
+func (_c *Repository_ListRules_Call) Return(_a0 []models.ForwardRule, _a1 int, _a2 error) *Repository_ListRules_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *Repository_ListRules_Call) RunAndReturn(run func(context.Context, int, int) ([]*models.ForwardRule, int, error)) *Repository_ListRules_Call {
+func (_c *Repository_ListRules_Call) RunAndReturn(run func(int, int) ([]models.ForwardRule, int, error)) *Repository_ListRules_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListRulesByInbox provides a mock function with given fields: ctx, inboxID, limit, offset
-func (_m *Repository) ListRulesByInbox(ctx context.Context, inboxID int, limit int, offset int) ([]*models.ForwardRule, int, error) {
-	ret := _m.Called(ctx, inboxID, limit, offset)
+// ListRulesByInbox provides a mock function with given fields: inboxID, limit, offset
+func (_m *Repository) ListRulesByInbox(inboxID int, limit int, offset int) ([]models.ForwardRule, int, error) {
+	ret := _m.Called(inboxID, limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListRulesByInbox")
 	}
 
-	var r0 []*models.ForwardRule
+	var r0 []models.ForwardRule
 	var r1 int
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, int) ([]*models.ForwardRule, int, error)); ok {
-		return rf(ctx, inboxID, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int, int) ([]models.ForwardRule, int, error)); ok {
+		return rf(inboxID, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, int) []*models.ForwardRule); ok {
-		r0 = rf(ctx, inboxID, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int, int) []models.ForwardRule); ok {
+		r0 = rf(inboxID, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.ForwardRule)
+			r0 = ret.Get(0).([]models.ForwardRule)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, int, int) int); ok {
-		r1 = rf(ctx, inboxID, limit, offset)
+	if rf, ok := ret.Get(1).(func(int, int, int) int); ok {
+		r1 = rf(inboxID, limit, offset)
 	} else {
 		r1 = ret.Get(1).(int)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, int, int, int) error); ok {
-		r2 = rf(ctx, inboxID, limit, offset)
+	if rf, ok := ret.Get(2).(func(int, int, int) error); ok {
+		r2 = rf(inboxID, limit, offset)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -1509,61 +1583,60 @@ type Repository_ListRulesByInbox_Call struct {
 }
 
 // ListRulesByInbox is a helper method to define mock.On call
-//   - ctx context.Context
 //   - inboxID int
 //   - limit int
 //   - offset int
-func (_e *Repository_Expecter) ListRulesByInbox(ctx interface{}, inboxID interface{}, limit interface{}, offset interface{}) *Repository_ListRulesByInbox_Call {
-	return &Repository_ListRulesByInbox_Call{Call: _e.mock.On("ListRulesByInbox", ctx, inboxID, limit, offset)}
+func (_e *Repository_Expecter) ListRulesByInbox(inboxID interface{}, limit interface{}, offset interface{}) *Repository_ListRulesByInbox_Call {
+	return &Repository_ListRulesByInbox_Call{Call: _e.mock.On("ListRulesByInbox", inboxID, limit, offset)}
 }
 
-func (_c *Repository_ListRulesByInbox_Call) Run(run func(ctx context.Context, inboxID int, limit int, offset int)) *Repository_ListRulesByInbox_Call {
+func (_c *Repository_ListRulesByInbox_Call) Run(run func(inboxID int, limit int, offset int)) *Repository_ListRulesByInbox_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(int), args[3].(int))
+		run(args[0].(int), args[1].(int), args[2].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_ListRulesByInbox_Call) Return(_a0 []*models.ForwardRule, _a1 int, _a2 error) *Repository_ListRulesByInbox_Call {
+func (_c *Repository_ListRulesByInbox_Call) Return(_a0 []models.ForwardRule, _a1 int, _a2 error) *Repository_ListRulesByInbox_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *Repository_ListRulesByInbox_Call) RunAndReturn(run func(context.Context, int, int, int) ([]*models.ForwardRule, int, error)) *Repository_ListRulesByInbox_Call {
+func (_c *Repository_ListRulesByInbox_Call) RunAndReturn(run func(int, int, int) ([]models.ForwardRule, int, error)) *Repository_ListRulesByInbox_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListTokensByUser provides a mock function with given fields: ctx, userID, limit, offset
-func (_m *Repository) ListTokensByUser(ctx context.Context, userID int, limit int, offset int) ([]*models.Token, int, error) {
-	ret := _m.Called(ctx, userID, limit, offset)
+// ListTokensByUser provides a mock function with given fields: userID, limit, offset
+func (_m *Repository) ListTokensByUser(userID int, limit int, offset int) ([]models.Token, int, error) {
+	ret := _m.Called(userID, limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListTokensByUser")
 	}
 
-	var r0 []*models.Token
+	var r0 []models.Token
 	var r1 int
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, int) ([]*models.Token, int, error)); ok {
-		return rf(ctx, userID, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int, int) ([]models.Token, int, error)); ok {
+		return rf(userID, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int, int) []*models.Token); ok {
-		r0 = rf(ctx, userID, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int, int) []models.Token); ok {
+		r0 = rf(userID, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.Token)
+			r0 = ret.Get(0).([]models.Token)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, int, int) int); ok {
-		r1 = rf(ctx, userID, limit, offset)
+	if rf, ok := ret.Get(1).(func(int, int, int) int); ok {
+		r1 = rf(userID, limit, offset)
 	} else {
 		r1 = ret.Get(1).(int)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, int, int, int) error); ok {
-		r2 = rf(ctx, userID, limit, offset)
+	if rf, ok := ret.Get(2).(func(int, int, int) error); ok {
+		r2 = rf(userID, limit, offset)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -1577,61 +1650,60 @@ type Repository_ListTokensByUser_Call struct {
 }
 
 // ListTokensByUser is a helper method to define mock.On call
-//   - ctx context.Context
 //   - userID int
 //   - limit int
 //   - offset int
-func (_e *Repository_Expecter) ListTokensByUser(ctx interface{}, userID interface{}, limit interface{}, offset interface{}) *Repository_ListTokensByUser_Call {
-	return &Repository_ListTokensByUser_Call{Call: _e.mock.On("ListTokensByUser", ctx, userID, limit, offset)}
+func (_e *Repository_Expecter) ListTokensByUser(userID interface{}, limit interface{}, offset interface{}) *Repository_ListTokensByUser_Call {
+	return &Repository_ListTokensByUser_Call{Call: _e.mock.On("ListTokensByUser", userID, limit, offset)}
 }
 
-func (_c *Repository_ListTokensByUser_Call) Run(run func(ctx context.Context, userID int, limit int, offset int)) *Repository_ListTokensByUser_Call {
+func (_c *Repository_ListTokensByUser_Call) Run(run func(userID int, limit int, offset int)) *Repository_ListTokensByUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(int), args[3].(int))
+		run(args[0].(int), args[1].(int), args[2].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_ListTokensByUser_Call) Return(_a0 []*models.Token, _a1 int, _a2 error) *Repository_ListTokensByUser_Call {
+func (_c *Repository_ListTokensByUser_Call) Return(_a0 []models.Token, _a1 int, _a2 error) *Repository_ListTokensByUser_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *Repository_ListTokensByUser_Call) RunAndReturn(run func(context.Context, int, int, int) ([]*models.Token, int, error)) *Repository_ListTokensByUser_Call {
+func (_c *Repository_ListTokensByUser_Call) RunAndReturn(run func(int, int, int) ([]models.Token, int, error)) *Repository_ListTokensByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListUsers provides a mock function with given fields: ctx, limit, offset
-func (_m *Repository) ListUsers(ctx context.Context, limit int, offset int) ([]*models.User, int, error) {
-	ret := _m.Called(ctx, limit, offset)
+// ListUsers provides a mock function with given fields: limit, offset
+func (_m *Repository) ListUsers(limit int, offset int) ([]models.User, int, error) {
+	ret := _m.Called(limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListUsers")
 	}
 
-	var r0 []*models.User
+	var r0 []models.User
 	var r1 int
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) ([]*models.User, int, error)); ok {
-		return rf(ctx, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int) ([]models.User, int, error)); ok {
+		return rf(limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) []*models.User); ok {
-		r0 = rf(ctx, limit, offset)
+	if rf, ok := ret.Get(0).(func(int, int) []models.User); ok {
+		r0 = rf(limit, offset)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.User)
+			r0 = ret.Get(0).([]models.User)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, int) int); ok {
-		r1 = rf(ctx, limit, offset)
+	if rf, ok := ret.Get(1).(func(int, int) int); ok {
+		r1 = rf(limit, offset)
 	} else {
 		r1 = ret.Get(1).(int)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, int, int) error); ok {
-		r2 = rf(ctx, limit, offset)
+	if rf, ok := ret.Get(2).(func(int, int) error); ok {
+		r2 = rf(limit, offset)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -1645,46 +1717,55 @@ type Repository_ListUsers_Call struct {
 }
 
 // ListUsers is a helper method to define mock.On call
-//   - ctx context.Context
 //   - limit int
 //   - offset int
-func (_e *Repository_Expecter) ListUsers(ctx interface{}, limit interface{}, offset interface{}) *Repository_ListUsers_Call {
-	return &Repository_ListUsers_Call{Call: _e.mock.On("ListUsers", ctx, limit, offset)}
+func (_e *Repository_Expecter) ListUsers(limit interface{}, offset interface{}) *Repository_ListUsers_Call {
+	return &Repository_ListUsers_Call{Call: _e.mock.On("ListUsers", limit, offset)}
 }
 
-func (_c *Repository_ListUsers_Call) Run(run func(ctx context.Context, limit int, offset int)) *Repository_ListUsers_Call {
+func (_c *Repository_ListUsers_Call) Run(run func(limit int, offset int)) *Repository_ListUsers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(int))
+		run(args[0].(int), args[1].(int))
 	})
 	return _c
 }
 
-func (_c *Repository_ListUsers_Call) Return(_a0 []*models.User, _a1 int, _a2 error) *Repository_ListUsers_Call {
+func (_c *Repository_ListUsers_Call) Return(_a0 []models.User, _a1 int, _a2 error) *Repository_ListUsers_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *Repository_ListUsers_Call) RunAndReturn(run func(context.Context, int, int) ([]*models.User, int, error)) *Repository_ListUsers_Call {
+func (_c *Repository_ListUsers_Call) RunAndReturn(run func(int, int) ([]models.User, int, error)) *Repository_ListUsers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ProjectAddUser provides a mock function with given fields: ctx, projectUser
-func (_m *Repository) ProjectAddUser(ctx context.Context, projectUser *models.ProjectUser) error {
-	ret := _m.Called(ctx, projectUser)
+// ProjectAddUser provides a mock function with given fields: projectUser
+func (_m *Repository) ProjectAddUser(projectUser models.ProjectUser) (models.ProjectUser, error) {
+	ret := _m.Called(projectUser)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ProjectAddUser")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.ProjectUser) error); ok {
-		r0 = rf(ctx, projectUser)
+	var r0 models.ProjectUser
+	var r1 error
+	if rf, ok := ret.Get(0).(func(models.ProjectUser) (models.ProjectUser, error)); ok {
+		return rf(projectUser)
+	}
+	if rf, ok := ret.Get(0).(func(models.ProjectUser) models.ProjectUser); ok {
+		r0 = rf(projectUser)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(models.ProjectUser)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(models.ProjectUser) error); ok {
+		r1 = rf(projectUser)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Repository_ProjectAddUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ProjectAddUser'
@@ -1693,40 +1774,39 @@ type Repository_ProjectAddUser_Call struct {
 }
 
 // ProjectAddUser is a helper method to define mock.On call
-//   - ctx context.Context
-//   - projectUser *models.ProjectUser
-func (_e *Repository_Expecter) ProjectAddUser(ctx interface{}, projectUser interface{}) *Repository_ProjectAddUser_Call {
-	return &Repository_ProjectAddUser_Call{Call: _e.mock.On("ProjectAddUser", ctx, projectUser)}
+//   - projectUser models.ProjectUser
+func (_e *Repository_Expecter) ProjectAddUser(projectUser interface{}) *Repository_ProjectAddUser_Call {
+	return &Repository_ProjectAddUser_Call{Call: _e.mock.On("ProjectAddUser", projectUser)}
 }
 
-func (_c *Repository_ProjectAddUser_Call) Run(run func(ctx context.Context, projectUser *models.ProjectUser)) *Repository_ProjectAddUser_Call {
+func (_c *Repository_ProjectAddUser_Call) Run(run func(projectUser models.ProjectUser)) *Repository_ProjectAddUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.ProjectUser))
+		run(args[0].(models.ProjectUser))
 	})
 	return _c
 }
 
-func (_c *Repository_ProjectAddUser_Call) Return(_a0 error) *Repository_ProjectAddUser_Call {
-	_c.Call.Return(_a0)
+func (_c *Repository_ProjectAddUser_Call) Return(_a0 models.ProjectUser, _a1 error) *Repository_ProjectAddUser_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_ProjectAddUser_Call) RunAndReturn(run func(context.Context, *models.ProjectUser) error) *Repository_ProjectAddUser_Call {
+func (_c *Repository_ProjectAddUser_Call) RunAndReturn(run func(models.ProjectUser) (models.ProjectUser, error)) *Repository_ProjectAddUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ProjectRemoveUser provides a mock function with given fields: ctx, projectID, userID
-func (_m *Repository) ProjectRemoveUser(ctx context.Context, projectID int, userID int) error {
-	ret := _m.Called(ctx, projectID, userID)
+// ProjectRemoveUser provides a mock function with given fields: projectID, userID
+func (_m *Repository) ProjectRemoveUser(projectID int, userID int) error {
+	ret := _m.Called(projectID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ProjectRemoveUser")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) error); ok {
-		r0 = rf(ctx, projectID, userID)
+	if rf, ok := ret.Get(0).(func(int, int) error); ok {
+		r0 = rf(projectID, userID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1740,16 +1820,15 @@ type Repository_ProjectRemoveUser_Call struct {
 }
 
 // ProjectRemoveUser is a helper method to define mock.On call
-//   - ctx context.Context
 //   - projectID int
 //   - userID int
-func (_e *Repository_Expecter) ProjectRemoveUser(ctx interface{}, projectID interface{}, userID interface{}) *Repository_ProjectRemoveUser_Call {
-	return &Repository_ProjectRemoveUser_Call{Call: _e.mock.On("ProjectRemoveUser", ctx, projectID, userID)}
+func (_e *Repository_Expecter) ProjectRemoveUser(projectID interface{}, userID interface{}) *Repository_ProjectRemoveUser_Call {
+	return &Repository_ProjectRemoveUser_Call{Call: _e.mock.On("ProjectRemoveUser", projectID, userID)}
 }
 
-func (_c *Repository_ProjectRemoveUser_Call) Run(run func(ctx context.Context, projectID int, userID int)) *Repository_ProjectRemoveUser_Call {
+func (_c *Repository_ProjectRemoveUser_Call) Run(run func(projectID int, userID int)) *Repository_ProjectRemoveUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(int))
+		run(args[0].(int), args[1].(int))
 	})
 	return _c
 }
@@ -1759,27 +1838,37 @@ func (_c *Repository_ProjectRemoveUser_Call) Return(_a0 error) *Repository_Proje
 	return _c
 }
 
-func (_c *Repository_ProjectRemoveUser_Call) RunAndReturn(run func(context.Context, int, int) error) *Repository_ProjectRemoveUser_Call {
+func (_c *Repository_ProjectRemoveUser_Call) RunAndReturn(run func(int, int) error) *Repository_ProjectRemoveUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateInbox provides a mock function with given fields: ctx, inbox
-func (_m *Repository) UpdateInbox(ctx context.Context, inbox *models.Inbox) error {
-	ret := _m.Called(ctx, inbox)
+// UpdateInbox provides a mock function with given fields: inbox
+func (_m *Repository) UpdateInbox(inbox models.Inbox) (models.Inbox, error) {
+	ret := _m.Called(inbox)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateInbox")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Inbox) error); ok {
-		r0 = rf(ctx, inbox)
+	var r0 models.Inbox
+	var r1 error
+	if rf, ok := ret.Get(0).(func(models.Inbox) (models.Inbox, error)); ok {
+		return rf(inbox)
+	}
+	if rf, ok := ret.Get(0).(func(models.Inbox) models.Inbox); ok {
+		r0 = rf(inbox)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(models.Inbox)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(models.Inbox) error); ok {
+		r1 = rf(inbox)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Repository_UpdateInbox_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateInbox'
@@ -1788,45 +1877,54 @@ type Repository_UpdateInbox_Call struct {
 }
 
 // UpdateInbox is a helper method to define mock.On call
-//   - ctx context.Context
-//   - inbox *models.Inbox
-func (_e *Repository_Expecter) UpdateInbox(ctx interface{}, inbox interface{}) *Repository_UpdateInbox_Call {
-	return &Repository_UpdateInbox_Call{Call: _e.mock.On("UpdateInbox", ctx, inbox)}
+//   - inbox models.Inbox
+func (_e *Repository_Expecter) UpdateInbox(inbox interface{}) *Repository_UpdateInbox_Call {
+	return &Repository_UpdateInbox_Call{Call: _e.mock.On("UpdateInbox", inbox)}
 }
 
-func (_c *Repository_UpdateInbox_Call) Run(run func(ctx context.Context, inbox *models.Inbox)) *Repository_UpdateInbox_Call {
+func (_c *Repository_UpdateInbox_Call) Run(run func(inbox models.Inbox)) *Repository_UpdateInbox_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.Inbox))
+		run(args[0].(models.Inbox))
 	})
 	return _c
 }
 
-func (_c *Repository_UpdateInbox_Call) Return(_a0 error) *Repository_UpdateInbox_Call {
-	_c.Call.Return(_a0)
+func (_c *Repository_UpdateInbox_Call) Return(_a0 models.Inbox, _a1 error) *Repository_UpdateInbox_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_UpdateInbox_Call) RunAndReturn(run func(context.Context, *models.Inbox) error) *Repository_UpdateInbox_Call {
+func (_c *Repository_UpdateInbox_Call) RunAndReturn(run func(models.Inbox) (models.Inbox, error)) *Repository_UpdateInbox_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateMessageReadStatus provides a mock function with given fields: ctx, messageID, isRead
-func (_m *Repository) UpdateMessageReadStatus(ctx context.Context, messageID int, isRead bool) error {
-	ret := _m.Called(ctx, messageID, isRead)
+// UpdateMessageReadStatus provides a mock function with given fields: messageID, isRead
+func (_m *Repository) UpdateMessageReadStatus(messageID int, isRead bool) (models.Message, error) {
+	ret := _m.Called(messageID, isRead)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateMessageReadStatus")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, bool) error); ok {
-		r0 = rf(ctx, messageID, isRead)
+	var r0 models.Message
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int, bool) (models.Message, error)); ok {
+		return rf(messageID, isRead)
+	}
+	if rf, ok := ret.Get(0).(func(int, bool) models.Message); ok {
+		r0 = rf(messageID, isRead)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(models.Message)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(int, bool) error); ok {
+		r1 = rf(messageID, isRead)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Repository_UpdateMessageReadStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateMessageReadStatus'
@@ -1835,46 +1933,55 @@ type Repository_UpdateMessageReadStatus_Call struct {
 }
 
 // UpdateMessageReadStatus is a helper method to define mock.On call
-//   - ctx context.Context
 //   - messageID int
 //   - isRead bool
-func (_e *Repository_Expecter) UpdateMessageReadStatus(ctx interface{}, messageID interface{}, isRead interface{}) *Repository_UpdateMessageReadStatus_Call {
-	return &Repository_UpdateMessageReadStatus_Call{Call: _e.mock.On("UpdateMessageReadStatus", ctx, messageID, isRead)}
+func (_e *Repository_Expecter) UpdateMessageReadStatus(messageID interface{}, isRead interface{}) *Repository_UpdateMessageReadStatus_Call {
+	return &Repository_UpdateMessageReadStatus_Call{Call: _e.mock.On("UpdateMessageReadStatus", messageID, isRead)}
 }
 
-func (_c *Repository_UpdateMessageReadStatus_Call) Run(run func(ctx context.Context, messageID int, isRead bool)) *Repository_UpdateMessageReadStatus_Call {
+func (_c *Repository_UpdateMessageReadStatus_Call) Run(run func(messageID int, isRead bool)) *Repository_UpdateMessageReadStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(bool))
+		run(args[0].(int), args[1].(bool))
 	})
 	return _c
 }
 
-func (_c *Repository_UpdateMessageReadStatus_Call) Return(_a0 error) *Repository_UpdateMessageReadStatus_Call {
-	_c.Call.Return(_a0)
+func (_c *Repository_UpdateMessageReadStatus_Call) Return(_a0 models.Message, _a1 error) *Repository_UpdateMessageReadStatus_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_UpdateMessageReadStatus_Call) RunAndReturn(run func(context.Context, int, bool) error) *Repository_UpdateMessageReadStatus_Call {
+func (_c *Repository_UpdateMessageReadStatus_Call) RunAndReturn(run func(int, bool) (models.Message, error)) *Repository_UpdateMessageReadStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateProject provides a mock function with given fields: ctx, project
-func (_m *Repository) UpdateProject(ctx context.Context, project *models.Project) error {
-	ret := _m.Called(ctx, project)
+// UpdateProject provides a mock function with given fields: project
+func (_m *Repository) UpdateProject(project models.Project) (models.Project, error) {
+	ret := _m.Called(project)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateProject")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Project) error); ok {
-		r0 = rf(ctx, project)
+	var r0 models.Project
+	var r1 error
+	if rf, ok := ret.Get(0).(func(models.Project) (models.Project, error)); ok {
+		return rf(project)
+	}
+	if rf, ok := ret.Get(0).(func(models.Project) models.Project); ok {
+		r0 = rf(project)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(models.Project)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(models.Project) error); ok {
+		r1 = rf(project)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Repository_UpdateProject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateProject'
@@ -1883,45 +1990,54 @@ type Repository_UpdateProject_Call struct {
 }
 
 // UpdateProject is a helper method to define mock.On call
-//   - ctx context.Context
-//   - project *models.Project
-func (_e *Repository_Expecter) UpdateProject(ctx interface{}, project interface{}) *Repository_UpdateProject_Call {
-	return &Repository_UpdateProject_Call{Call: _e.mock.On("UpdateProject", ctx, project)}
+//   - project models.Project
+func (_e *Repository_Expecter) UpdateProject(project interface{}) *Repository_UpdateProject_Call {
+	return &Repository_UpdateProject_Call{Call: _e.mock.On("UpdateProject", project)}
 }
 
-func (_c *Repository_UpdateProject_Call) Run(run func(ctx context.Context, project *models.Project)) *Repository_UpdateProject_Call {
+func (_c *Repository_UpdateProject_Call) Run(run func(project models.Project)) *Repository_UpdateProject_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.Project))
+		run(args[0].(models.Project))
 	})
 	return _c
 }
 
-func (_c *Repository_UpdateProject_Call) Return(_a0 error) *Repository_UpdateProject_Call {
-	_c.Call.Return(_a0)
+func (_c *Repository_UpdateProject_Call) Return(_a0 models.Project, _a1 error) *Repository_UpdateProject_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_UpdateProject_Call) RunAndReturn(run func(context.Context, *models.Project) error) *Repository_UpdateProject_Call {
+func (_c *Repository_UpdateProject_Call) RunAndReturn(run func(models.Project) (models.Project, error)) *Repository_UpdateProject_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateRule provides a mock function with given fields: ctx, rule
-func (_m *Repository) UpdateRule(ctx context.Context, rule *models.ForwardRule) error {
-	ret := _m.Called(ctx, rule)
+// UpdateRule provides a mock function with given fields: rule
+func (_m *Repository) UpdateRule(rule models.ForwardRule) (models.ForwardRule, error) {
+	ret := _m.Called(rule)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateRule")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.ForwardRule) error); ok {
-		r0 = rf(ctx, rule)
+	var r0 models.ForwardRule
+	var r1 error
+	if rf, ok := ret.Get(0).(func(models.ForwardRule) (models.ForwardRule, error)); ok {
+		return rf(rule)
+	}
+	if rf, ok := ret.Get(0).(func(models.ForwardRule) models.ForwardRule); ok {
+		r0 = rf(rule)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(models.ForwardRule)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(models.ForwardRule) error); ok {
+		r1 = rf(rule)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Repository_UpdateRule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateRule'
@@ -1930,45 +2046,54 @@ type Repository_UpdateRule_Call struct {
 }
 
 // UpdateRule is a helper method to define mock.On call
-//   - ctx context.Context
-//   - rule *models.ForwardRule
-func (_e *Repository_Expecter) UpdateRule(ctx interface{}, rule interface{}) *Repository_UpdateRule_Call {
-	return &Repository_UpdateRule_Call{Call: _e.mock.On("UpdateRule", ctx, rule)}
+//   - rule models.ForwardRule
+func (_e *Repository_Expecter) UpdateRule(rule interface{}) *Repository_UpdateRule_Call {
+	return &Repository_UpdateRule_Call{Call: _e.mock.On("UpdateRule", rule)}
 }
 
-func (_c *Repository_UpdateRule_Call) Run(run func(ctx context.Context, rule *models.ForwardRule)) *Repository_UpdateRule_Call {
+func (_c *Repository_UpdateRule_Call) Run(run func(rule models.ForwardRule)) *Repository_UpdateRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.ForwardRule))
+		run(args[0].(models.ForwardRule))
 	})
 	return _c
 }
 
-func (_c *Repository_UpdateRule_Call) Return(_a0 error) *Repository_UpdateRule_Call {
-	_c.Call.Return(_a0)
+func (_c *Repository_UpdateRule_Call) Return(_a0 models.ForwardRule, _a1 error) *Repository_UpdateRule_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_UpdateRule_Call) RunAndReturn(run func(context.Context, *models.ForwardRule) error) *Repository_UpdateRule_Call {
+func (_c *Repository_UpdateRule_Call) RunAndReturn(run func(models.ForwardRule) (models.ForwardRule, error)) *Repository_UpdateRule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateUser provides a mock function with given fields: ctx, user
-func (_m *Repository) UpdateUser(ctx context.Context, user *models.User) error {
-	ret := _m.Called(ctx, user)
+// UpdateUser provides a mock function with given fields: user
+func (_m *Repository) UpdateUser(user models.User) (models.User, error) {
+	ret := _m.Called(user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUser")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.User) error); ok {
-		r0 = rf(ctx, user)
+	var r0 models.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(models.User) (models.User, error)); ok {
+		return rf(user)
+	}
+	if rf, ok := ret.Get(0).(func(models.User) models.User); ok {
+		r0 = rf(user)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(models.User)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(models.User) error); ok {
+		r1 = rf(user)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Repository_UpdateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUser'
@@ -1977,25 +2102,24 @@ type Repository_UpdateUser_Call struct {
 }
 
 // UpdateUser is a helper method to define mock.On call
-//   - ctx context.Context
-//   - user *models.User
-func (_e *Repository_Expecter) UpdateUser(ctx interface{}, user interface{}) *Repository_UpdateUser_Call {
-	return &Repository_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, user)}
+//   - user models.User
+func (_e *Repository_Expecter) UpdateUser(user interface{}) *Repository_UpdateUser_Call {
+	return &Repository_UpdateUser_Call{Call: _e.mock.On("UpdateUser", user)}
 }
 
-func (_c *Repository_UpdateUser_Call) Run(run func(ctx context.Context, user *models.User)) *Repository_UpdateUser_Call {
+func (_c *Repository_UpdateUser_Call) Run(run func(user models.User)) *Repository_UpdateUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.User))
+		run(args[0].(models.User))
 	})
 	return _c
 }
 
-func (_c *Repository_UpdateUser_Call) Return(_a0 error) *Repository_UpdateUser_Call {
-	_c.Call.Return(_a0)
+func (_c *Repository_UpdateUser_Call) Return(_a0 models.User, _a1 error) *Repository_UpdateUser_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_UpdateUser_Call) RunAndReturn(run func(context.Context, *models.User) error) *Repository_UpdateUser_Call {
+func (_c *Repository_UpdateUser_Call) RunAndReturn(run func(models.User) (models.User, error)) *Repository_UpdateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

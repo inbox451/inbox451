@@ -1,7 +1,6 @@
 package core
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -57,7 +56,6 @@ func NewCore(cfg *config.Config, db *sqlx.DB, version, commit, date string) (*Co
 	return core, nil
 }
 
-func (c *Core) StoreMessage(message *models.Message) error {
-	ctx := context.Background()
-	return c.MessageService.Store(ctx, message)
+func (c *Core) StoreMessage(message models.Message) (models.Message, error) {
+	return c.MessageService.Store(message)
 }

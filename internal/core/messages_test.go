@@ -1,7 +1,6 @@
 package core
 
 import (
-	"context"
 	"errors"
 	"io"
 	"testing"
@@ -31,15 +30,16 @@ func setupMessageTestCore(t *testing.T) (*Core, *mocks.Repository) {
 }
 
 func TestMessageService_Store(t *testing.T) {
+	now := time.Now()
 	tests := []struct {
 		name    string
-		message *models.Message
+		message models.Message
 		mockFn  func(*mocks.Repository)
 		wantErr bool
 	}{
 		{
 			name: "successful store",
-			message: &models.Message{
+			message: models.Message{
 				InboxID:  1,
 				Sender:   "sender@example.com",
 				Receiver: "inbox@example.com",
@@ -47,14 +47,25 @@ func TestMessageService_Store(t *testing.T) {
 				Body:     "Test Body",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("CreateMessage", mock.Anything, mock.AnythingOfType("*models.Message")).
-					Return(nil)
+				m.On("CreateMessage", mock.AnythingOfType("models.Message")).
+					Return(models.Message{
+						Base: models.Base{
+							ID:        1,
+							CreatedAt: null.TimeFrom(now),
+							UpdatedAt: null.TimeFrom(now),
+						},
+						InboxID:  1,
+						Sender:   "sender@example.com",
+						Receiver: "inbox@example.com",
+						Subject:  "Test Subject",
+						Body:     "Test Body",
+					}, nil)
 			},
 			wantErr: false,
 		},
 		{
 			name: "repository error",
-			message: &models.Message{
+			message: models.Message{
 				InboxID:  1,
 				Sender:   "sender@example.com",
 				Receiver: "inbox@example.com",
@@ -62,8 +73,8 @@ func TestMessageService_Store(t *testing.T) {
 				Body:     "Test Body",
 			},
 			mockFn: func(m *mocks.Repository) {
-				m.On("CreateMessage", mock.Anything, mock.AnythingOfType("*models.Message")).
-					Return(errors.New("database error"))
+				m.On("CreateMessage", mock.AnythingOfType("models.Message")).
+					Return(models.Message{}, errors.New("database error"))
 			},
 			wantErr: true,
 		},
@@ -74,7 +85,7 @@ func TestMessageService_Store(t *testing.T) {
 			core, mockRepo := setupMessageTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.MessageService.Store(context.Background(), tt.message)
+			_, err := core.MessageService.Store(tt.message)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -92,7 +103,7 @@ func TestMessageService_Get(t *testing.T) {
 		name    string
 		id      int
 		mockFn  func(*mocks.Repository)
-		want    *models.Message
+		want    models.Message
 		wantErr bool
 		errType error
 	}{
@@ -100,7 +111,7 @@ func TestMessageService_Get(t *testing.T) {
 			name: "existing message",
 			id:   1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetMessage", mock.Anything, 1).Return(&models.Message{
+				m.On("GetMessage", 1).Return(models.Message{
 					Base: models.Base{
 						ID:        1,
 						CreatedAt: null.TimeFrom(now),
@@ -113,7 +124,7 @@ func TestMessageService_Get(t *testing.T) {
 					Body:     "Test Body",
 				}, nil)
 			},
-			want: &models.Message{
+			want: models.Message{
 				Base: models.Base{
 					ID:        1,
 					CreatedAt: null.TimeFrom(now),
@@ -131,9 +142,9 @@ func TestMessageService_Get(t *testing.T) {
 			name: "non-existent message",
 			id:   999,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetMessage", mock.Anything, 999).Return(nil, storage.ErrNotFound)
+				m.On("GetMessage", 999).Return(models.Message{}, storage.ErrNotFound)
 			},
-			want:    nil,
+			want:    models.Message{},
 			wantErr: true,
 			errType: storage.ErrNotFound,
 		},
@@ -144,7 +155,7 @@ func TestMessageService_Get(t *testing.T) {
 			core, mockRepo := setupMessageTestCore(t)
 			tt.mockFn(mockRepo)
 
-			got, err := core.MessageService.Get(context.Background(), tt.id)
+			got, err := core.MessageService.Get(tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errType != nil {
@@ -169,7 +180,7 @@ func TestMessageService_ListByInbox(t *testing.T) {
 		offset  int
 		isRead  *bool
 		mockFn  func(*mocks.Repository)
-		want    *models.PaginatedResponse
+		want    models.PaginatedResponse
 		wantErr bool
 	}{
 		{
@@ -179,7 +190,7 @@ func TestMessageService_ListByInbox(t *testing.T) {
 			offset:  0,
 			isRead:  &isRead,
 			mockFn: func(m *mocks.Repository) {
-				messages := []*models.Message{
+				messages := []models.Message{
 					{
 						Base:     models.Base{ID: 1},
 						InboxID:  1,
@@ -190,11 +201,11 @@ func TestMessageService_ListByInbox(t *testing.T) {
 						IsRead:   true,
 					},
 				}
-				m.On("ListMessagesByInboxWithFilter", mock.Anything, 1, &isRead, 10, 0).
+				m.On("ListMessagesByInboxWithFilter", 1, &isRead, 10, 0).
 					Return(messages, 1, nil)
 			},
-			want: &models.PaginatedResponse{
-				Data: []*models.Message{
+			want: models.PaginatedResponse{
+				Data: []models.Message{
 					{
 						Base:     models.Base{ID: 1},
 						InboxID:  1,
@@ -220,7 +231,7 @@ func TestMessageService_ListByInbox(t *testing.T) {
 			offset:  0,
 			isRead:  nil,
 			mockFn: func(m *mocks.Repository) {
-				messages := []*models.Message{
+				messages := []models.Message{
 					{
 						Base:     models.Base{ID: 1},
 						InboxID:  1,
@@ -240,11 +251,11 @@ func TestMessageService_ListByInbox(t *testing.T) {
 						IsRead:   false,
 					},
 				}
-				m.On("ListMessagesByInboxWithFilter", mock.Anything, 1, (*bool)(nil), 10, 0).
+				m.On("ListMessagesByInboxWithFilter", 1, (*bool)(nil), 10, 0).
 					Return(messages, 2, nil)
 			},
-			want: &models.PaginatedResponse{
-				Data: []*models.Message{
+			want: models.PaginatedResponse{
+				Data: []models.Message{
 					{
 						Base:     models.Base{ID: 1},
 						InboxID:  1,
@@ -279,10 +290,10 @@ func TestMessageService_ListByInbox(t *testing.T) {
 			offset:  0,
 			isRead:  nil,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListMessagesByInboxWithFilter", mock.Anything, 1, (*bool)(nil), 10, 0).
-					Return([]*models.Message(nil), 0, errors.New("database error"))
+				m.On("ListMessagesByInboxWithFilter", 1, (*bool)(nil), 10, 0).
+					Return(nil, 0, errors.New("database error"))
 			},
-			want:    nil,
+			want:    models.PaginatedResponse{},
 			wantErr: true,
 		},
 	}
@@ -292,7 +303,7 @@ func TestMessageService_ListByInbox(t *testing.T) {
 			core, mockRepo := setupMessageTestCore(t)
 			tt.mockFn(mockRepo)
 
-			got, err := core.MessageService.ListByInbox(context.Background(), tt.inboxID, tt.limit, tt.offset, tt.isRead)
+			got, err := core.MessageService.ListByInbox(tt.inboxID, tt.limit, tt.offset, tt.isRead)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -316,7 +327,16 @@ func TestMessageService_MarkAsRead(t *testing.T) {
 			name:      "successful mark as read",
 			messageID: 1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageReadStatus", mock.Anything, 1, true).Return(nil)
+				m.On("UpdateMessageReadStatus", 1, true).Return(
+					models.Message{
+						Base:     models.Base{ID: 1},
+						InboxID:  1,
+						Sender:   "sender1@example.com",
+						Receiver: "inbox@example.com",
+						Subject:  "Subject 1",
+						Body:     "Body 1",
+						IsRead:   true,
+					}, nil)
 			},
 			wantErr: false,
 		},
@@ -324,7 +344,7 @@ func TestMessageService_MarkAsRead(t *testing.T) {
 			name:      "non-existent message",
 			messageID: 999,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageReadStatus", mock.Anything, 999, true).Return(storage.ErrNotFound)
+				m.On("UpdateMessageReadStatus", 999, true).Return(models.Message{}, storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -335,7 +355,7 @@ func TestMessageService_MarkAsRead(t *testing.T) {
 			core, mockRepo := setupMessageTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.MessageService.MarkAsRead(context.Background(), tt.messageID)
+			_, err := core.MessageService.MarkAsRead(tt.messageID)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -358,7 +378,15 @@ func TestMessageService_MarkAsUnread(t *testing.T) {
 			name:      "successful mark as unread",
 			messageID: 1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageReadStatus", mock.Anything, 1, false).Return(nil)
+				m.On("UpdateMessageReadStatus", 1, false).Return(models.Message{
+					Base:     models.Base{ID: 1},
+					InboxID:  1,
+					Sender:   "sender1@example.com",
+					Receiver: "inbox@example.com",
+					Subject:  "Subject 1",
+					Body:     "Body 1",
+					IsRead:   false,
+				}, nil)
 			},
 			wantErr: false,
 		},
@@ -366,7 +394,7 @@ func TestMessageService_MarkAsUnread(t *testing.T) {
 			name:      "non-existent message",
 			messageID: 999,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageReadStatus", mock.Anything, 999, false).Return(storage.ErrNotFound)
+				m.On("UpdateMessageReadStatus", 999, false).Return(models.Message{}, storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -377,7 +405,7 @@ func TestMessageService_MarkAsUnread(t *testing.T) {
 			core, mockRepo := setupMessageTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.MessageService.MarkAsUnread(context.Background(), tt.messageID)
+			_, err := core.MessageService.MarkAsUnread(tt.messageID)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -400,7 +428,7 @@ func TestMessageService_Delete(t *testing.T) {
 			name:      "successful deletion",
 			messageID: 1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteMessage", mock.Anything, 1).Return(nil)
+				m.On("DeleteMessage", 1).Return(nil)
 			},
 			wantErr: false,
 		},
@@ -408,7 +436,7 @@ func TestMessageService_Delete(t *testing.T) {
 			name:      "non-existent message",
 			messageID: 999,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteMessage", mock.Anything, 999).Return(storage.ErrNotFound)
+				m.On("DeleteMessage", 999).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -419,7 +447,7 @@ func TestMessageService_Delete(t *testing.T) {
 			core, mockRepo := setupMessageTestCore(t)
 			tt.mockFn(mockRepo)
 
-			err := core.MessageService.Delete(context.Background(), tt.messageID)
+			err := core.MessageService.Delete(tt.messageID)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
