@@ -88,6 +88,9 @@ func (s *Server) updateUser(c echo.Context) error {
 func (s *Server) deleteUser(c echo.Context) error {
 	userID, _ := strconv.Atoi(c.Param("userId"))
 	if err := s.core.UserService.Delete(userID); err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return s.core.HandleError(nil, http.StatusNotFound)
+		}
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 	return c.NoContent(http.StatusNoContent)

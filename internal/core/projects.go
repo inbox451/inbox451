@@ -112,7 +112,7 @@ func (s *ProjectService) RemoveUser(projectID int, userID int) error {
 
 	err := s.core.Repository.ProjectRemoveUser(projectID, userID)
 	if err != nil {
-		s.core.Logger.Error("Failed to add user to project: %v", err)
+		s.core.Logger.Error("Failed to remove user from project: %v", err)
 		return err
 	}
 

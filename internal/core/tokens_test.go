@@ -303,7 +303,7 @@ func TestTokenService_DeleteByUser(t *testing.T) {
 			tokenID: 999,
 			userID:  1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetTokenByUser", 1, 999).
+				m.On("GetTokenByUser", 999, 1).
 					Return(models.Token{}, storage.ErrNotFound)
 			},
 			wantErr: true,
