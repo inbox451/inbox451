@@ -2,6 +2,9 @@ package api
 
 import (
 	"context"
+	"database/sql"
+	"inbox451/internal/auth"
+	"inbox451/internal/models"
 	"mime"
 	"net/http"
 	"path/filepath"
@@ -28,9 +31,10 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 type Server struct {
 	core *core.Core
 	echo *echo.Echo
+	auth *auth.Auth
 }
 
-func NewServer(core *core.Core) *Server {
+func NewServer(core *core.Core, db *sql.DB) *Server {
 	e := echo.New()
 	e.HideBanner = true
 	s := &Server{
@@ -53,6 +57,20 @@ func NewServer(core *core.Core) *Server {
 
 	// Set custom error handler
 	e.HTTPErrorHandler = s.errorHandler
+
+	// Initialize Auth module
+	authCallbacks := &auth.Callbacks{
+		GetUser: func(id int) (*models.User, error) {
+			// Use context.Background() as this is called internally by the auth module
+			// Adjust if a request-specific context is preferable and feasible
+			return s.core.UserService.Get(context.Background(), id)
+		},
+	}
+	authModule, err := auth.New(core, db, authCallbacks)
+	if err != nil {
+		core.Logger.Fatal("Failed to initialize auth module: %v", err)
+	}
+	s.auth = authModule
 
 	// API routes
 	api := e.Group("/api")

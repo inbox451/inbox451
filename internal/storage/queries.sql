@@ -201,23 +201,23 @@ SELECT COUNT(*)
 FROM users
 
 -- name: create-user
-INSERT INTO users (
-    name, username, password, email, status, role,
-    password_login, created_at, updated_at
-) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+INSERT INTO users (name, username, password, email, status, role, password_login, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING id, created_at, updated_at;
 
 -- name: get-user
-SELECT id, name, username, password, email, status, role,
-       password_login, loggedin_at, created_at, updated_at
+SELECT id, name, username, password, email, status, role, password_login, loggedin_at, created_at, updated_at
 FROM users
 WHERE id = $1;
 
+-- name: get-user-by-email
+SELECT id, name, username, password, email, status, role, password_login, loggedin_at, created_at, updated_at
+FROM users
+WHERE email = $1;
+
 -- name: update-user
 UPDATE users
-SET name = $1, username = $2, password = $3, email = $4,
-    status = $5, role = $6, password_login = $7,
-    updated_at = CURRENT_TIMESTAMP
+SET name = $1, username = $2, password = CASE WHEN $3 = '' THEN password ELSE $3 END, email = $4, status = $5, role = $6, password_login = $7, updated_at = NOW()
 WHERE id = $8
 RETURNING updated_at;
 
@@ -225,8 +225,7 @@ RETURNING updated_at;
 DELETE FROM users WHERE id = $1;
 
 -- name: get-user-by-username
-SELECT id, name, username, password, email, status, role,
-       password_login, loggedin_at, created_at, updated_at
+SELECT id, name, username, password, email, status, role, password_login, loggedin_at, created_at, updated_at
 FROM users
 WHERE username = $1;
 
@@ -235,21 +234,24 @@ WHERE username = $1;
 -- -------------------------------------------
 
 -- name: list-tokens-by-user
-SELECT id, user_id, token, name, expires_at, created_at, updated_at
+SELECT id, user_id, token, name, expires_at, last_used_at, created_at, updated_at
 FROM tokens
 WHERE user_id = $1
-ORDER BY id
+ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
 
 -- name: count-tokens-by-user
-SELECT COUNT(1)
-FROM tokens
-WHERE user_id = $1;
+SELECT COUNT(*) FROM tokens WHERE user_id = $1;
 
 -- name: get-token-by-user
-SELECT id, user_id, token, name, expires_at, created_at, updated_at
+SELECT id, user_id, token, name, expires_at, last_used_at, created_at, updated_at
 FROM tokens
-WHERE id = $1 AND user_id = $2
+WHERE id = $1 AND user_id = $2;
+
+-- name: get-token-by-value
+SELECT id, user_id, token, name, expires_at, last_used_at, created_at, updated_at
+FROM tokens
+WHERE token = $1
 
 -- name: create-token
 INSERT INTO tokens (user_id, token, name, expires_at)
@@ -257,5 +259,30 @@ VALUES ($1, $2, $3, $4)
 RETURNING id, user_id, token, name, expires_at, created_at, updated_at;
 
 -- name: delete-token
-DELETE FROM tokens
-WHERE id = $1
+DELETE FROM tokens WHERE id = $1;
+
+-- name: update-token-last-used
+UPDATE tokens SET last_used_at = NOW() WHERE id = $1;
+
+-- name: prune-expired-tokens
+DELETE FROM tokens WHERE expires_at IS NOT NULL AND expires_at < NOW();
+
+
+-- =============================================================================
+-- Session queries needed by github.com/zerodha/simplesessions/stores/postgres
+-- =============================================================================
+
+-- name: get-session
+SELECT data FROM sessions WHERE id=$1;
+
+-- name: insert-session
+INSERT INTO sessions (id, data, created_at) VALUES ($1, $2, now());
+
+-- name: delete-session
+DELETE FROM sessions WHERE id=$1;
+
+-- name: delete-expired-sessions
+DELETE FROM sessions;
+
+-- name: update-session
+UPDATE sessions SET data=$1  WHERE id=$2;

@@ -38,6 +38,12 @@ var (
 		Code:    http.StatusBadRequest,
 		Message: "bad request",
 	}
+
+	ErrAuthFailed = errors.New("invalid credentials")
+
+	ErrAccountInactive = errors.New("user account is inactive")
+
+	ErrPasswordLoginDisabled = errors.New("password login is disabled for this user")
 )
 
 func (c *Core) HandleError(err error, code int) error {

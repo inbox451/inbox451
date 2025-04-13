@@ -2,6 +2,10 @@ package core
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"github.com/volatiletech/null/v9"
+	"inbox451/internal/storage"
 
 	"inbox451/internal/models"
 )
@@ -16,6 +20,25 @@ func NewUserService(core *Core) UserService {
 
 func (s *UserService) Create(ctx context.Context, user *models.User) error {
 	s.core.Logger.Info("Creating new user: %s", user.Name)
+
+	// Hash the password before saving
+	if user.Password.Valid && user.Password.String != "" {
+		if err := user.HashPassword(user.Password.String); err != nil {
+			s.core.Logger.Error("Failed to hash password for user %s: %v", user.Username, err)
+			return fmt.Errorf("password hashing failed: %w", err)
+		}
+	} else {
+		// Ensure password is null if empty or invalid
+		user.Password = null.StringFromPtr(nil)
+	}
+
+	// Set default status and role if not provided
+	if user.Status == "" {
+		user.Status = "active" // Or 'inactive' depending on desired default
+	}
+	if user.Role == "" {
+		user.Role = "user"
+	}
 
 	if err := s.core.Repository.CreateUser(ctx, user); err != nil {
 		s.core.Logger.Error("Failed to create user: %v", err)
@@ -46,6 +69,15 @@ func (s *UserService) Get(ctx context.Context, userID int) (*models.User, error)
 func (s *UserService) Update(ctx context.Context, user *models.User) error {
 	s.core.Logger.Info("Updating user with ID: %d", user.ID)
 
+	// Hash the password ONLY if it's being changed (i.e., not empty)
+	if user.Password.Valid && user.Password.String != "" {
+		if err := user.HashPassword(user.Password.String); err != nil {
+			s.core.Logger.Error("Failed to hash password during update for user %d: %v", user.ID, err)
+			return fmt.Errorf("password hashing failed: %w", err)
+		}
+	}
+
+	// If user.Password.String is empty, the repository layer should handle not updating it.
 	if err := s.core.Repository.UpdateUser(ctx, user); err != nil {
 		s.core.Logger.Error("Failed to update user: %v", err)
 		return err
@@ -87,4 +119,45 @@ func (s *UserService) List(ctx context.Context, limit, offset int) (*models.Pagi
 
 	s.core.Logger.Info("Successfully retrieved %d users (total: %d)", len(users), total)
 	return response, nil
+}
+
+// LoginUser validates user credentials.
+func (s *UserService) LoginUser(ctx context.Context, username, password string) (*models.User, error) {
+	s.core.Logger.Info("Attempting login for username: %s", username)
+	user, err := s.core.Repository.GetUserByUsername(ctx, username)
+	if err != nil {
+		// If user not found or other DB error
+		if errors.Is(err, storage.ErrNotFound) {
+			s.core.Logger.Warn("Login failed: User not found for username: %s", username)
+			return nil, ErrAuthFailed // Use a specific auth error
+		}
+		s.core.Logger.Error("Database error during login for username %s: %v", username, err)
+		return nil, err // Return the original DB error for logging/debugging
+	}
+
+	// Check if user is active and allows password login
+	if user.Status != "active" {
+		s.core.Logger.Warn("Login failed: User account is inactive for username: %s", username)
+		return nil, ErrAccountInactive
+	}
+	if !user.PasswordLogin {
+		s.core.Logger.Warn("Login failed: Password login disabled for username: %s", username)
+		return nil, ErrPasswordLoginDisabled
+	}
+	// Check password
+	match, err := user.CheckPassword(password)
+	if err != nil {
+		s.core.Logger.Error("Error checking password for username %s: %v", username, err)
+		return nil, fmt.Errorf("error during password verification: %w", err)
+	}
+	if !match {
+		s.core.Logger.Warn("Login failed: Invalid password for username: %s", username)
+		return nil, ErrAuthFailed // Specific error for bad credentials
+	}
+
+	// Login successful
+	s.core.Logger.Info("Login successful for username: %s", username)
+	// Optionally: Update last login time here if needed
+	// s.core.Repository.UpdateUserLoginTimestamp(ctx, user.ID)
+	return user, nil
 }

@@ -1,13 +1,29 @@
 package api
 
-import "github.com/labstack/echo/v4"
+import (
+	"github.com/labstack/echo/v4"
+)
 
 func (s *Server) routes(api *echo.Group) {
 	// Health check endpoint
-	api.GET("/health", s.healthCheck)
+	api.GET("/api/health", s.healthCheck)
+
+	// -- Authentication routes
+	authGroup := s.echo.Group("/api/auth")
+	authGroup.POST("/login", s.login)
+	authGroup.POST("/logout", s.logout, s.auth.Middleware)
+	if s.auth.IsOIDCEnabled() {
+		authGroup.GET("/oidc/login", s.oidcLogin)
+		authGroup.GET("/oidc/callback", s.oidcCallback)
+	}
+
+	// Protect API routes
+	// Apply the authentication middleware to all routes in the API group
+	api.Use(s.auth.Middleware)
 
 	// User routes
 	api.GET("/users", s.getUsers)
+	api.GET("/users/me", s.profile)
 	api.GET("/users/:userId", s.getUser)
 	api.GET("/users/:userId/projects", s.getProjectsByUser)
 	api.POST("/users", s.createUser)
@@ -51,4 +67,5 @@ func (s *Server) routes(api *echo.Group) {
 	api.PUT("/projects/:projectId/inboxes/:inboxId/messages/:messageId/read", s.markMessageRead)
 	api.PUT("/projects/:projectId/inboxes/:inboxId/messages/:messageId/unread", s.markMessageUnread)
 	api.DELETE("/projects/:projectId/inboxes/:inboxId/messages/:messageId", s.deleteMessage)
+
 }

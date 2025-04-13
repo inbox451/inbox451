@@ -28,7 +28,7 @@ make deps
 
 2. Start the development servers:
 ```bash
-make dev          # Starts PostgreSQL and Go server
+make dev          # Starts PostgresSQL and Go server
 make run-frontend # In another terminal, starts Vite dev server
 ```
 

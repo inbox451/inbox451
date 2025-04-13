@@ -20,6 +20,7 @@ type migFunc struct {
 
 var migList = []migFunc{
 	{"v0.1.0", migrations.V0_1_0},
+	{"v0.2.0", migrations.V0_2_0},
 }
 
 func upgrade(db *sqlx.DB, config *config.Config, prompt bool) {

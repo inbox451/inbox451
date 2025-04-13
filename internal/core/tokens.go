@@ -102,7 +102,7 @@ func (s *TokenService) CreateForUser(ctx context.Context, userID int, tokenData 
 		newToken.Name = "API Token"
 	}
 
-	tokenStr, err := generateSecureTokenBase64()
+	tokenStr, err := GenerateSecureTokenBase64()
 	if err != nil {
 		s.core.Logger.Error("Failed to generate secure token: %v", err)
 		return nil, err
@@ -149,7 +149,7 @@ func (s *TokenService) DeleteByUser(ctx context.Context, userID int, tokenID int
 	return nil
 }
 
-// generateSecureTokenBase64 generates a cryptographically secure random token
+// GenerateSecureTokenBase64 generates a cryptographically secure random token
 // encoded in URL-safe base64. It returns a string of approximately 43 characters
 // (for 32 bytes of entropy) that is safe for use in URLs and file names.
 //
@@ -161,7 +161,7 @@ func (s *TokenService) DeleteByUser(ctx context.Context, userID int, tokenID int
 // Example output: "xJ_dwq8k-rLp5xGhq2d4mNvKzHjY3bWl1fTnM9iR0oE"
 //
 // If the random number generator fails, it returns an empty string and an error.
-func generateSecureTokenBase64() (string, error) {
+func GenerateSecureTokenBase64() (string, error) {
 	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	if err != nil {

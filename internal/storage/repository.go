@@ -52,6 +52,7 @@ type Repository interface {
 	ListUsers(ctx context.Context, limit, offset int) ([]*models.User, int, error)
 	GetUser(ctx context.Context, id int) (*models.User, error)
 	GetUserByUsername(ctx context.Context, username string) (*models.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
 	CreateUser(ctx context.Context, user *models.User) error
 	UpdateUser(ctx context.Context, user *models.User) error
 	DeleteUser(ctx context.Context, userId int) error
@@ -61,6 +62,9 @@ type Repository interface {
 	GetTokenByUser(ctx context.Context, userID int, tokenID int) (*models.Token, error)
 	CreateToken(ctx context.Context, token *models.Token) error
 	DeleteToken(ctx context.Context, tokenID int) error
+	GetTokenByValue(ctx context.Context, tokenValue string) (*models.Token, error)
+	UpdateTokenLastUsed(ctx context.Context, tokenID int) error
+	PruneExpiredTokens(ctx context.Context) (int64, error)
 }
 
 type repository struct {

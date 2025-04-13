@@ -64,13 +64,24 @@ type Queries struct {
 	UpdateUser        *sqlx.Stmt `query:"update-user"`
 	DeleteUser        *sqlx.Stmt `query:"delete-user"`
 	GetUserByUsername *sqlx.Stmt `query:"get-user-by-username"`
+	GetUserByEmail    *sqlx.Stmt `query:"get-user-by-email"`
 
 	// Tokens
-	ListTokensByUser  *sqlx.Stmt `query:"list-tokens-by-user"`
-	CountTokensByUser *sqlx.Stmt `query:"count-tokens-by-user"`
-	GetTokenByUser    *sqlx.Stmt `query:"get-token-by-user"`
-	DeleteToken       *sqlx.Stmt `query:"delete-token"`
-	CreateToken       *sqlx.Stmt `query:"create-token"`
+	ListTokensByUser    *sqlx.Stmt `query:"list-tokens-by-user"`
+	CountTokensByUser   *sqlx.Stmt `query:"count-tokens-by-user"`
+	GetTokenByUser      *sqlx.Stmt `query:"get-token-by-user"`
+	GetTokenByValue     *sqlx.Stmt `query:"get-token-by-value"`
+	UpdateTokenLastUsed *sqlx.Stmt `query:"update-token-last-used"`
+	DeleteToken         *sqlx.Stmt `query:"delete-token"`
+	PruneExpiredTokens  *sqlx.Stmt `query:"prune-expired-tokens"`
+	CreateToken         *sqlx.Stmt `query:"create-token"`
+
+	// Session
+	GetSession            *sqlx.Stmt `query:"get-session"`
+	InsertSession         *sqlx.Stmt `query:"insert-session"`
+	DeleteSession         *sqlx.Stmt `query:"delete-session"`
+	DeleteExpiredSessions *sqlx.Stmt `query:"delete-expired-sessions"`
+	UpdateSession         *sqlx.Stmt `query:"update-session"`
 }
 
 func PrepareQueries(db *sqlx.DB) (*Queries, error) {

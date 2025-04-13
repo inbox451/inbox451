@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -31,11 +32,12 @@ var (
 	date    = "unknown"
 )
 
-func initDB(cfg *config.Config) (*sqlx.DB, error) {
+func initDB(cfg *config.Config) (*sqlx.DB, *sql.DB, error) {
 	var db *sqlx.DB
+	var stdDB *sql.DB
 	var err error
 
-	maxRetries := 5
+	const maxRetries = 5
 	for i := 0; i < maxRetries; i++ {
 		db, err = sqlx.Connect("postgres", cfg.Database.URL)
 		if err == nil {
@@ -45,14 +47,17 @@ func initDB(cfg *config.Config) (*sqlx.DB, error) {
 		time.Sleep(2 * time.Second)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database after %d retries: %v", maxRetries, err)
+		return nil, nil, fmt.Errorf("failed to connect to database after %d retries: %w", maxRetries, err)
 	}
 
 	db.SetMaxOpenConns(cfg.Database.MaxOpenConns)
 	db.SetMaxIdleConns(cfg.Database.MaxIdleConns)
 	db.SetConnMaxLifetime(cfg.Database.ConnMaxLifetime)
 
-	return db, nil
+	// TODO: Check if the database is reachable
+	stdDB = db.DB
+
+	return db, stdDB, nil
 }
 
 type serverError struct {
@@ -70,9 +75,10 @@ type ServerInstance struct {
 	name   string
 }
 
-func startServers(core *core.Core) error {
+func startServers(core *core.Core, db *sql.DB) error {
 	// Create error channel for servers
-	errChan := make(chan serverError, 3)
+	const numServers = 3
+	errChan := make(chan serverError, numServers)
 
 	// Create a channel to listen for interrupt signals
 	stop := make(chan os.Signal, 1)
@@ -80,7 +86,7 @@ func startServers(core *core.Core) error {
 
 	// Initialize all servers
 	servers := []ServerInstance{
-		{server: api.NewServer(core), name: "HTTP"},
+		{server: api.NewServer(core, db), name: "HTTP"},
 		{server: smtp.NewServer(core), name: "SMTP"},
 		{server: imap.NewServer(core), name: "IMAP"},
 	}
@@ -130,7 +136,7 @@ func handleGracefulShutdown(core *core.Core, servers []ServerInstance) error {
 		}(s)
 	}
 
-	// Wait for all servers to shutdown or timeout
+	// Wait for all servers to shut down or timeout
 	var shutdownErrors []error
 	for i := 0; i < len(servers); i++ {
 		if err := <-errChan; err != nil {
@@ -195,7 +201,7 @@ func main() {
 		logger.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	db, err := initDB(cfg)
+	db, stdDB, err := initDB(cfg)
 	if err != nil {
 		logger.Fatalf("Failed to initialize database: %v", err)
 	}
@@ -228,7 +234,7 @@ func main() {
 	core.Logger.Info("Starting inbox451 version %s (commit: %s, built: %s)", version, commit, date)
 
 	// Start all servers
-	if err := startServers(core); err != nil {
+	if err := startServers(core, stdDB); err != nil {
 		core.Logger.Fatal("Server error: %v", err)
 	}
 }
