@@ -8,7 +8,6 @@ import (
 	"inbox451/internal/config"
 
 	"github.com/jmoiron/sqlx"
-	"golang.org/x/crypto/bcrypt" // Import bcrypt
 )
 
 func V0_2_0(db *sqlx.DB, config *config.Config, log *log.Logger) error {
@@ -63,37 +62,10 @@ func V0_2_0(db *sqlx.DB, config *config.Config, log *log.Logger) error {
 
 	// Execute the schema changes
 	for _, query := range schema {
-		log.Printf("Executing: %s\n", query)
 		if _, err := tx.Exec(query); err != nil {
 			return fmt.Errorf("failed to execute schema update '%s': %w", query, err)
 		}
 	}
-
-	// ---- Data Migration: Create a default admin user if none exists ----
-	var userCount int
-	err = tx.Get(&userCount, "SELECT COUNT(*) FROM users")
-	if err != nil {
-		return fmt.Errorf("failed to count users: %w", err)
-	}
-
-	if userCount == 0 {
-		log.Println("No users found. Creating default admin user 'admin@inbox451.dev'")
-		defaultPassword := "password" // Change this in production!
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), bcrypt.DefaultCost)
-		if err != nil {
-			return fmt.Errorf("failed to hash default password: %w", err)
-		}
-
-		_, err = tx.Exec(`
-            INSERT INTO users (name, username, password, email, status, role, password_login)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-			"Admin User", "admin", string(hashedPassword), "admin@inbox451.dev", "active", "admin", true)
-		if err != nil {
-			return fmt.Errorf("failed to insert default admin user: %w", err)
-		}
-		log.Println("Default admin user created. Username: admin, Email: admin@inbox451.dev, Password: password (CHANGE THIS!)")
-	}
-	// ---- End Data Migration ----
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
