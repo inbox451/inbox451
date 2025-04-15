@@ -81,7 +81,7 @@ func (r *repository) UpdateUser(ctx context.Context, user *models.User) error {
 	return r.queries.UpdateUser.QueryRowContext(ctx,
 		user.Name,
 		user.Username,
-		passwordToUpdate, // Pass the potentially new hashed password or "" to keep old
+		passwordToUpdate,
 		user.Email,
 		user.Status,
 		user.Role,
