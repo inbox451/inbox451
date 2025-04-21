@@ -3,13 +3,14 @@ package api
 import (
 	"context"
 	"database/sql"
-	"inbox451/internal/auth"
-	"inbox451/internal/models"
 	"mime"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"inbox451/internal/auth"
+	"inbox451/internal/models"
 
 	"inbox451/internal/assets"
 	"inbox451/internal/core"

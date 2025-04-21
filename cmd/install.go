@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/volatiletech/null/v9"
-	"golang.org/x/crypto/bcrypt"
-	"inbox451/internal/core"
-	"inbox451/internal/models"
 	"log"
 	"strings"
+
+	"inbox451/internal/core"
+	"inbox451/internal/models"
+
+	"github.com/volatiletech/null/v9"
+	"golang.org/x/crypto/bcrypt"
 
 	"inbox451/internal/config"
 
