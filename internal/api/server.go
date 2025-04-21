@@ -34,7 +34,7 @@ type Server struct {
 	auth *auth.Auth
 }
 
-func NewServer(core *core.Core, db *sql.DB) *Server {
+func NewServer(ctx context.Context, core *core.Core, db *sql.DB) *Server {
 	e := echo.New()
 	e.HideBanner = true
 	s := &Server{
@@ -61,12 +61,10 @@ func NewServer(core *core.Core, db *sql.DB) *Server {
 	// Initialize Auth module
 	authCallbacks := &auth.Callbacks{
 		GetUser: func(id int) (*models.User, error) {
-			// Use context.Background() as this is called internally by the auth module
-			// Adjust if a request-specific context is preferable and feasible
 			return s.core.UserService.Get(context.Background(), id)
 		},
 	}
-	authModule, err := auth.New(core, db, authCallbacks)
+	authModule, err := auth.New(ctx, core, db, authCallbacks)
 	if err != nil {
 		core.Logger.Fatal("Failed to initialize auth module: %v", err)
 	}
@@ -77,46 +75,11 @@ func NewServer(core *core.Core, db *sql.DB) *Server {
 	s.routes(api)
 
 	// Serve frontend assets
-	e.GET("/*", func(c echo.Context) error {
-		path := c.Param("*")
-		if path == "" || path == "/" {
-			path = "index.html"
-		}
-
-		if path[0] == '/' {
-			path = path[1:]
-		}
-
-		core.Logger.Info("Attempting to serve: %s", path)
-
-		// Try to read the file
-		data, err := assets.FS.Read(path)
-		if err != nil {
-			core.Logger.Error("Failed to read file %s: %v", path, err)
-			// If the file is not found and it's not an API route, serve index.html
-			if !strings.HasPrefix(path, "api/") {
-				indexData, err := assets.FS.Read("index.html")
-				if err != nil {
-					return c.String(http.StatusNotFound, "File not found")
-				}
-				return c.HTMLBlob(http.StatusOK, indexData)
-			}
-			return c.String(http.StatusNotFound, "File not found")
-		}
-
-		// Determine content type based on file extension
-		contentType := mime.TypeByExtension(filepath.Ext(path))
-		if contentType == "" {
-			contentType = http.DetectContentType(data)
-		}
-
-		return c.Blob(http.StatusOK, contentType, data)
-	})
+	e.GET("/*", s.assetHandler)
 
 	return s
 }
 
-// Add the error handler method
 func (s *Server) errorHandler(err error, c echo.Context) {
 	if he, ok := err.(*echo.HTTPError); ok {
 		if he.Internal != nil {
@@ -135,6 +98,43 @@ func (s *Server) errorHandler(err error, c echo.Context) {
 			s.core.Logger.Error("Failed to send error response: %v", err)
 		}
 	}
+}
+
+// assetHandler serves frontend assets and index.html fallback
+func (s *Server) assetHandler(c echo.Context) error {
+	path := c.Param("*")
+	if path == "" || path == "/" {
+		path = "index.html"
+	}
+
+	if path[0] == '/' {
+		path = path[1:]
+	}
+
+	s.core.Logger.Info("Attempting to serve: %s", path)
+
+	// Try to read the file
+	data, err := assets.FS.Read(path)
+	if err != nil {
+		s.core.Logger.Error("Failed to read file %s: %v", path, err)
+		// If the file is not found and it's not an API route, serve index.html
+		if !strings.HasPrefix(path, "api/") {
+			indexData, err := assets.FS.Read("index.html")
+			if err != nil {
+				return c.String(http.StatusNotFound, "File not found")
+			}
+			return c.HTMLBlob(http.StatusOK, indexData)
+		}
+		return c.String(http.StatusNotFound, "File not found")
+	}
+
+	// Determine content type based on file extension
+	contentType := mime.TypeByExtension(filepath.Ext(path))
+	if contentType == "" {
+		contentType = http.DetectContentType(data)
+	}
+
+	return c.Blob(http.StatusOK, contentType, data)
 }
 
 func (s *Server) ListenAndServe() error {
