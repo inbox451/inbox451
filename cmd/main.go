@@ -86,7 +86,7 @@ func startServers(core *core.Core, db *sql.DB) error {
 
 	// Initialize all servers
 	servers := []ServerInstance{
-		{server: api.NewServer(core, db), name: "HTTP"},
+		{server: api.NewServer(context.Background(), core, db), name: "HTTP"},
 		{server: smtp.NewServer(core), name: "SMTP"},
 		{server: imap.NewServer(core), name: "IMAP"},
 	}
