@@ -92,9 +92,9 @@ func TestRepository_ListUsers(t *testing.T) {
 					"id", "name", "username", "password", "email",
 					"status", "role", "loggedin_at", "created_at", "updated_at",
 				}).
-					AddRow(1, "User 1", "user1", "hash1", "user1@example.com",
+					AddRow(1, "User 1", "user1", null.StringFrom("hash1"), "user1@example.com",
 						"active", "user", nil, now, now).
-					AddRow(2, "User 2", "user2", "hash2", "user2@example.com",
+					AddRow(2, "User 2", "user2", null.StringFrom("hash2"), "user2@example.com",
 						"active", "user", nil, now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM users").
@@ -110,7 +110,7 @@ func TestRepository_ListUsers(t *testing.T) {
 					},
 					Name:     "User 1",
 					Username: "user1",
-					Password: "hash1",
+					Password: null.StringFrom("hash1"),
 					Email:    "user1@example.com",
 					Status:   "active",
 					Role:     "user",
@@ -123,7 +123,7 @@ func TestRepository_ListUsers(t *testing.T) {
 					},
 					Name:     "User 2",
 					Username: "user2",
-					Password: "hash2",
+					Password: null.StringFrom("hash2"),
 					Email:    "user2@example.com",
 					Status:   "active",
 					Role:     "user",
@@ -189,7 +189,7 @@ func TestRepository_GetUser(t *testing.T) {
 					"status", "role", "password_login", "loggedin_at",
 					"created_at", "updated_at",
 				}).AddRow(
-					1, "Test User", "testuser", "hash", "test@example.com",
+					1, "Test User", "testuser", null.StringFrom("hash"), "test@example.com",
 					"active", "user", true, nil,
 					now, now,
 				)
@@ -206,7 +206,7 @@ func TestRepository_GetUser(t *testing.T) {
 				},
 				Name:          "Test User",
 				Username:      "testuser",
-				Password:      "hash",
+				Password:      null.StringFrom("hash"),
 				Email:         "test@example.com",
 				Status:        "active",
 				Role:          "user",
@@ -267,7 +267,7 @@ func TestRepository_CreateUser(t *testing.T) {
 			user: &models.User{
 				Name:          "Test User",
 				Username:      "testuser",
-				Password:      "hash",
+				Password:      null.StringFrom("hash"),
 				Email:         "test@example.com",
 				Status:        "active",
 				Role:          "user",
@@ -296,7 +296,7 @@ func TestRepository_CreateUser(t *testing.T) {
 			user: &models.User{
 				Name:          "Test User",
 				Username:      "existing",
-				Password:      "hash",
+				Password:      null.StringFrom("hash"),
 				Email:         "test@example.com",
 				Status:        "active",
 				Role:          "user",
@@ -360,7 +360,7 @@ func TestRepository_UpdateUser(t *testing.T) {
 				},
 				Name:          "Updated User",
 				Username:      "updateduser",
-				Password:      "newhash",
+				Password:      null.StringFrom("newhash"),
 				Email:         "updated@example.com",
 				Status:        "active",
 				Role:          "admin",
@@ -393,7 +393,7 @@ func TestRepository_UpdateUser(t *testing.T) {
 				},
 				Name:          "Updated User",
 				Username:      "updateduser",
-				Password:      "newhash",
+				Password:      null.StringFrom("newhash"),
 				Email:         "updated@example.com",
 				Status:        "active",
 				Role:          "admin",
@@ -508,7 +508,7 @@ func TestRepository_GetUserByUsername(t *testing.T) {
 					"status", "role", "password_login", "loggedin_at",
 					"created_at", "updated_at",
 				}).AddRow(
-					1, "Test User", "testuser", "hash", "test@example.com",
+					1, "Test User", "testuser", null.StringFrom("hash"), "test@example.com",
 					"active", "user", true, nil,
 					now, now,
 				)
@@ -525,7 +525,7 @@ func TestRepository_GetUserByUsername(t *testing.T) {
 				},
 				Name:          "Test User",
 				Username:      "testuser",
-				Password:      "hash",
+				Password:      null.StringFrom("hash"),
 				Email:         "test@example.com",
 				Status:        "active",
 				Role:          "user",
