@@ -148,7 +148,7 @@ func createDefaultAdminUserIfNeeded(db *sqlx.DB, logger *log.Logger) error {
 		if err != nil {
 			return fmt.Errorf("failed to begin transaction for admin user creation: %w", err)
 		}
-		defer tx.Rollback() // Rollback on error
+		defer func() { _ = tx.Rollback() }() // Rollback on error
 
 		// Prepare the statement within the transaction
 		stmt, err := tx.Preparex(`
