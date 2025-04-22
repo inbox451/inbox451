@@ -3,12 +3,13 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
+
 	"inbox451/internal/auth"
 	"inbox451/internal/core"
 	"inbox451/internal/models"
 	"inbox451/internal/storage"
-	"net/http"
-	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -89,7 +90,6 @@ func (s *Server) profile(c echo.Context) error {
 
 // oidcLogin redirects the user to the OIDC provider.
 func (s *Server) oidcLogin(c echo.Context) error {
-
 	if !s.auth.IsOIDCEnabled() {
 		return c.String(http.StatusNotImplemented, "OIDC login is not enabled")
 	}

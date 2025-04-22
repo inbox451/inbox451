@@ -3,18 +3,18 @@ package auth
 import (
 	"context"
 	"database/sql"
-	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
+	"sync"
+	"time"
+
 	"inbox451/internal/config"
 	"inbox451/internal/core"
 	"inbox451/internal/logger"
 	"inbox451/internal/models"
 	"inbox451/internal/storage"
-	"net/http"
-	"strings"
-	"sync"
-	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/labstack/echo/v4"
@@ -58,7 +58,78 @@ type Callbacks struct {
 	GetUser func(id int) (*models.User, error)
 }
 
-func New(core *core.Core, db *sql.DB, cb *Callbacks) (*Auth, error) {
+// Helper to initialize OIDC provider and config
+func initOIDC(a *Auth) {
+	if !a.oidcCfg.Enabled {
+		return
+	}
+	ctxOIDC := context.Background()
+	a.log.Info("Initializing OIDC provider: %s", a.oidcCfg.ProviderURL)
+	provider, err := oidc.NewProvider(ctxOIDC, a.oidcCfg.ProviderURL)
+	if err != nil {
+		a.oidcCfg.Enabled = false
+		a.log.Error("Error initializing OIDC provider, disabling OIDC: %v", err)
+		return
+	}
+	a.provider = provider
+	a.oauthCfg = oauth2.Config{
+		ClientID:     a.oidcCfg.ClientID,
+		ClientSecret: a.oidcCfg.ClientSecret,
+		Endpoint:     provider.Endpoint(),
+		RedirectURL:  a.oidcCfg.RedirectURL,
+		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+	}
+	a.verifier = provider.Verifier(&oidc.Config{ClientID: a.oidcCfg.ClientID})
+	a.log.Info("OIDC Authentication enabled with provider: %s", a.oidcCfg.ProviderURL)
+}
+
+// Helper to start session pruning goroutine
+func startSessionPruner(ctx context.Context, a *Auth) {
+	go func() {
+		ticker := time.NewTicker(time.Hour * 1)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				a.log.Debug("Pruning expired sessions")
+				err := a.sessStore.Prune()
+				if err != nil {
+					a.log.Error("Error pruning login sessions: %v", err)
+				} else {
+					a.log.Debug("Expired session pruning completed")
+				}
+			case <-ctx.Done():
+				a.log.Info("Session pruning goroutine shutting down")
+				return
+			}
+		}
+	}()
+}
+
+// Helper to start token pruning goroutine
+func startTokenPruner(ctx context.Context, a *Auth) {
+	go func() {
+		ticker := time.NewTicker(time.Hour * 6)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				a.log.Debug("Pruning expired API tokens")
+				count, err := a.core.Repository.PruneExpiredTokens(context.Background())
+				if err != nil {
+					a.log.Error("Error pruning expired tokens: %v", err)
+				} else if count > 0 {
+					a.log.Info("Pruned %d expired API tokens", count)
+				}
+			case <-ctx.Done():
+				a.log.Info("Token pruning goroutine shutting down")
+				return
+			}
+		}
+	}()
+}
+
+func New(ctx context.Context, core *core.Core, db *sql.DB, cb *Callbacks) (*Auth, error) {
 	a := &Auth{
 		core:      core,
 		oidcCfg:   core.Config.OIDC,
@@ -67,27 +138,7 @@ func New(core *core.Core, db *sql.DB, cb *Callbacks) (*Auth, error) {
 		apiTokens: make(map[string]models.Token),
 	}
 
-	// Initialize OIDC if enabled
-	if a.oidcCfg.Enabled {
-		ctx := context.Background()
-		a.log.Info("Initializing OIDC provider: %s", a.oidcCfg.ProviderURL)
-		provider, err := oidc.NewProvider(ctx, a.oidcCfg.ProviderURL)
-		if err != nil {
-			a.oidcCfg.Enabled = false
-			a.log.Error("Error initializing OIDC provider, disabling OIDC: %v", err)
-		} else {
-			a.provider = provider
-			a.oauthCfg = oauth2.Config{
-				ClientID:     a.oidcCfg.ClientID,
-				ClientSecret: a.oidcCfg.ClientSecret,
-				Endpoint:     provider.Endpoint(),
-				RedirectURL:  a.oidcCfg.RedirectURL,
-				Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
-			}
-			a.verifier = provider.Verifier(&oidc.Config{ClientID: a.oidcCfg.ClientID})
-			a.log.Info("OIDC Authentication enabled with provider: %s", a.oidcCfg.ProviderURL)
-		}
-	}
+	initOIDC(a)
 
 	// Initialize session manager
 	st, err := postgres.New(postgres.Opt{}, db)
@@ -131,35 +182,8 @@ func New(core *core.Core, db *sql.DB, cb *Callbacks) (*Auth, error) {
 		},
 	)
 
-	// Start session pruning goroutine
-	go func() {
-		ticker := time.NewTicker(time.Hour * 1) // Prune every hour
-		defer ticker.Stop()
-		for range ticker.C {
-			a.log.Debug("Pruning expired sessions")
-			err := a.sessStore.Prune()
-			if err != nil {
-				a.log.Error("Error pruning login sessions: %v", err)
-			} else {
-				a.log.Debug("Expired session pruning completed")
-			}
-		}
-	}()
-
-	// Start token pruning goroutine
-	go func() {
-		ticker := time.NewTicker(time.Hour * 6) // Prune every 6 hours
-		defer ticker.Stop()
-		for range ticker.C {
-			a.log.Debug("Pruning expired API tokens")
-			count, err := a.core.Repository.PruneExpiredTokens(context.Background())
-			if err != nil {
-				a.log.Error("Error pruning expired tokens: %v", err)
-			} else if count > 0 {
-				a.log.Info("Pruned %d expired API tokens", count)
-			}
-		}
-	}()
+	startSessionPruner(ctx, a)
+	startTokenPruner(ctx, a)
 
 	return a, nil
 }
@@ -292,50 +316,64 @@ func (a *Auth) ExchangeOIDCToken(code, nonce string) (string, OIDCClaim, error) 
 	return rawIDToken, claims, nil
 }
 
+// Helper for API token authentication
+func (a *Auth) authenticateAPIToken(c echo.Context) (*models.User, error) {
+	authHeader := strings.TrimSpace(c.Request().Header.Get("x-api-key"))
+	if authHeader == "" {
+		return nil, nil // Not an API token request
+	}
+	token, ok := a.GetAPIToken(authHeader)
+	if !ok {
+		return nil, echo.NewHTTPError(http.StatusUnauthorized, "Invalid API token")
+	}
+	user, err := a.cb.GetUser(token.UserID)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, echo.NewHTTPError(http.StatusUnauthorized, "User associated with API token not found")
+		}
+		a.log.Error("Error fetching user for API token %d: %v", token.ID, err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Error authenticating API token")
+	}
+	if user.Status != "active" {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "User account is not active")
+	}
+	return user, nil
+}
+
+// Helper for session authentication
+func (a *Auth) authenticateSession(c echo.Context) (*models.User, *simplesessions.Session, error) {
+	sess, user, err := a.validateSession(c)
+	if err != nil {
+		return nil, nil, err
+	}
+	if user.Status != "active" {
+		_ = sess.Destroy()
+		return nil, nil, echo.NewHTTPError(http.StatusForbidden, "User account is not active")
+	}
+	return user, sess, nil
+}
+
 // Middleware authenticates requests via API token or session cookie.
 func (a *Auth) Middleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		authHeader := strings.TrimSpace(c.Request().Header.Get("x-api-key"))
-
-		// Prioritize x-api-key header
-		if authHeader != "" {
-			token, ok := a.GetAPIToken(authHeader)
-			if !ok {
-				return echo.NewHTTPError(http.StatusUnauthorized, "Invalid API token")
-			}
-			// API token is valid, fetch the associated user
-			user, err := a.cb.GetUser(token.UserID)
+		// Try API token authentication
+		if user, err := a.authenticateAPIToken(c); err != nil || user != nil {
 			if err != nil {
-				if errors.Is(err, storage.ErrNotFound) {
-					return echo.NewHTTPError(http.StatusUnauthorized, "User associated with API token not found")
-				}
-				a.log.Error("Error fetching user for API token %d: %v", token.ID, err)
-				return echo.NewHTTPError(http.StatusInternalServerError, "Error authenticating API token")
+				return err
 			}
-			if user.Status != "active" {
-				return echo.NewHTTPError(http.StatusForbidden, "User account is not active")
-			}
-			c.Set(UserKey, *user) // Store the user model
+			c.Set(UserKey, *user)
 			return next(c)
 		}
 
-		// Try session-based authentication
-		sess, user, err := a.validateSession(c)
-		if err == nil {
-			if user.Status != "active" {
-				// Log out inactive users
-				_ = sess.Destroy()
-				return echo.NewHTTPError(http.StatusForbidden, "User account is not active")
-			}
-			c.Set(UserKey, *user) // Store the user model
+		// Try session authentication
+		user, sess, err := a.authenticateSession(c)
+		if err == nil && user != nil {
+			c.Set(UserKey, *user)
 			c.Set(SessionKey, sess)
 			return next(c)
 		}
-
-		// If session validation failed (and it wasn't just 'no session found')
-		if !errors.Is(err, simplesessions.ErrInvalidSession) && !errors.Is(err, http.ErrNoCookie) {
+		if err != nil && !errors.Is(err, simplesessions.ErrInvalidSession) && !errors.Is(err, http.ErrNoCookie) {
 			a.log.Error("Session validation error: %v", err)
-			// Return a generic error instead of potentially leaking session details
 			return echo.NewHTTPError(http.StatusUnauthorized, "Session error")
 		}
 
@@ -346,7 +384,7 @@ func (a *Auth) Middleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 // validateSession checks for a valid session cookie and fetches the user.
 func (a *Auth) validateSession(c echo.Context) (*simplesessions.Session, *models.User, error) {
-	sess, err := a.sess.Acquire(nil, c, c)
+	sess, err := a.sess.Acquire(c.Request().Context(), c, c)
 	if err != nil {
 		// Distinguish between "no session" and other errors
 		if errors.Is(err, simplesessions.ErrInvalidSession) {
@@ -422,26 +460,6 @@ func (a *Auth) Logout(c echo.Context) error {
 	}
 	a.log.Info("User logged out, session destroyed: %s", sess.ID())
 	return nil
-}
-
-// parseBasicAuthHeader parses the Authorization header for Basic Auth.
-func parseBasicAuthHeader(h string) (string, string, error) {
-	const authBasic = "Basic "
-	if !strings.HasPrefix(h, authBasic) {
-		return "", "", errors.New("unknown Authorization scheme")
-	}
-
-	payload, err := base64.StdEncoding.DecodeString(h[len(authBasic):])
-	if err != nil {
-		return "", "", echo.NewHTTPError(http.StatusBadRequest, "invalid Base64 value in Basic Authorization header")
-	}
-
-	pair := strings.SplitN(string(payload), ":", 2)
-	if len(pair) != 2 || pair[0] == "" || pair[1] == "" {
-		return "", "", echo.NewHTTPError(http.StatusBadRequest, "invalid Basic Auth format")
-	}
-
-	return pair[0], pair[1], nil
 }
 
 // IsOIDCEnabled checks if OIDC authentication is configured and enabled.

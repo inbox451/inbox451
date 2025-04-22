@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"errors"
+
 	"golang.org/x/crypto/bcrypt"
 
 	null "github.com/volatiletech/null/v9"
