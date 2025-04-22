@@ -32,6 +32,28 @@ func (r *repository) GetTokenByUser(ctx context.Context, token_id int, user_id i
 	return &token, handleDBError(err)
 }
 
+// GetTokenByValue finds a token by its value (the actual token string)
+func (r *repository) GetTokenByValue(ctx context.Context, tokenValue string) (*models.Token, error) {
+	var token models.Token
+	err := r.queries.GetTokenByValue.GetContext(ctx, &token, tokenValue)
+	return &token, handleDBError(err)
+}
+
+// UpdateTokenLastUsed updates the last_used_at timestamp for a token.
+func (r *repository) UpdateTokenLastUsed(ctx context.Context, tokenID int) error {
+	_, err := r.queries.UpdateTokenLastUsed.ExecContext(ctx, tokenID)
+	return handleDBError(err) // Doesn't need handleRowsAffected, it's okay if it doesn't update
+}
+
+// PruneExpiredTokens deletes tokens that have passed their expiration date.
+func (r *repository) PruneExpiredTokens(ctx context.Context) (int64, error) {
+	result, err := r.queries.PruneExpiredTokens.ExecContext(ctx)
+	if err != nil {
+		return 0, handleDBError(err)
+	}
+	return result.RowsAffected()
+}
+
 func (r *repository) CreateToken(ctx context.Context, token *models.Token) error {
 	err := r.queries.CreateToken.QueryRowContext(
 		ctx,

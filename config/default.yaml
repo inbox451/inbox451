@@ -17,3 +17,9 @@ database:
 logging:
   level: "info"
   format: "json"
+oidc:
+  enabled: false # Set to true to enable OIDC login
+  provider_url: "" # e.g., https://accounts.google.com or https://login.microsoftonline.com/{tenantid}/v2.0
+  client_id: ""
+  client_secret: ""
+  # redirect_url is automatically constructed based on app.root_url + /auth/oidc/callback

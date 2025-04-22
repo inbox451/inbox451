@@ -2,6 +2,9 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
+
+	"golang.org/x/crypto/bcrypt"
 
 	null "github.com/volatiletech/null/v9"
 )
@@ -25,14 +28,47 @@ type Inbox struct {
 
 type User struct {
 	Base
-	Name          string    `json:"name" db:"name"`
-	Username      string    `json:"username" db:"username"`
-	Password      string    `json:"password" db:"password"`
-	Email         string    `json:"email" db:"email"`
-	Status        string    `json:"status" db:"status"`
-	Role          string    `json:"role" db:"role"`
-	PasswordLogin bool      `json:"password_login" db:"password_login"`
-	LoggedinAt    null.Time `json:"loggedin_at" db:"loggedin_at"`
+	Name     string `json:"name" db:"name"`
+	Email    string `json:"email" db:"email"`
+	Username string `json:"username" db:"username" validate:"required"`
+	// Password field now stores the HASH, not plaintext.
+	// Omit from JSON responses by default.
+	Password      null.String `json:"-" db:"password"`
+	Status        string      `json:"status" db:"status"`
+	Role          string      `json:"role" db:"role"`
+	PasswordLogin bool        `json:"password_login" db:"password_login"`
+	LoggedinAt    null.Time   `json:"loggedin_at" db:"loggedin_at"`
+}
+
+func (u *User) HashPassword(password string) error {
+	if len(password) == 0 {
+		u.Password = null.StringFromPtr(nil) // Store NULL if password is empty
+		return nil
+	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	u.Password = null.StringFrom(string(hashedPassword))
+	return nil
+}
+
+// CheckPassword compares a provided password with the user's hashed password.
+func (u *User) CheckPassword(password string) (bool, error) {
+	if !u.Password.Valid {
+		// User likely has no password set (e.g., OIDC only user)
+		return false, errors.New("user has no password set")
+	}
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password.String), []byte(password))
+	if err != nil {
+		// bcrypt.ErrMismatchedHashAndPassword means invalid password
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return false, nil // Password doesn't match
+		}
+		// Other errors indicate a problem during comparison
+		return false, err
+	}
+	return true, nil // Password matches
 }
 
 type ProjectUser struct {
@@ -44,10 +80,11 @@ type ProjectUser struct {
 
 type Token struct {
 	Base
-	UserID    int       `json:"user_id" db:"user_id" validate:"required"`
-	Token     string    `json:"token" db:"token" validate:"required"`
-	Name      string    `json:"name" db:"name" validate:"required"`
-	ExpiresAt null.Time `json:"expires_at" db:"expires_at"`
+	UserID     int       `json:"user_id" db:"user_id" validate:"required"`
+	Token      string    `json:"token" db:"token" validate:"required"`
+	Name       string    `json:"name" db:"name" validate:"required"`
+	ExpiresAt  null.Time `json:"expires_at" db:"expires_at"`
+	LastUsedAt null.Time `json:"last_used_at" db:"last_used_at"`
 }
 
 type ForwardRule struct {

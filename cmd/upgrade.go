@@ -20,6 +20,7 @@ type migFunc struct {
 
 var migList = []migFunc{
 	{"v0.1.0", migrations.V0_1_0},
+	{"v0.2.0", migrations.V0_2_0},
 }
 
 func upgrade(db *sqlx.DB, config *config.Config, prompt bool) {
@@ -43,18 +44,24 @@ func upgrade(db *sqlx.DB, config *config.Config, prompt bool) {
 
 	if len(toRun) == 0 {
 		logger.Printf("no upgrades to run. Database is up to date.")
-		return
+	} else {
+		logger.Printf("Found %d pending upgrade(s) to run.", len(toRun))
+		for _, m := range toRun {
+			log.Printf("running migration %s", m.version)
+			if err := m.fn(db, config, logger); err != nil {
+				log.Fatalf("error running migration %s: %v", m.version, err)
+			}
+
+			if err := recordMigrationVersion(m.version, db); err != nil {
+				log.Fatalf("error recording migration version %s: %v", m.version, err)
+			}
+		}
+		logger.Println("All migrations executed successfully.")
 	}
 
-	for _, m := range toRun {
-		log.Printf("running migration %s", m.version)
-		if err := m.fn(db, config, logger); err != nil {
-			log.Fatalf("error running migration %s: %v", m.version, err)
-		}
-
-		if err := recordMigrationVersion(m.version, db); err != nil {
-			log.Fatalf("error recording migration version %s: %v", m.version, err)
-		}
+	// Check if the default admin user exists and create it if not.
+	if err := createDefaultAdminUserIfNeeded(db, logger); err != nil {
+		logger.Fatalf("Error creating default admin user during upgrade: %v", err)
 	}
 
 	log.Printf("upgrade complete")

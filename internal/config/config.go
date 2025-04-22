@@ -19,6 +19,17 @@ type DatabaseConfig struct {
 	ConnMaxLifetime time.Duration `koanf:"conn_max_lifetime"`
 }
 
+// OIDCConfig holds OpenID Connect / OAuth2 settings.
+// Moved here from internal/auth to break import cycle.
+// would have preferred to use "OIDC auth.OIDCConfig"
+type OIDCConfig struct {
+	Enabled      bool   `koanf:"enabled"`
+	ProviderURL  string `koanf:"provider_url"`
+	RedirectURL  string `koanf:"redirect_url"` // Note: This might be better constructed at runtime
+	ClientID     string `koanf:"client_id"`
+	ClientSecret string `koanf:"client_secret"`
+}
+
 type Config struct {
 	Server struct {
 		HTTP struct {
@@ -40,6 +51,7 @@ type Config struct {
 		Level  logger.Level `koanf:"level"`
 		Format string       `koanf:"format"`
 	} `koanf:"logging"`
+	OIDC OIDCConfig `koanf:"oidc"`
 }
 
 func LoadConfig(configFile string, ko *koanf.Koanf) (*Config, error) {

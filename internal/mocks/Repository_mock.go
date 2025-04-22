@@ -941,6 +941,65 @@ func (_c *Repository_GetTokenByUser_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
+// GetTokenByValue provides a mock function with given fields: ctx, tokenValue
+func (_m *Repository) GetTokenByValue(ctx context.Context, tokenValue string) (*models.Token, error) {
+	ret := _m.Called(ctx, tokenValue)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTokenByValue")
+	}
+
+	var r0 *models.Token
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.Token, error)); ok {
+		return rf(ctx, tokenValue)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *models.Token); ok {
+		r0 = rf(ctx, tokenValue)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Token)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, tokenValue)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Repository_GetTokenByValue_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTokenByValue'
+type Repository_GetTokenByValue_Call struct {
+	*mock.Call
+}
+
+// GetTokenByValue is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tokenValue string
+func (_e *Repository_Expecter) GetTokenByValue(ctx interface{}, tokenValue interface{}) *Repository_GetTokenByValue_Call {
+	return &Repository_GetTokenByValue_Call{Call: _e.mock.On("GetTokenByValue", ctx, tokenValue)}
+}
+
+func (_c *Repository_GetTokenByValue_Call) Run(run func(ctx context.Context, tokenValue string)) *Repository_GetTokenByValue_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *Repository_GetTokenByValue_Call) Return(_a0 *models.Token, _a1 error) *Repository_GetTokenByValue_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Repository_GetTokenByValue_Call) RunAndReturn(run func(context.Context, string) (*models.Token, error)) *Repository_GetTokenByValue_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUser provides a mock function with given fields: ctx, id
 func (_m *Repository) GetUser(ctx context.Context, id int) (*models.User, error) {
 	ret := _m.Called(ctx, id)
@@ -996,6 +1055,65 @@ func (_c *Repository_GetUser_Call) Return(_a0 *models.User, _a1 error) *Reposito
 }
 
 func (_c *Repository_GetUser_Call) RunAndReturn(run func(context.Context, int) (*models.User, error)) *Repository_GetUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUserByEmail provides a mock function with given fields: ctx, email
+func (_m *Repository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	ret := _m.Called(ctx, email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserByEmail")
+	}
+
+	var r0 *models.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.User, error)); ok {
+		return rf(ctx, email)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *models.User); ok {
+		r0 = rf(ctx, email)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.User)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, email)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Repository_GetUserByEmail_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByEmail'
+type Repository_GetUserByEmail_Call struct {
+	*mock.Call
+}
+
+// GetUserByEmail is a helper method to define mock.On call
+//   - ctx context.Context
+//   - email string
+func (_e *Repository_Expecter) GetUserByEmail(ctx interface{}, email interface{}) *Repository_GetUserByEmail_Call {
+	return &Repository_GetUserByEmail_Call{Call: _e.mock.On("GetUserByEmail", ctx, email)}
+}
+
+func (_c *Repository_GetUserByEmail_Call) Run(run func(ctx context.Context, email string)) *Repository_GetUserByEmail_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *Repository_GetUserByEmail_Call) Return(_a0 *models.User, _a1 error) *Repository_GetUserByEmail_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Repository_GetUserByEmail_Call) RunAndReturn(run func(context.Context, string) (*models.User, error)) *Repository_GetUserByEmail_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1764,6 +1882,62 @@ func (_c *Repository_ProjectRemoveUser_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
+// PruneExpiredTokens provides a mock function with given fields: ctx
+func (_m *Repository) PruneExpiredTokens(ctx context.Context) (int64, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PruneExpiredTokens")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (int64, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) int64); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Repository_PruneExpiredTokens_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PruneExpiredTokens'
+type Repository_PruneExpiredTokens_Call struct {
+	*mock.Call
+}
+
+// PruneExpiredTokens is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Repository_Expecter) PruneExpiredTokens(ctx interface{}) *Repository_PruneExpiredTokens_Call {
+	return &Repository_PruneExpiredTokens_Call{Call: _e.mock.On("PruneExpiredTokens", ctx)}
+}
+
+func (_c *Repository_PruneExpiredTokens_Call) Run(run func(ctx context.Context)) *Repository_PruneExpiredTokens_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *Repository_PruneExpiredTokens_Call) Return(_a0 int64, _a1 error) *Repository_PruneExpiredTokens_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Repository_PruneExpiredTokens_Call) RunAndReturn(run func(context.Context) (int64, error)) *Repository_PruneExpiredTokens_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateInbox provides a mock function with given fields: ctx, inbox
 func (_m *Repository) UpdateInbox(ctx context.Context, inbox *models.Inbox) error {
 	ret := _m.Called(ctx, inbox)
@@ -1949,6 +2123,53 @@ func (_c *Repository_UpdateRule_Call) Return(_a0 error) *Repository_UpdateRule_C
 }
 
 func (_c *Repository_UpdateRule_Call) RunAndReturn(run func(context.Context, *models.ForwardRule) error) *Repository_UpdateRule_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateTokenLastUsed provides a mock function with given fields: ctx, tokenID
+func (_m *Repository) UpdateTokenLastUsed(ctx context.Context, tokenID int) error {
+	ret := _m.Called(ctx, tokenID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateTokenLastUsed")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) error); ok {
+		r0 = rf(ctx, tokenID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Repository_UpdateTokenLastUsed_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateTokenLastUsed'
+type Repository_UpdateTokenLastUsed_Call struct {
+	*mock.Call
+}
+
+// UpdateTokenLastUsed is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tokenID int
+func (_e *Repository_Expecter) UpdateTokenLastUsed(ctx interface{}, tokenID interface{}) *Repository_UpdateTokenLastUsed_Call {
+	return &Repository_UpdateTokenLastUsed_Call{Call: _e.mock.On("UpdateTokenLastUsed", ctx, tokenID)}
+}
+
+func (_c *Repository_UpdateTokenLastUsed_Call) Run(run func(ctx context.Context, tokenID int)) *Repository_UpdateTokenLastUsed_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int))
+	})
+	return _c
+}
+
+func (_c *Repository_UpdateTokenLastUsed_Call) Return(_a0 error) *Repository_UpdateTokenLastUsed_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Repository_UpdateTokenLastUsed_Call) RunAndReturn(run func(context.Context, int) error) *Repository_UpdateTokenLastUsed_Call {
 	_c.Call.Return(run)
 	return _c
 }
