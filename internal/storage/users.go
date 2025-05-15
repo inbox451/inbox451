@@ -2,9 +2,6 @@ package storage
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-
 	"inbox451/internal/models"
 
 	_ "github.com/lib/pq"
@@ -35,26 +32,14 @@ func (r *repository) GetUser(ctx context.Context, userID int) (*models.User, err
 func (r *repository) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	var user models.User
 	err := r.queries.GetUserByUsername.GetContext(ctx, &user, username)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &user, nil
+	return &user, handleDBError(err)
 }
 
 func (r *repository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
 	// Assuming you add a query named 'get-user-by-email' in queries.sql
 	err := r.queries.GetUserByEmail.GetContext(ctx, &user, email)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil // Return nil, nil when not found
-		}
-		return nil, handleDBError(err)
-	}
-	return &user, nil
+	return &user, handleDBError(err)
 }
 
 func (r *repository) CreateUser(ctx context.Context, user *models.User) error {
