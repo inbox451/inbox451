@@ -26,20 +26,29 @@ func (r *repository) ListUsers(ctx context.Context, limit, offset int) ([]*model
 func (r *repository) GetUser(ctx context.Context, userID int) (*models.User, error) {
 	var user models.User
 	err := r.queries.GetUser.GetContext(ctx, &user, userID)
-	return &user, handleDBError(err)
+	if err != nil {
+		return nil, handleDBError(err)
+	}
+	return &user, nil
 }
 
 func (r *repository) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	var user models.User
 	err := r.queries.GetUserByUsername.GetContext(ctx, &user, username)
-	return &user, handleDBError(err)
+	if err != nil {
+		return nil, handleDBError(err)
+	}
+	return &user, nil
 }
 
 func (r *repository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
 	// Assuming you add a query named 'get-user-by-email' in queries.sql
 	err := r.queries.GetUserByEmail.GetContext(ctx, &user, email)
-	return &user, handleDBError(err)
+	if err != nil {
+		return nil, handleDBError(err)
+	}
+	return &user, nil
 }
 
 func (r *repository) CreateUser(ctx context.Context, user *models.User) error {
