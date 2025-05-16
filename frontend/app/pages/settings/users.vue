@@ -1,4 +1,8 @@
 <script setup lang="ts">
+definePageMeta({
+  title: 'Users'
+})
+
 const nuxtApp = useNuxtApp()
 // const toast = useToast()
 
@@ -41,12 +45,9 @@ async function inviteUser() {
 
 <template>
   <div>
-    <UPageCard
+    <UiCardHeader
       title="Users"
       description="Invite new users by email address."
-      variant="naked"
-      orientation="horizontal"
-      class="mb-4"
     >
       <UModal v-model:open="isModalOpen" title="Invite User">
         <UButton
@@ -71,20 +72,15 @@ async function inviteUser() {
           />
         </template>
       </UModal>
-    </UPageCard>
+    </UiCardHeader>
 
-    <UPageCard variant="subtle" :ui="{ container: 'p-0 sm:p-0 gap-y-0', wrapper: 'items-stretch', header: 'p-4 mb-0 border-b border-default' }">
-      <template #header>
-        <UInput
-          v-model="q"
-          icon="i-lucide-search"
-          placeholder="Search users"
-          autofocus
-          class="w-full"
-        />
-      </template>
-
+    <UCard
+      variant="subtle"
+      :ui="{
+        body: 'p-0 sm:p-0'
+      }"
+    >
       <SettingsUsersList :data="filteredUsers" />
-    </UPageCard>
+    </UCard>
   </div>
 </template>

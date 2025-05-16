@@ -2,6 +2,10 @@
 import * as z from 'zod'
 import type { FormError } from '@nuxt/ui'
 
+definePageMeta({
+  title: 'Security'
+})
+
 const passwordSchema = z.object({
   current: z.string().min(8, 'Must be at least 8 characters'),
   new: z.string().min(8, 'Must be at least 8 characters')
@@ -24,10 +28,9 @@ const validate = (state: Partial<PasswordSchema>): FormError[] => {
 </script>
 
 <template>
-  <UPageCard
+  <UiCardDetailed
     title="Password"
     description="Confirm your current password before setting a new one."
-    variant="subtle"
   >
     <UForm
       :schema="passwordSchema"
@@ -55,15 +58,13 @@ const validate = (state: Partial<PasswordSchema>): FormError[] => {
 
       <UButton label="Update" class="w-fit" type="submit" />
     </UForm>
-  </UPageCard>
+  </UiCardDetailed>
 
-  <UPageCard
+  <UiCardDetailed
     title="Account"
     description="No longer want to use our service? You can delete your account here. This action is not reversible. All information related to this account will be deleted permanently."
     class="bg-gradient-to-tl from-error/10 from-5% to-default"
   >
-    <template #footer>
-      <UButton label="Delete account" color="error" />
-    </template>
-  </UPageCard>
+    <UButton label="Delete account" color="error" />
+  </UiCardDetailed>
 </template>

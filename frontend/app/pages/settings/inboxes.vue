@@ -7,6 +7,10 @@ const newInboxEmail = ref('')
 const isLoading = ref(false)
 const isModalOpen = ref(false)
 
+definePageMeta({
+  title: 'Inboxes'
+})
+
 async function createInbox() {
   if (!userStore.selectedProject?.id) return
 
@@ -29,12 +33,9 @@ async function createInbox() {
 
 <template>
   <div>
-    <UPageCard
+    <UiCardHeader
       title="Inboxes"
       description="Create and manage your inboxes."
-      variant="naked"
-      orientation="horizontal"
-      class="mb-4"
     >
       <UModal v-model:open="isModalOpen" title="Create Inbox">
         <UButton
@@ -59,10 +60,15 @@ async function createInbox() {
           />
         </template>
       </UModal>
-    </UPageCard>
+    </UiCardHeader>
 
-    <UPageCard variant="subtle" :ui="{ container: 'p-0 sm:p-0 gap-y-0', wrapper: 'items-stretch', header: 'p-4 mb-0 border-b border-default' }">
+    <UCard
+      variant="subtle"
+      :ui="{
+        body: 'p-0 sm:p-0'
+      }"
+    >
       <SettingsInboxesList :data="userStore.inboxes" />
-    </UPageCard>
+    </UCard>
   </div>
 </template>

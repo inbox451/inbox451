@@ -3,6 +3,10 @@ import { computed, ref, watch } from 'vue'
 import { breakpointsTailwind } from '@vueuse/core'
 import type { Messages } from '~/types'
 
+definePageMeta({
+  title: 'Inbox'
+})
+
 const route = useRoute()
 const nuxtApp = useNuxtApp()
 const userStore = useUserStore()
@@ -91,21 +95,11 @@ const isMobile = breakpoints.smaller('lg')
 </script>
 
 <template>
-  <UDashboardPanel
-    id="inbox-1"
-    :default-size="25"
-    :min-size="20"
-    :max-size="30"
-    resizable
-  >
-    <UDashboardNavbar title="Inbox">
-      <template #leading>
-        <UDashboardSidebarCollapse />
-      </template>
+  <div class="dashboard-panel shrink-0 w-full lg:w-[25%]">
+    <NavigationHeader>
       <template #trailing>
         <UBadge :label="filteredMails?.length" variant="subtle" />
       </template>
-
       <template #right>
         <UTabs
           v-model="selectedTab"
@@ -115,9 +109,10 @@ const isMobile = breakpoints.smaller('lg')
           size="xs"
         />
       </template>
-    </UDashboardNavbar>
+    </NavigationHeader>
+
     <InboxList v-model="selectedMail" :mails="filteredMails" />
-  </UDashboardPanel>
+  </div>
 
   <InboxMail
     v-if="selectedMail"
@@ -129,11 +124,9 @@ const isMobile = breakpoints.smaller('lg')
     <UIcon name="i-lucide-inbox" class="size-32 text-dimmed" />
   </div>
 
-  <ClientOnly>
-    <USlideover v-if="isMobile" v-model:open="isMailPanelOpen">
-      <template #content>
-        <InboxMail v-if="selectedMail" :mail="selectedMail" @close="selectedMail = null" />
-      </template>
-    </USlideover>
-  </ClientOnly>
+  <USlideover v-if="isMobile" v-model:open="isMailPanelOpen">
+    <template #content>
+      <InboxMail v-if="selectedMail" :mail="selectedMail" @close="selectedMail = null" />
+    </template>
+  </USlideover>
 </template>

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+definePageMeta({
+  title: 'Projects'
+})
+
 const nuxtApp = useNuxtApp()
 const toast = useToast()
 const userStore = useUserStore()
@@ -27,12 +31,9 @@ async function createProject() {
 
 <template>
   <div>
-    <UPageCard
+    <UiCardHeader
       title="Projects"
       description="Create and manage your projects."
-      variant="naked"
-      orientation="horizontal"
-      class="mb-4"
     >
       <UModal v-model:open="isModalOpen" title="Create Project">
         <UButton
@@ -57,10 +58,15 @@ async function createProject() {
           />
         </template>
       </UModal>
-    </UPageCard>
+    </UiCardHeader>
 
-    <UPageCard variant="subtle" :ui="{ container: 'p-0 sm:p-0 gap-y-0', wrapper: 'items-stretch', header: 'p-4 mb-0 border-b border-default' }">
+    <UCard
+      variant="subtle"
+      :ui="{
+        body: 'p-0 sm:p-0'
+      }"
+    >
       <SettingsProjectsList :data="userStore.projects" />
-    </UPageCard>
+    </UCard>
   </div>
 </template>

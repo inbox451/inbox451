@@ -46,8 +46,8 @@ async function markAsUnread() {
 </script>
 
 <template>
-  <UDashboardPanel id="inbox-2">
-    <UDashboardNavbar :title="mail.subject" :toggle="false">
+  <div class="dashboard-panel flex-1">
+    <NavigationHeader :title="mail.subject">
       <template #leading>
         <UButton
           icon="i-lucide-x"
@@ -67,7 +67,6 @@ async function markAsUnread() {
             @click="markAsUnread"
           />
         </UTooltip>
-
         <UTooltip text="Delete">
           <UButton
             icon="i-lucide-trash-2"
@@ -77,7 +76,7 @@ async function markAsUnread() {
           />
         </UTooltip>
       </template>
-    </UDashboardNavbar>
+    </NavigationHeader>
 
     <div class="flex flex-col sm:flex-row justify-between items-center gap-1 p-4 sm:px-6 border-b border-default">
       <div class="flex items-center gap-4 sm:my-1.5">
@@ -104,5 +103,5 @@ async function markAsUnread() {
         {{ mail.body }}
       </p>
     </div>
-  </UDashboardPanel>
+  </div>
 </template>

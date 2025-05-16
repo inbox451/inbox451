@@ -2,7 +2,8 @@
 const nuxtApp = useNuxtApp()
 
 definePageMeta({
-  layout: 'not-dashboard'
+  layout: 'not-dashboard',
+  title: 'Logout'
 })
 
 onMounted(async () => {

@@ -2,6 +2,10 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
+definePageMeta({
+  title: 'Settings'
+})
+
 const fileRef = ref<HTMLInputElement>()
 
 const profileSchema = z.object({
@@ -54,12 +58,9 @@ function onFileClick() {
     :state="profile"
     @submit="onSubmit"
   >
-    <UPageCard
+    <UiCardHeader
       title="Profile"
       description="These informations will be displayed publicly."
-      variant="naked"
-      orientation="horizontal"
-      class="mb-4"
     >
       <UButton
         form="settings"
@@ -68,9 +69,14 @@ function onFileClick() {
         type="submit"
         class="w-fit lg:ms-auto"
       />
-    </UPageCard>
+    </UiCardHeader>
 
-    <UPageCard variant="subtle">
+    <UCard
+      variant="subtle"
+      :ui="{
+        body: 'flex flex-col gap-y-4'
+      }"
+    >
       <UFormField
         name="name"
         label="Name"
@@ -153,6 +159,6 @@ function onFileClick() {
           class="w-full"
         />
       </UFormField>
-    </UPageCard>
+    </UCard>
   </UForm>
 </template>
