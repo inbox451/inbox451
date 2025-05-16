@@ -1,10 +1,6 @@
 <script setup lang="ts">
 const userStore = useUserStore()
 
-defineProps<{
-  collapsed?: boolean
-}>()
-
 const projects = computed(() => {
   return userStore.projects.map(project => ({
     id: project.id,
@@ -51,20 +47,18 @@ watch(() => selectedProject.value, async (newVal, oldVal) => {
   <UDropdownMenu
     :items="items"
     :content="{ align: 'center', collisionPadding: 12 }"
-    :ui="{ content: collapsed ? 'w-40' : 'w-(--reka-dropdown-menu-trigger-width)' }"
+    :ui="{ content: 'w-(--reka-dropdown-menu-trigger-width)' }"
   >
     <UButton
       v-bind="{
         ...selectedProject,
-        label: collapsed ? undefined : selectedProject?.label,
-        trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
+        label: selectedProject?.label,
+        trailingIcon: 'i-lucide-chevrons-up-down'
       }"
       color="neutral"
       variant="ghost"
       block
-      :square="collapsed"
       class="data-[state=open]:bg-elevated"
-      :class="[!collapsed && 'py-2']"
       :ui="{
         trailingIcon: 'text-dimmed'
       }"
