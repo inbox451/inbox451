@@ -12,23 +12,25 @@ const nuxtApp = useNuxtApp()
 const router = useRouter()
 const userStore = useUserStore()
 
-type StateKeys = keyof typeof state
-type Schema = z.output<typeof schema>
-
 const isLoading = ref(false)
 const state = reactive({
   username: '',
   password: ''
 })
 
+const schema = z.object({
+  username: z.string().min(1, 'Username is required'),
+  password: z.string().min(8, 'Must be at least 8 characters')
+})
+
 const fields = [{
-  name: 'username' as StateKeys,
+  name: 'username' as keyof typeof state,
   type: 'text' as const,
   label: 'Username',
   placeholder: 'Enter your username',
   required: true
 }, {
-  name: 'password' as StateKeys,
+  name: 'password' as keyof typeof state,
   label: 'Password',
   type: 'password' as const,
   placeholder: 'Enter your password'
@@ -50,15 +52,10 @@ const providers = [{
   }
 }]
 
-const schema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(8, 'Must be at least 8 characters')
-})
-
-async function onSubmit(payload: FormSubmitEvent<Schema>) {
+async function onSubmit(payload: FormSubmitEvent<any>) {
   isLoading.value = true
   await nuxtApp.$api
-    .login(payload.data)
+    .login(payload.data as z.output<typeof schema>)
     .then(async () => {
       await userStore.getUser()
 
@@ -108,41 +105,13 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       <USeparator label="or" class="my-6" />
 
       <!-- Simple Login -->
-      <UForm
+      <UiFormSimple
         :schema="schema"
         :state="state"
-        class="space-y-4 "
+        :fields="fields"
+        :is-loading="isLoading"
         @submit="onSubmit"
-      >
-        <UFormField
-          v-for="field in fields"
-          :key="field.name"
-          :label="field.label"
-          :name="field.name"
-          :type="field.type"
-          :placeholder="field.placeholder"
-          :required="field.required"
-        >
-          <UInput
-            v-model="state[field.name]"
-            :type="field.type"
-            :placeholder="field.placeholder"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UButton
-          type="submit"
-          class="inline-flex w-full items-center justify-center"
-          :loading="isLoading"
-        >
-          <UIcon
-            name="i-lucide-log-in"
-            class="me-2"
-          />
-          Continue
-        </UButton>
-      </UForm>
+      />
     </UCard>
   </div>
 </template>

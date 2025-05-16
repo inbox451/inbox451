@@ -12,16 +12,13 @@ definePageMeta({
   title: 'Create Project'
 })
 
-type StateKeys = keyof typeof state
-type Schema = z.output<typeof schema>
-
 const isLoading = ref(false)
 const state = reactive({
   name: ''
 })
 
 const fields = [{
-  name: 'name' as StateKeys,
+  name: 'name' as keyof typeof state,
   type: 'text' as const,
   label: 'Name',
   placeholder: 'Enter the name of your project',
@@ -32,10 +29,10 @@ const schema = z.object({
   name: z.string().min(1, 'Project name is required')
 })
 
-async function onSubmit(payload: FormSubmitEvent<Schema>) {
+async function onSubmit(payload: FormSubmitEvent<any>) {
   isLoading.value = true
   await nuxtApp.$api
-    .createProject(payload.data.name)
+    .createProject((payload.data as z.output<typeof schema>).name)
     .then(async () => {
       // Refresh the projects list in the store
       await refreshProjects()
@@ -60,7 +57,7 @@ onMounted(() => {
 <template>
   <div class="flex flex-col h-screen items-center justify-center p-4">
     <UCard class="w-full max-w-md">
-      <div class="flex flex-col text-center">
+      <div class="flex flex-col text-center mb-6">
         <div class="mb-2">
           <UIcon
             name="i-lucide-folder-plus"
@@ -75,41 +72,13 @@ onMounted(() => {
         </div>
       </div>
 
-      <UForm
+      <UiFormSimple
         :schema="schema"
         :state="state"
-        class="space-y-4 mt-6"
+        :fields="fields"
+        :is-loading="isLoading"
         @submit="onSubmit"
-      >
-        <UFormField
-          v-for="field in fields"
-          :key="field.name"
-          :label="field.label"
-          :name="field.name"
-          :type="field.type"
-          :placeholder="field.placeholder"
-          :required="field.required"
-        >
-          <UInput
-            v-model="state[field.name]"
-            :type="field.type"
-            :placeholder="field.placeholder"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UButton
-          type="submit"
-          class="inline-flex w-full items-center justify-center"
-          :loading="isLoading"
-        >
-          <UIcon
-            name="i-lucide-plus"
-            class="me-2"
-          />
-          Continue
-        </UButton>
-      </UForm>
+      />
     </UCard>
   </div>
 </template>

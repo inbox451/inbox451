@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import type { FormSubmitEvent } from '@nuxt/ui'
+import * as z from 'zod'
+
 const nuxtApp = useNuxtApp()
 const toast = useToast()
 const userStore = useUserStore()
 
-const newInboxEmail = ref('')
 const isLoading = ref(false)
 const isModalOpen = ref(false)
 
@@ -11,10 +13,26 @@ definePageMeta({
   title: 'Inboxes'
 })
 
-async function createInbox() {
+const state = reactive({
+  email: ''
+})
+
+const fields = [{
+  name: 'email' as keyof typeof state,
+  type: 'email' as const,
+  label: 'Email',
+  placeholder: 'Enter the e-mail address of your inbox',
+  required: true
+}]
+
+const schema = z.object({
+  email: z.string().email('Invalid email address')
+})
+
+async function onSubmit(payload: FormSubmitEvent<any>) {
   if (!userStore.selectedProject?.id) return
 
-  await nuxtApp.$api.createInbox(userStore.selectedProject.id, newInboxEmail.value).then(async () => {
+  await nuxtApp.$api.createInbox(userStore.selectedProject.id, (payload.data as z.output<typeof schema>).email).then(async () => {
     toast.add({ title: 'Success', description: 'New inbox has been created.', color: 'success' })
 
     await refreshInboxes()
@@ -23,11 +41,9 @@ async function createInbox() {
       toast.add({ title: 'Error', description: error.response._data.message, color: 'error' })
     })
     .finally(() => {
+      isLoading.value = false
       isModalOpen.value = false
     })
-
-  newInboxEmail.value = ''
-  isLoading.value = false
 }
 </script>
 
@@ -45,18 +61,13 @@ async function createInbox() {
         />
 
         <template #body>
-          <UInput
-            v-model="newInboxEmail"
-            placeholder="Enter new email address"
-            class="w-full "
-          />
-          <UButton
-            label="Create"
-            color="neutral"
-            :disabled="!newInboxEmail"
-            class="inline-flex items-center justify-center w-full mt-4"
-            :loading="isLoading"
-            @click="createInbox"
+          <UiFormSimple
+            button-label="Create"
+            :schema="schema"
+            :state="state"
+            :fields="fields"
+            :is-loading="isLoading"
+            @submit="onSubmit"
           />
         </template>
       </UModal>
