@@ -52,7 +52,13 @@ func NewServer(ctx context.Context, core *core.Core, db *sql.DB) *Server {
 	// Add middleware
 	e.Use(echomiddleware.Recover())
 	e.Use(echomiddleware.Logger())
-	e.Use(echomiddleware.CORS())
+	e.Use(echomiddleware.CORSWithConfig(echomiddleware.CORSConfig{
+		AllowOrigins:     []string{"http://localhost:3000"}, // Specific origins instead of "*"
+		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete, http.MethodOptions},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+		AllowCredentials: true, // Required when sending cookies/credentials
+		MaxAge:           86400, 
+	}))
 	e.Use(echomiddleware.RequestID())
 	e.Use(echomiddleware.Secure())
 

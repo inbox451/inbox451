@@ -25,14 +25,10 @@ FRONTEND_MODULES = frontend/node_modules
 FRONTEND_DIST = frontend/dist
 FRONTEND_DEPS = \
 	$(FRONTEND_MODULES) \
-	frontend/index.html \
 	frontend/package.json \
-	frontend/vite.config.ts \
-	frontend/tsconfig.app.json \
-	frontend/tsconfig.node.json \
-	frontend/tailwind.config.js \
-	frontend/components.json \
-	$(shell find frontend/src frontend/public -type f)
+	frontend/nuxt.config.ts \
+	frontend/tsconfig.json \
+	$(shell find frontend/app frontend/public -type f)
 
 .PHONY: build deps test dev pack-bin \
         build-frontend run-frontend \
