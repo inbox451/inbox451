@@ -39,8 +39,14 @@ inbox451
 
 # Frontend
 frontend/dist
+frontend/.output
+frontend/.data
+frontend/.nuxt
+frontend/.nitro
+frontend/.cache
+frontend/.fleet
+frontend/.idea
 frontend/node_modules
-frontend/dist-ssr
 frontend/logs
 frontend/*.log
 frontend/npm-debug.log*
@@ -48,10 +54,10 @@ yarn-debug.log*
 frontend/yarn-error.log*
 frontend/pnpm-debug.log*
 frontend/lerna-debug.log*
-
-frontend/node_modules
-frontend/dist
-frontend/dist-ssr
+frontend/.env
+frontend/.env.*
+frontend/!.env.example
+frontend/.history
 
 # Ignore config files
 config.yml
