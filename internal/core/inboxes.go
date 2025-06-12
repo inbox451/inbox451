@@ -2,6 +2,9 @@ package core
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"strings"
 
 	"inbox451/internal/models"
 )
@@ -15,6 +18,25 @@ func NewInboxService(core *Core) InboxService {
 }
 
 func (s *InboxService) Create(ctx context.Context, inbox *models.Inbox) error {
+	// Check if EmailDomain is configured
+	if s.core.Config.Server.EmailDomain != "" {
+		// If inbox.Email doesn't contain "@", append the domain
+		if !strings.Contains(inbox.Email, "@") {
+			originalEmail := inbox.Email
+			inbox.Email = fmt.Sprintf("%s@%s", inbox.Email, s.core.Config.Server.EmailDomain)
+			s.core.Logger.Info("Auto-appended domain to inbox email: %s -> %s", originalEmail, inbox.Email)
+		}
+
+		// Validate that the email ends with the configured domain
+		expectedSuffix := "@" + s.core.Config.Server.EmailDomain
+		if !strings.HasSuffix(inbox.Email, expectedSuffix) {
+			return &APIError{
+				Code:    http.StatusBadRequest,
+				Message: fmt.Sprintf("Inbox email must end with %s", expectedSuffix),
+			}
+		}
+	}
+
 	s.core.Logger.Info("Creating new inbox for project %d: %s", inbox.ProjectID, inbox.Email)
 
 	if err := s.core.Repository.CreateInbox(ctx, inbox); err != nil {
@@ -44,6 +66,25 @@ func (s *InboxService) Get(ctx context.Context, id int) (*models.Inbox, error) {
 }
 
 func (s *InboxService) Update(ctx context.Context, inbox *models.Inbox) error {
+	// Check if EmailDomain is configured
+	if s.core.Config.Server.EmailDomain != "" {
+		// If inbox.Email doesn't contain "@", append the domain
+		if !strings.Contains(inbox.Email, "@") {
+			originalEmail := inbox.Email
+			inbox.Email = fmt.Sprintf("%s@%s", inbox.Email, s.core.Config.Server.EmailDomain)
+			s.core.Logger.Info("Auto-appended domain to inbox email: %s -> %s", originalEmail, inbox.Email)
+		}
+
+		// Validate that the email ends with the configured domain
+		expectedSuffix := "@" + s.core.Config.Server.EmailDomain
+		if !strings.HasSuffix(inbox.Email, expectedSuffix) {
+			return &APIError{
+				Code:    http.StatusBadRequest,
+				Message: fmt.Sprintf("Inbox email must end with %s", expectedSuffix),
+			}
+		}
+	}
+
 	s.core.Logger.Info("Updating inbox with ID: %d", inbox.ID)
 
 	if err := s.core.Repository.UpdateInbox(ctx, inbox); err != nil {

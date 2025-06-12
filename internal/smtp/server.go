@@ -34,7 +34,19 @@ func NewServer(core *core.Core) *SmtpServer {
 	s := smtp.NewServer(be)
 
 	s.Addr = core.Config.Server.SMTP.Port
-	s.Domain = core.Config.Server.SMTP.Hostname
+
+	// Determine the domain to use for SMTP server
+	if core.Config.Server.EmailDomain != "" {
+		s.Domain = core.Config.Server.EmailDomain
+		core.Logger.Info("SMTP server domain set to: %s", s.Domain)
+	} else if core.Config.Server.SMTP.Hostname != "" {
+		s.Domain = core.Config.Server.SMTP.Hostname
+		core.Logger.Warn("EmailDomain not configured, falling back to SMTP.Hostname: %s. Consider setting EmailDomain instead.", s.Domain)
+	} else {
+		// s.Domain will be empty, go-smtp will use os.Hostname()
+		core.Logger.Warn("Neither EmailDomain nor SMTP.Hostname configured. SMTP server will use OS hostname, which might not be desirable.")
+	}
+
 	s.AllowInsecureAuth = true
 
 	return &SmtpServer{

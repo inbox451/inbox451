@@ -45,6 +45,7 @@ type Config struct {
 			Port     string `koanf:"port"`
 			Hostname string `koanf:"hostname"`
 		}
+		EmailDomain string `koanf:"email_domain"`
 	} `koanf:"server"`
 	Database DatabaseConfig `koanf:"database"`
 	Logging  struct {
