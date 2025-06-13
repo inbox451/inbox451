@@ -21,7 +21,7 @@ EXPOSE 8080 1025 1143
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost${INBOX451_SERVER_HTTP_PORT}/api/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost${INBOX451_SERVER_HTTP_PORT}/api/health || exit 1
 
 # Run the application
 ENTRYPOINT ["./inbox451"]

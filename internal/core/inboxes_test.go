@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"io"
+	"net/http"
 	"testing"
 	"time"
 
+	"inbox451/internal/config"
 	"inbox451/internal/logger"
 	"inbox451/internal/mocks"
 	"inbox451/internal/models"
@@ -22,11 +24,18 @@ func setupInboxTestCore(t *testing.T) (*Core, *mocks.Repository) {
 	logger := logger.New(io.Discard, logger.DEBUG)
 
 	core := &Core{
+		Config:     &config.Config{},
 		Logger:     logger,
 		Repository: mockRepo,
 	}
 	core.InboxService = NewInboxService(core)
 
+	return core, mockRepo
+}
+
+func setupInboxTestCoreWithEmailDomain(t *testing.T, emailDomain string) (*Core, *mocks.Repository) {
+	core, mockRepo := setupInboxTestCore(t)
+	core.Config.Server.EmailDomain = emailDomain
 	return core, mockRepo
 }
 
@@ -337,6 +346,205 @@ func TestInboxService_ListByProject(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got)
+			}
+
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestInboxService_Create_WithEmailDomain(t *testing.T) {
+	tests := []struct {
+		name        string
+		emailDomain string
+		inbox       *models.Inbox
+		mockFn      func(*mocks.Repository)
+		wantEmail   string
+		wantErr     bool
+		errMessage  string
+	}{
+		{
+			name:        "auto-append domain to local part",
+			emailDomain: "example.com",
+			inbox: &models.Inbox{
+				ProjectID: 1,
+				Email:     "testinbox",
+			},
+			mockFn: func(m *mocks.Repository) {
+				m.On("CreateInbox", mock.Anything, mock.MatchedBy(func(inbox *models.Inbox) bool {
+					return inbox.Email == "testinbox@example.com"
+				})).Return(nil)
+			},
+			wantEmail: "testinbox@example.com",
+			wantErr:   false,
+		},
+		{
+			name:        "accept full email with correct domain",
+			emailDomain: "example.com",
+			inbox: &models.Inbox{
+				ProjectID: 1,
+				Email:     "test@example.com",
+			},
+			mockFn: func(m *mocks.Repository) {
+				m.On("CreateInbox", mock.Anything, mock.MatchedBy(func(inbox *models.Inbox) bool {
+					return inbox.Email == "test@example.com"
+				})).Return(nil)
+			},
+			wantEmail: "test@example.com",
+			wantErr:   false,
+		},
+		{
+			name:        "reject email with incorrect domain",
+			emailDomain: "example.com",
+			inbox: &models.Inbox{
+				ProjectID: 1,
+				Email:     "test@otherdomain.com",
+			},
+			mockFn:     func(m *mocks.Repository) {},
+			wantErr:    true,
+			errMessage: "Inbox email must end with @example.com",
+		},
+		{
+			name:        "no domain configured - accept any email",
+			emailDomain: "",
+			inbox: &models.Inbox{
+				ProjectID: 1,
+				Email:     "test@anydomain.com",
+			},
+			mockFn: func(m *mocks.Repository) {
+				m.On("CreateInbox", mock.Anything, mock.MatchedBy(func(inbox *models.Inbox) bool {
+					return inbox.Email == "test@anydomain.com"
+				})).Return(nil)
+			},
+			wantEmail: "test@anydomain.com",
+			wantErr:   false,
+		},
+		{
+			name:        "auto-append domain with special characters",
+			emailDomain: "sub.example.com",
+			inbox: &models.Inbox{
+				ProjectID: 1,
+				Email:     "user+tag",
+			},
+			mockFn: func(m *mocks.Repository) {
+				m.On("CreateInbox", mock.Anything, mock.MatchedBy(func(inbox *models.Inbox) bool {
+					return inbox.Email == "user+tag@sub.example.com"
+				})).Return(nil)
+			},
+			wantEmail: "user+tag@sub.example.com",
+			wantErr:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			core, mockRepo := setupInboxTestCoreWithEmailDomain(t, tt.emailDomain)
+			tt.mockFn(mockRepo)
+
+			err := core.InboxService.Create(context.Background(), tt.inbox)
+			if tt.wantErr {
+				assert.Error(t, err)
+				apiErr, ok := err.(*APIError)
+				assert.True(t, ok, "error should be APIError")
+				assert.Equal(t, http.StatusBadRequest, apiErr.Code)
+				assert.Equal(t, tt.errMessage, apiErr.Message)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantEmail, tt.inbox.Email)
+			}
+
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestInboxService_Update_WithEmailDomain(t *testing.T) {
+	tests := []struct {
+		name        string
+		emailDomain string
+		inbox       *models.Inbox
+		mockFn      func(*mocks.Repository)
+		wantEmail   string
+		wantErr     bool
+		errMessage  string
+	}{
+		{
+			name:        "auto-append domain to local part on update",
+			emailDomain: "example.com",
+			inbox: &models.Inbox{
+				Base:      models.Base{ID: 1},
+				ProjectID: 1,
+				Email:     "updatedinbox",
+			},
+			mockFn: func(m *mocks.Repository) {
+				m.On("UpdateInbox", mock.Anything, mock.MatchedBy(func(inbox *models.Inbox) bool {
+					return inbox.Email == "updatedinbox@example.com"
+				})).Return(nil)
+			},
+			wantEmail: "updatedinbox@example.com",
+			wantErr:   false,
+		},
+		{
+			name:        "accept updated email with correct domain",
+			emailDomain: "example.com",
+			inbox: &models.Inbox{
+				Base:      models.Base{ID: 1},
+				ProjectID: 1,
+				Email:     "updated@example.com",
+			},
+			mockFn: func(m *mocks.Repository) {
+				m.On("UpdateInbox", mock.Anything, mock.MatchedBy(func(inbox *models.Inbox) bool {
+					return inbox.Email == "updated@example.com"
+				})).Return(nil)
+			},
+			wantEmail: "updated@example.com",
+			wantErr:   false,
+		},
+		{
+			name:        "reject updated email with incorrect domain",
+			emailDomain: "example.com",
+			inbox: &models.Inbox{
+				Base:      models.Base{ID: 1},
+				ProjectID: 1,
+				Email:     "updated@wrongdomain.com",
+			},
+			mockFn:     func(m *mocks.Repository) {},
+			wantErr:    true,
+			errMessage: "Inbox email must end with @example.com",
+		},
+		{
+			name:        "no domain configured - accept any updated email",
+			emailDomain: "",
+			inbox: &models.Inbox{
+				Base:      models.Base{ID: 1},
+				ProjectID: 1,
+				Email:     "updated@anydomain.com",
+			},
+			mockFn: func(m *mocks.Repository) {
+				m.On("UpdateInbox", mock.Anything, mock.MatchedBy(func(inbox *models.Inbox) bool {
+					return inbox.Email == "updated@anydomain.com"
+				})).Return(nil)
+			},
+			wantEmail: "updated@anydomain.com",
+			wantErr:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			core, mockRepo := setupInboxTestCoreWithEmailDomain(t, tt.emailDomain)
+			tt.mockFn(mockRepo)
+
+			err := core.InboxService.Update(context.Background(), tt.inbox)
+			if tt.wantErr {
+				assert.Error(t, err)
+				apiErr, ok := err.(*APIError)
+				assert.True(t, ok, "error should be APIError")
+				assert.Equal(t, http.StatusBadRequest, apiErr.Code)
+				assert.Equal(t, tt.errMessage, apiErr.Message)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantEmail, tt.inbox.Email)
 			}
 
 			mockRepo.AssertExpectations(t)

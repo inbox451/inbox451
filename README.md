@@ -52,6 +52,7 @@ server:
   imap:
     port: ":1143"
     hostname: "localhost"
+  email_domain: "example.com"
 database:
   url: "postgres://inbox:inbox@localhost:5432/inbox451?sslmode=disable"
 logging:
