@@ -33,7 +33,7 @@ func (s *Server) login(c echo.Context) error {
 
 	ctx := c.Request().Context()
 	// TODO: Check if the login we would attempt to login via e-mail and username or simply username
-	user, err := s.core.UserService.LoginUser(ctx, req.Username, req.Password)
+	user, err := s.core.UserService.LoginWithPassword(ctx, req.Username, req.Password)
 	if err != nil {
 		// HandleError will determine the correct HTTP status code based on the error type
 		return s.core.HandleError(err, http.StatusUnauthorized) // Default to Unauthorized for login failures
