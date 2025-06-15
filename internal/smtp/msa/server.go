@@ -42,7 +42,7 @@ func (backend MSABackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 func NewServer(core *core.Core) *MSAServer {
 	backend := &MSABackend{core: core}
 	s := smtp.NewServer(backend)
-	s.Addr = core.Config.Server.SMTP.Port
+	s.Addr = ":587"
 	s.Domain = core.Config.Server.SMTP.Hostname
 
 	s.AllowInsecureAuth = false

@@ -40,7 +40,7 @@ func NewServer(core *core.Core) *MTAServer {
 	smtpServer := smtp.NewServer(backend)
 
 	// TODO: Review configuration options and place them in core.Config
-	smtpServer.Addr = core.Config.Server.SMTP.Port
+	smtpServer.Addr = ":25" // Standard SMTP port for MTA
 	smtpServer.Domain = core.Config.Server.SMTP.Hostname
 	smtpServer.ReadTimeout = 5 * time.Second
 	smtpServer.WriteTimeout = 10 * time.Second
