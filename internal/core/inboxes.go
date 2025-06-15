@@ -157,7 +157,7 @@ func (s *InboxService) GetByEmailWithWildcard(ctx context.Context, to string) (*
 	domainPart := to[atIndex:]    // Get the domain part after '@'
 
 	dotIndex := strings.Index(recipientPart, ".")
-	if dotIndex != -1 {
+	if dotIndex == -1 {
 		s.core.Logger.Warn("Email not found, exact match failed, and no wildcard to match to: %s", to)
 		return nil, nil
 	}

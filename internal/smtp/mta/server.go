@@ -40,8 +40,8 @@ func NewServer(core *core.Core) *MTAServer {
 	smtpServer := smtp.NewServer(backend)
 
 	// TODO: Review configuration options and place them in core.Config
-	smtpServer.Addr = ":25" // Standard SMTP port for MTA
-	smtpServer.Domain = core.Config.Server.SMTP.Hostname
+	smtpServer.Addr = core.Config.Server.SMTP.Hostname + ":" + core.Config.Server.SMTP.MTA.Port
+	smtpServer.Domain = core.Config.Server.SMTP.Domain
 	smtpServer.ReadTimeout = 5 * time.Second
 	smtpServer.WriteTimeout = 10 * time.Second
 	smtpServer.MaxMessageBytes = 10 * 1024 * 1024
@@ -91,7 +91,7 @@ func (s *MTASession) Rcpt(to string, opts *smtp.RcptOptions) error {
 
 	// Validate the domain of the recipient email address
 	expectedDomain := "@" + s.core.Config.Server.EmailDomain
-	if strings.HasSuffix(to, expectedDomain) {
+	if strings.HasSuffix(to, expectedDomain) == false {
 		return &smtp.SMTPError{
 			Code:         550,
 			EnhancedCode: smtp.EnhancedCode{5, 7, 1},

@@ -2,10 +2,12 @@ server:
   http:
     port: ":8080"
   smtp:
-    port: ":1025"
-    hostname: "localhost"
-    username: ""
-    password: ""
+    host: "localhost"
+    domain: "smtp.example.com"
+    msa:
+      port: 587
+    mta:
+      port: 1025
   imap:
     port: ":1143"
     hostname: "localhost"
