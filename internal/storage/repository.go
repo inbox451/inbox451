@@ -27,6 +27,7 @@ type Repository interface {
 	// Inbox operations
 	ListInboxesByProject(ctx context.Context, projectID, limit, offset int) ([]*models.Inbox, int, error)
 	GetInbox(ctx context.Context, id int) (*models.Inbox, error)
+	GetInboxByEmail(ctx context.Context, email string) (*models.Inbox, error)
 	CreateInbox(ctx context.Context, inbox *models.Inbox) error
 	UpdateInbox(ctx context.Context, inbox *models.Inbox) error
 	DeleteInbox(ctx context.Context, id int) error
@@ -40,7 +41,6 @@ type Repository interface {
 
 	// Message operations
 	ListRules(ctx context.Context, limit, offset int) ([]*models.ForwardRule, int, error)
-	GetInboxByEmail(ctx context.Context, email string) (*models.Inbox, error)
 	GetMessage(ctx context.Context, id int) (*models.Message, error)
 	ListMessagesByInbox(ctx context.Context, inboxID, limit, offset int) ([]*models.Message, int, error)
 	ListMessagesByInboxWithFilter(ctx context.Context, inboxID int, isRead *bool, limit, offset int) ([]*models.Message, int, error)

@@ -16,7 +16,8 @@ import (
 	"inbox451/internal/config"
 	"inbox451/internal/core"
 	"inbox451/internal/imap"
-	"inbox451/internal/smtp"
+	"inbox451/internal/smtp/msa"
+	"inbox451/internal/smtp/mta"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/knadh/koanf/providers/posflag"
@@ -77,7 +78,7 @@ type ServerInstance struct {
 
 func startServers(core *core.Core, db *sql.DB) error {
 	// Create error channel for servers
-	const numServers = 3
+	const numServers = 4
 	errChan := make(chan serverError, numServers)
 
 	// Create a channel to listen for interrupt signals
@@ -87,8 +88,9 @@ func startServers(core *core.Core, db *sql.DB) error {
 	// Initialize all servers
 	servers := []ServerInstance{
 		{server: api.NewServer(context.Background(), core, db), name: "HTTP"},
-		{server: smtp.NewServer(core), name: "SMTP"},
 		{server: imap.NewServer(core), name: "IMAP"},
+		{server: mta.NewServer(core), name: "SMTP: Mail Transfer Agent (MTA)"},
+		{server: msa.NewServer(core), name: "SMTP Mail Submission Agent (MSA)"},
 	}
 
 	// Start all servers
