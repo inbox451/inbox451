@@ -35,22 +35,23 @@ type MTASession struct {
 	to   string
 }
 
-func NewMTAServer(core *core.Core) (*MTAServer, error) {
+func NewServer(core *core.Core) *MTAServer {
 	backend := &MTABackend{core: core}
 	smtpServer := smtp.NewServer(backend)
 
+	// TODO: Review configuration options and place them in core.Config
 	smtpServer.Addr = core.Config.Server.SMTP.Port
 	smtpServer.Domain = core.Config.Server.SMTP.Hostname
 	smtpServer.ReadTimeout = 5 * time.Second
 	smtpServer.WriteTimeout = 10 * time.Second
-	smtpServer.MaxMessageBytes = 10 * 1024 * 1024 // max email size 10 MB
+	smtpServer.MaxMessageBytes = 10 * 1024 * 1024
 	smtpServer.MaxRecipients = 100
 	smtpServer.AllowInsecureAuth = true
 
 	return &MTAServer{
 		core: core,
 		smtp: smtpServer,
-	}, nil
+	}
 }
 
 func (s *MTAServer) ListenAndServe() error {
@@ -102,7 +103,7 @@ func (s *MTASession) Rcpt(to string, opts *smtp.RcptOptions) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	inbox, err := s.core.InboxService.getByEmailWithWildcard(ctx, to)
+	inbox, err := s.core.InboxService.GetByEmailWithWildcard(ctx, to)
 	if err != nil {
 		s.core.Logger.Error("MTA: Error fetching inbox for %s: %v", to, err)
 		return &smtp.SMTPError{
@@ -170,7 +171,7 @@ func (s *MTASession) Data(r io.Reader) error {
 		}
 	}
 
-	inbox, err := s.core.InboxService.getByEmailWithWildcard(ctx, s.to)
+	inbox, err := s.core.InboxService.GetByEmailWithWildcard(ctx, s.to)
 	if err != nil {
 		s.core.Logger.Error("MTA: Error fetching inbox for %s: %v", s.to, err)
 		return &smtp.SMTPError{

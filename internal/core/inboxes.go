@@ -129,7 +129,7 @@ func (s *InboxService) ListByProject(ctx context.Context, projectID, limit, offs
 	return response, nil
 }
 
-func (s *InboxService) getByEmailWithWildcard(ctx context.Context, to string) (*models.Inbox, error) {
+func (s *InboxService) GetByEmailWithWildcard(ctx context.Context, to string) (*models.Inbox, error) {
 	s.core.Logger.Info("Fetching inbox by email with wildcard: %s", to)
 
 	// first check exact match

@@ -7,7 +7,6 @@ import (
 	"github.com/emersion/go-message"
 	"inbox451/internal/core"
 	"inbox451/internal/models"
-	"inbox451/internal/storage"
 	"io"
 	"strings"
 	"time"
@@ -40,7 +39,7 @@ func (backend MSABackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	return session, nil
 }
 
-func NewMSAServer(core *core.Core) (*MSAServer, error) {
+func NewServer(core *core.Core) *MSAServer {
 	backend := &MSABackend{core: core}
 	s := smtp.NewServer(backend)
 	s.Addr = core.Config.Server.SMTP.Port
@@ -51,7 +50,7 @@ func NewMSAServer(core *core.Core) (*MSAServer, error) {
 	return &MSAServer{
 		core: core,
 		smtp: s,
-	}, nil
+	}
 }
 
 func (s *MSAServer) ListenAndServe() error {
@@ -157,7 +156,7 @@ func (s *MSASession) Rcpt(to string, opts *smtp.RcptOptions) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	inbox, err := s.core.InboxService.getByEmailWithWildcard(ctx, to)
+	inbox, err := s.core.InboxService.GetByEmailWithWildcard(ctx, to)
 	if err != nil {
 		s.core.Logger.Error("MTA: Error fetching inbox for %s: %v", to, err)
 		return &smtp.SMTPError{
@@ -222,7 +221,7 @@ func (s *MSASession) Data(r io.Reader) error {
 		}
 	}
 
-	inbox, err := s.core.InboxService.getByEmailWithWildcard(ctx, s.to)
+	inbox, err := s.core.InboxService.GetByEmailWithWildcard(ctx, s.to)
 	if err != nil {
 		s.core.Logger.Error("MTA: Error fetching inbox for %s: %v", s.to, err)
 		return &smtp.SMTPError{

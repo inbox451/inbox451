@@ -11,7 +11,7 @@ import (
 	"inbox451/internal/storage"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // PostgreSQL driver
+	_ "github.com/lib/pq" // PostgresSQL driver
 )
 
 type Core struct {
