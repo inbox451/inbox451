@@ -21,10 +21,10 @@ type MSAServer struct {
 }
 
 type MSASession struct {
-	core     *core.Core
-	to       string
-	from     string
-	authUser *models.User
+	core         *core.Core
+	to           string
+	from         string
+	authUsername string
 }
 
 type MSABackend struct {
@@ -87,6 +87,7 @@ func (s *MSAServer) Shutdown(ctx context.Context) error {
 func (s *MSASession) Reset() {
 	s.from = ""
 	s.to = ""
+	s.authUsername = ""
 }
 
 func (s *MSASession) Logout() error {
@@ -124,12 +125,12 @@ func (s *MSASession) AuthPlain(identity, username, password string) error {
 		}
 	}
 	s.core.Logger.Info("MSA: Authentication successful for username '%s'", username)
-	s.authUser = user
+	s.authUsername = user.Username
 	return nil
 }
 
 func (s *MSASession) RequireAuthentication() error {
-	if s.authUser == nil {
+	if s.authUsername == "" {
 		s.core.Logger.Info("MSA: Authentication required before sending email")
 		return &smtp.SMTPError{
 			Code:         530,
@@ -187,7 +188,7 @@ func (s *MSASession) Rcpt(to string, opts *smtp.RcptOptions) error {
 		}
 	}
 
-	s.core.Logger.Info("MSA: Recipient %s accepted for user %s (inbox ID: %d)", to, s.authUser.Username, inbox.ID)
+	s.core.Logger.Info("MSA: Recipient %s accepted for user %s (inbox ID: %d)", to, s.authUsername, inbox.ID)
 	s.to = to
 	return nil
 }
