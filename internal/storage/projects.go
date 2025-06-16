@@ -61,7 +61,7 @@ func (r *repository) UpdateProject(ctx context.Context, project *models.Project)
 }
 
 func (r *repository) ProjectAddUser(ctx context.Context, projectUser *models.ProjectUser) error {
-	err := r.queries.AddUserToProject.QueryRowContext(ctx, projectUser.ProjectID, projectUser.UserID, projectUser.Role).
+	err := r.queries.AddUserToProject.QueryRowContext(ctx, projectUser.UserID, projectUser.ProjectID, projectUser.Role).
 		Scan(&projectUser.CreatedAt, &projectUser.UpdatedAt)
 	return handleDBError(err)
 }

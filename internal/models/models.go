@@ -97,12 +97,18 @@ type ForwardRule struct {
 
 type Message struct {
 	Base
-	InboxID  int    `json:"inbox_id" db:"inbox_id" validate:"required"`
-	Sender   string `json:"sender" db:"sender" validate:"required,email"`
-	Receiver string `json:"receiver" db:"receiver" validate:"required,email"`
-	Subject  string `json:"subject" db:"subject" validate:"required,max=200"`
-	Body     string `json:"body" db:"body" validate:"required"`
-	IsRead   bool   `json:"is_read" db:"is_read"`
+	InboxID   int    `json:"inbox_id" db:"inbox_id" validate:"required"`
+	Sender    string `json:"sender" db:"sender" validate:"required,email"`
+	Receiver  string `json:"receiver" db:"receiver" validate:"required,email"`
+	Subject   string `json:"subject" db:"subject" validate:"required,max=200"`
+	Body      string `json:"body" db:"body" validate:"required"`
+	IsRead    bool   `json:"is_read" db:"is_read"`
+	IsDeleted bool   `json:"is_deleted" db:"is_deleted"`
+}
+
+type MessageFilters struct {
+	IsRead    *bool
+	IsDeleted *bool
 }
 
 type Session struct {

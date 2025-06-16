@@ -308,3 +308,70 @@ func TestUserService_Delete(t *testing.T) {
 		})
 	}
 }
+
+func TestUserService_LoginUser(t *testing.T) {
+	tests := []struct {
+		name     string
+		username string
+		password string
+		mockFn   func(*mocks.Repository)
+		want     *models.User
+		wantErr  bool
+		errType  error
+	}{
+		{
+			name:     "successful login",
+			username: "testuser",
+			password: "password123",
+			mockFn: func(m *mocks.Repository) {
+				user := &models.User{
+					Base:          models.Base{ID: 1},
+					Username:      "testuser",
+					Status:        "active",
+					Password:      null.StringFrom("$2a$10$LhYtVKJdkcACbejxhtJU8eoDyMNhsntXzXDc3uQVpAXSBSSreyK6i"),
+					PasswordLogin: true,
+				}
+				m.On("GetUserByUsername", mock.Anything, "testuser").Return(user, nil)
+			},
+			want: &models.User{
+				Base:          models.Base{ID: 1},
+				Username:      "testuser",
+				Status:        "active",
+				Password:      null.StringFrom("$2a$10$LhYtVKJdkcACbejxhtJU8eoDyMNhsntXzXDc3uQVpAXSBSSreyK6i"),
+				PasswordLogin: true,
+			},
+			wantErr: false,
+		},
+		{
+			name:     "non-existent user",
+			username: "nonexistent",
+			password: "password123",
+			mockFn: func(m *mocks.Repository) {
+				m.On("GetUserByUsername", mock.Anything, "nonexistent").Return((*models.User)(nil), storage.ErrNotFound)
+			},
+			want:    nil,
+			wantErr: true,
+			errType: ErrAuthFailed,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			core, mockRepo := setupTestCore(t)
+			tt.mockFn(mockRepo)
+
+			got, err := core.UserService.LoginUser(context.Background(), tt.username, tt.password)
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errType != nil {
+					assert.ErrorIs(t, err, tt.errType, "expected error type does not match")
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
