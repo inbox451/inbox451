@@ -5,9 +5,11 @@ import (
 	"context"
 	"errors"
 	"github.com/emersion/go-message"
+	"github.com/emersion/go-sasl"
 	"inbox451/internal/core"
 	"inbox451/internal/models"
 	"io"
+	"os"
 	"strings"
 	"time"
 )
@@ -39,13 +41,24 @@ func (backend MSABackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	return session, nil
 }
 
+func (s *MSASession) AuthMechanisms() []string {
+	return []string{sasl.Plain}
+}
+
+func (s *MSASession) Auth(mech string) (sasl.Server, error) {
+	return sasl.NewPlainServer(func(identity, username, password string) error {
+		return s.AuthPlain(identity, username, password)
+	}), nil
+}
+
 func NewServer(core *core.Core) *MSAServer {
 	backend := &MSABackend{core: core}
 	s := smtp.NewServer(backend)
 	s.Addr = core.Config.Server.SMTP.Hostname + ":" + core.Config.Server.SMTP.MSA.Port
 	s.Domain = core.Config.Server.SMTP.Domain
+	s.Debug = os.Stdout
 
-	s.AllowInsecureAuth = false
+	s.AllowInsecureAuth = core.Config.Server.SMTP.AllowInsecureAuth
 
 	return &MSAServer{
 		core: core,
@@ -144,7 +157,7 @@ func (s *MSASession) Rcpt(to string, opts *smtp.RcptOptions) error {
 
 	// Validate the domain of the recipient email address
 	expectedDomain := "@" + s.core.Config.Server.EmailDomain
-	if strings.HasSuffix(to, expectedDomain) {
+	if strings.HasSuffix(to, expectedDomain) == false {
 		return &smtp.SMTPError{
 			Code:         550,
 			EnhancedCode: smtp.EnhancedCode{5, 7, 1},
@@ -268,6 +281,6 @@ func (s *MSASession) Extension(name string) bool {
 	case "auth":
 		return true
 	default:
-		return false
+		return true
 	}
 }

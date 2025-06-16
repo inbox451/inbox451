@@ -46,7 +46,7 @@ func NewServer(core *core.Core) *MTAServer {
 	smtpServer.WriteTimeout = 10 * time.Second
 	smtpServer.MaxMessageBytes = 10 * 1024 * 1024
 	smtpServer.MaxRecipients = 100
-	smtpServer.AllowInsecureAuth = true
+	smtpServer.AllowInsecureAuth = core.Config.Server.SMTP.AllowInsecureAuth
 
 	return &MTAServer{
 		core: core,

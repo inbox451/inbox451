@@ -1,8 +1,8 @@
 server:
+  hostname: "localhost"
   http:
     port: ":8080"
   smtp:
-    host: "localhost"
     domain: "smtp.example.com"
     msa:
       port: 587
@@ -10,7 +10,6 @@ server:
       port: 1025
   imap:
     port: ":1143"
-    hostname: "localhost"
   email_domain: "smtp.example.com"
 database:
   url: "postgres://inbox:inbox@localhost:5432/inbox451?sslmode=disable"

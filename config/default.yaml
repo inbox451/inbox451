@@ -4,6 +4,7 @@ server:
   smtp:
     host: "localhost"
     domain: "smtp.example.com"
+    allow_insecure_auth: true
     mta:
       port: "1025"
       tls: false

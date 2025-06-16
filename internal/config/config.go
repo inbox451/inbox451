@@ -40,11 +40,12 @@ type SMTPAgentConfig struct {
 }
 
 type SMTPConfig struct {
-	Domain   string          `koanf:"domain"`
-	Hostname string          `koanf:"hostname"`
-	MSA      SMTPAgentConfig `koanf:"msa"`
-	MTA      SMTPAgentConfig `koanf:"mta"`
-	TLS      SMTPTLSConfig   `koanf:"tls"`
+	Domain            string          `koanf:"domain"`
+	Hostname          string          `koanf:"hostname"`
+	AllowInsecureAuth bool            `koanf:"allow_insecure_auth"` // Allow insecure authentication methods
+	MSA               SMTPAgentConfig `koanf:"msa"`
+	MTA               SMTPAgentConfig `koanf:"mta"`
+	TLS               SMTPTLSConfig   `koanf:"tls"`
 }
 
 type Config struct {
