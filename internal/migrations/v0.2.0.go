@@ -26,6 +26,29 @@ func V0_2_0(db *sqlx.DB, config *config.Config, log *log.Logger) error {
         )`,
 		`CREATE INDEX IF NOT EXISTS idx_sessions_id ON sessions (id)`,
 		`CREATE INDEX IF NOT EXISTS idx_sessions_id_created_at ON sessions (id, created_at)`,
+
+		// Ensure tokens table exists
+		`CREATE TABLE IF NOT EXISTS tokens (
+			id SERIAL PRIMARY KEY,
+			user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			token VARCHAR(255) NOT NULL UNIQUE,
+			name VARCHAR(255) NOT NULL,
+			expires_at TIMESTAMP WITH TIME ZONE,
+			last_used_at TIMESTAMP WITH TIME ZONE,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_tokens_token ON tokens(token)`,
+		`CREATE INDEX IF NOT EXISTS idx_tokens_user_id ON tokens(user_id)`,
+
+		// Add is_deleted column to messages table
+		`ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT false`,
+
+		// Create index for efficient filtering by inbox_id and is_deleted
+		`CREATE INDEX IF NOT EXISTS idx_messages_inbox_id_is_deleted ON messages (inbox_id, is_deleted)`,
+
+		// Create additional indexes for IMAP filtering operations
+		`CREATE INDEX IF NOT EXISTS idx_messages_inbox_id_is_read_is_deleted ON messages (inbox_id, is_read, is_deleted)`,
 	}
 
 	// Start a transaction
