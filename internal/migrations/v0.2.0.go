@@ -45,6 +45,15 @@ func V0_2_0(db *sqlx.DB, config *config.Config, log *log.Logger) error {
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_tokens_token ON tokens(token)`,
 		`CREATE INDEX IF NOT EXISTS idx_tokens_user_id ON tokens(user_id)`,
+
+		// Add is_deleted column to messages table
+		`ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT false`,
+
+		// Create index for efficient filtering by inbox_id and is_deleted
+		`CREATE INDEX IF NOT EXISTS idx_messages_inbox_id_is_deleted ON messages (inbox_id, is_deleted)`,
+
+		// Create additional indexes for IMAP filtering operations
+		`CREATE INDEX IF NOT EXISTS idx_messages_inbox_id_is_read_is_deleted ON messages (inbox_id, is_read, is_deleted)`,
 	}
 
 	// Start a transaction
