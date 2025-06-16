@@ -57,7 +57,8 @@ type Config struct {
 		IMAP struct {
 			Port     string `koanf:"port"`
 			Hostname string `koanf:"hostname"`
-		}
+			Address  string `koanf:"address"`
+		} `koanf:"imap"`
 		EmailDomain string `koanf:"email_domain"`
 	} `koanf:"server"`
 	Database DatabaseConfig `koanf:"database"`

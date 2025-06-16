@@ -567,3 +567,179 @@ func TestInboxService_Update_WithEmailDomain(t *testing.T) {
 		})
 	}
 }
+
+func TestInboxService_ListByUser(t *testing.T) {
+	now := time.Now()
+	tests := []struct {
+		name    string
+		userID  int
+		mockFn  func(*mocks.Repository)
+		want    []*models.Inbox
+		wantErr bool
+	}{
+		{
+			name:   "successful list with multiple inboxes",
+			userID: 1,
+			mockFn: func(m *mocks.Repository) {
+				inboxes := []*models.Inbox{
+					{
+						Base: models.Base{
+							ID:        1,
+							CreatedAt: null.TimeFrom(now),
+							UpdatedAt: null.TimeFrom(now),
+						},
+						ProjectID: 1,
+						Email:     "inbox1@example.com",
+					},
+					{
+						Base: models.Base{
+							ID:        2,
+							CreatedAt: null.TimeFrom(now),
+							UpdatedAt: null.TimeFrom(now),
+						},
+						ProjectID: 2,
+						Email:     "inbox2@example.com",
+					},
+				}
+				m.On("ListInboxesByUser", mock.Anything, 1).Return(inboxes, nil)
+			},
+			want: []*models.Inbox{
+				{
+					Base: models.Base{
+						ID:        1,
+						CreatedAt: null.TimeFrom(now),
+						UpdatedAt: null.TimeFrom(now),
+					},
+					ProjectID: 1,
+					Email:     "inbox1@example.com",
+				},
+				{
+					Base: models.Base{
+						ID:        2,
+						CreatedAt: null.TimeFrom(now),
+						UpdatedAt: null.TimeFrom(now),
+					},
+					ProjectID: 2,
+					Email:     "inbox2@example.com",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:   "successful list with no inboxes",
+			userID: 2,
+			mockFn: func(m *mocks.Repository) {
+				m.On("ListInboxesByUser", mock.Anything, 2).Return([]*models.Inbox{}, nil)
+			},
+			want:    []*models.Inbox{},
+			wantErr: false,
+		},
+		{
+			name:   "repository error",
+			userID: 1,
+			mockFn: func(m *mocks.Repository) {
+				m.On("ListInboxesByUser", mock.Anything, 1).Return([]*models.Inbox(nil), errors.New("database error"))
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			core, mockRepo := setupInboxTestCore(t)
+			tt.mockFn(mockRepo)
+
+			got, err := core.InboxService.ListByUser(context.Background(), tt.userID)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestInboxService_GetByEmailAndUser(t *testing.T) {
+	now := time.Now()
+	tests := []struct {
+		name    string
+		email   string
+		userID  int
+		mockFn  func(*mocks.Repository)
+		want    *models.Inbox
+		wantErr bool
+		errType error
+	}{
+		{
+			name:   "existing inbox",
+			email:  "inbox@example.com",
+			userID: 1,
+			mockFn: func(m *mocks.Repository) {
+				m.On("GetInboxByEmailAndUser", mock.Anything, "inbox@example.com", 1).Return(&models.Inbox{
+					Base: models.Base{
+						ID:        1,
+						CreatedAt: null.TimeFrom(now),
+						UpdatedAt: null.TimeFrom(now),
+					},
+					ProjectID: 1,
+					Email:     "inbox@example.com",
+				}, nil)
+			},
+			want: &models.Inbox{
+				Base: models.Base{
+					ID:        1,
+					CreatedAt: null.TimeFrom(now),
+					UpdatedAt: null.TimeFrom(now),
+				},
+				ProjectID: 1,
+				Email:     "inbox@example.com",
+			},
+			wantErr: false,
+		},
+		{
+			name:   "non-existent inbox",
+			email:  "nonexistent@example.com",
+			userID: 1,
+			mockFn: func(m *mocks.Repository) {
+				m.On("GetInboxByEmailAndUser", mock.Anything, "nonexistent@example.com", 1).Return(nil, storage.ErrNotFound)
+			},
+			want:    nil,
+			wantErr: true,
+			errType: storage.ErrNotFound,
+		},
+		{
+			name:   "repository error",
+			email:  "inbox@example.com",
+			userID: 1,
+			mockFn: func(m *mocks.Repository) {
+				m.On("GetInboxByEmailAndUser", mock.Anything, "inbox@example.com", 1).Return(nil, errors.New("database error"))
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			core, mockRepo := setupInboxTestCore(t)
+			tt.mockFn(mockRepo)
+
+			got, err := core.InboxService.GetByEmailAndUser(context.Background(), tt.email, tt.userID)
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errType != nil {
+					assert.ErrorIs(t, err, tt.errType)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}

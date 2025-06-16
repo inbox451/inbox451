@@ -169,3 +169,34 @@ func (s *InboxService) GetByEmailWithWildcard(ctx context.Context, to string) (*
 	return s.core.Repository.GetInboxByEmail(ctx, baseEmail)
 
 }
+
+func (s *InboxService) ListByUser(ctx context.Context, userID int) ([]*models.Inbox, error) {
+	s.core.Logger.Info("Listing inboxes for user %d", userID)
+
+	inboxes, err := s.core.Repository.ListInboxesByUser(ctx, userID)
+	if err != nil {
+		s.core.Logger.Error("Failed to list inboxes by user: %v", err)
+		return nil, err
+	}
+
+	s.core.Logger.Info("Successfully retrieved %d inboxes for user %d", len(inboxes), userID)
+	return inboxes, nil
+}
+
+func (s *InboxService) GetByEmailAndUser(ctx context.Context, email string, userID int) (*models.Inbox, error) {
+	s.core.Logger.Debug("Fetching inbox with email %s for user %d", email, userID)
+
+	inbox, err := s.core.Repository.GetInboxByEmailAndUser(ctx, email, userID)
+	if err != nil {
+		s.core.Logger.Error("Failed to fetch inbox by email and user: %v", err)
+		return nil, err
+	}
+
+	if inbox == nil {
+		s.core.Logger.Info("Inbox not found with email %s for user %d", email, userID)
+		return nil, ErrNotFound
+	}
+
+	s.core.Logger.Info("Successfully retrieved inbox %d with email %s for user %d", inbox.ID, email, userID)
+	return inbox, nil
+}

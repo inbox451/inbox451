@@ -552,7 +552,7 @@ func TestRepository_GetUserByUsername(t *testing.T) {
 					WillReturnError(sql.ErrNoRows)
 			},
 			want:    nil,
-			wantErr: false,
+			wantErr: true,
 		},
 		{
 			name:     "database error",
