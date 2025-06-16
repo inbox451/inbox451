@@ -167,7 +167,6 @@ func (s *UserService) LoginWithPassword(ctx context.Context, username, password 
 func (s *UserService) LoginWithToken(ctx context.Context, username, tokenValue string) (*models.User, error) {
 	s.core.Logger.Info("Attempting login for username: %s", username)
 	user, err := s.core.Repository.GetUserByUsername(ctx, username)
-
 	if err != nil {
 		// If user not found or other DB error
 		if errors.Is(err, storage.ErrNotFound) {

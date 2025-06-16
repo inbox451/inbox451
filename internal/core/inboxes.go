@@ -128,6 +128,7 @@ func (s *InboxService) ListByProject(ctx context.Context, projectID, limit, offs
 	s.core.Logger.Info("Successfully retrieved %d inboxes (total: %d)", len(inboxes), total)
 	return response, nil
 }
+
 func (s *InboxService) ListByUser(ctx context.Context, userID int) ([]*models.Inbox, error) {
 	s.core.Logger.Info("Listing inboxes for user %d", userID)
 
@@ -197,5 +198,4 @@ func (s *InboxService) GetByEmailWithWildcard(ctx context.Context, to string) (*
 	s.core.Logger.Info("Looking for inbox for wildcard match. inbox=%s wildcard=%s", baseEmail, to)
 
 	return s.core.Repository.GetInboxByEmail(ctx, baseEmail)
-
 }

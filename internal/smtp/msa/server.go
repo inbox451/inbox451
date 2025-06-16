@@ -4,17 +4,19 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/emersion/go-message"
-	"github.com/emersion/go-sasl"
-	"inbox451/internal/core"
-	"inbox451/internal/models"
-	"inbox451/internal/util"
 	"io"
 	"os"
 	"strings"
 	"time"
+
+	"inbox451/internal/core"
+	"inbox451/internal/models"
+	"inbox451/internal/util"
+
+	"github.com/emersion/go-message"
+	"github.com/emersion/go-sasl"
+	"github.com/emersion/go-smtp"
 )
-import "github.com/emersion/go-smtp"
 
 type MSAServer struct {
 	core *core.Core
