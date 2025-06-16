@@ -60,7 +60,7 @@ func NewServer(core *core.Core) *MSAServer {
 	s.Domain = core.Config.Server.SMTP.Domain
 	s.Debug = os.Stdout
 
-	s.AllowInsecureAuth = false //core.Config.Server.SMTP.AllowInsecureAuth
+	s.AllowInsecureAuth = core.Config.Server.SMTP.AllowInsecureAuth
 
 	if core.Config.Server.SMTP.MSA.EnableTLS {
 		s.TLSConfig = util.GetTLSConfig(core, core.Config.Server.SMTP.TLS.Cert, core.Config.Server.SMTP.TLS.Key)
