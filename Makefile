@@ -53,6 +53,16 @@ deps: $(STUFFBIN)
 test:
 	go test -v ./...
 
+tls-certs:
+	@echo "==> Generating TLS certificates..."
+	@mkdir -p ./tmp/certs
+	@openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+		-keyout ./tmp/certs/key.pem \
+		-out ./tmp/certs/cert.pem \
+		-subj "/C=PT/ST=Lisbon/L=Lisbon/O=Inbox451/CN=localhost"
+	@echo "==> Key generated at ./tmp/certs/key.pem"
+	@echo "==> Certificate generated at ./tmp/certs/cert.pem"
+
 # ==================================================================================== #
 # TESTING & MOCKING
 # ==================================================================================== #

@@ -30,17 +30,30 @@ type OIDCConfig struct {
 	ClientSecret string `koanf:"client_secret"`
 }
 
+type SMTPTLSConfig struct {
+	Cert string `koanf:"cert_file"` // Path to the TLS certificate file
+	Key  string `koanf:"key_file"`  // Path to the TLS key file
+}
+type SMTPAgentConfig struct {
+	EnableTLS bool   `koanf:"tls"`
+	Port      string `koanf:"port"`
+}
+
+type SMTPConfig struct {
+	Domain            string          `koanf:"domain"`
+	Hostname          string          `koanf:"hostname"`
+	AllowInsecureAuth bool            `koanf:"allow_insecure_auth"` // Allow insecure authentication methods
+	MSA               SMTPAgentConfig `koanf:"msa"`
+	MTA               SMTPAgentConfig `koanf:"mta"`
+	TLS               SMTPTLSConfig   `koanf:"tls"`
+}
+
 type Config struct {
 	Server struct {
 		HTTP struct {
 			Port string `koanf:"port"`
 		} `koanf:"http"`
-		SMTP struct {
-			Port     string `koanf:"port"`
-			Hostname string `koanf:"hostname"`
-			Username string `koanf:"username"`
-			Password string `koanf:"password"`
-		} `koanf:"smtp"`
+		SMTP SMTPConfig `koanf:"smtp"`
 		IMAP struct {
 			Port     string `koanf:"port"`
 			Hostname string `koanf:"hostname"`

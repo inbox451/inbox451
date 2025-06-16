@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -126,4 +127,45 @@ func (s *InboxService) ListByProject(ctx context.Context, projectID, limit, offs
 
 	s.core.Logger.Info("Successfully retrieved %d inboxes (total: %d)", len(inboxes), total)
 	return response, nil
+}
+
+func (s *InboxService) GetByEmailWithWildcard(ctx context.Context, to string) (*models.Inbox, error) {
+	s.core.Logger.Info("Fetching inbox by email with wildcard: %s", to)
+
+	// first check exact match
+	inbox, err := s.core.Repository.GetInboxByEmail(ctx, to)
+	if err != nil {
+		s.core.Logger.Error("Failed to fetch inbox by email: %v", err)
+		return nil, err
+	}
+
+	if inbox != nil {
+		s.core.Logger.Info("Found inbox by exact email match: %s", to)
+		return inbox, nil
+	}
+
+	// if not found, check for wildcard match
+	// kermit.the.frog@example.org we just look for the domain part and until the first '.'
+	// we would be looking for kermit@example.org
+	atIndex := strings.LastIndex(to, "@")
+	if atIndex == -1 {
+		s.core.Logger.Warn("Invalid email format, missing '@': %s", to)
+		return nil, errors.New("invalid email format, missing '@'")
+	}
+
+	recipientPart := to[:atIndex] // Get the part before '@'
+	domainPart := to[atIndex:]    // Get the domain part after '@'
+
+	dotIndex := strings.Index(recipientPart, ".")
+	if dotIndex == -1 {
+		s.core.Logger.Warn("Email not found, exact match failed, and no wildcard to match to: %s", to)
+		return nil, ErrNotFound
+	}
+
+	baseEmail := recipientPart[:dotIndex] + domainPart
+
+	s.core.Logger.Info("Looking for inbox for wildcard match. inbox=%s wildcard=%s", baseEmail, to)
+
+	return s.core.Repository.GetInboxByEmail(ctx, baseEmail)
+
 }

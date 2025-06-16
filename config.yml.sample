@@ -1,15 +1,16 @@
 server:
+  hostname: "localhost"
   http:
     port: ":8080"
   smtp:
-    port: ":1025"
-    hostname: "localhost"
-    username: ""
-    password: ""
+    domain: "smtp.example.com"
+    msa:
+      port: 587
+    mta:
+      port: 1025
   imap:
     port: ":1143"
-    hostname: "localhost"
-  email_domain: "example.com"
+  email_domain: "smtp.example.com"
 database:
   url: "postgres://inbox:inbox@localhost:5432/inbox451?sslmode=disable"
   max_open_conns: 25

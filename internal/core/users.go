@@ -123,8 +123,8 @@ func (s *UserService) List(ctx context.Context, limit, offset int) (*models.Pagi
 	return response, nil
 }
 
-// LoginUser validates user credentials.
-func (s *UserService) LoginUser(ctx context.Context, username, password string) (*models.User, error) {
+// LoginWithPassword validates user credentials.
+func (s *UserService) LoginWithPassword(ctx context.Context, username, password string) (*models.User, error) {
 	s.core.Logger.Info("Attempting login for username: %s", username)
 	user, err := s.core.Repository.GetUserByUsername(ctx, username)
 	if err != nil {
@@ -161,5 +161,43 @@ func (s *UserService) LoginUser(ctx context.Context, username, password string) 
 	s.core.Logger.Info("Login successful for username: %s", username)
 	// Optionally: Update last login time here if needed
 	// s.core.Repository.UpdateUserLoginTimestamp(ctx, user.ID)
+	return user, nil
+}
+
+func (s *UserService) LoginWithToken(ctx context.Context, username, tokenValue string) (*models.User, error) {
+	s.core.Logger.Info("Attempting login for username: %s", username)
+	user, err := s.core.Repository.GetUserByUsername(ctx, username)
+
+	if err != nil {
+		// If user not found or other DB error
+		if errors.Is(err, storage.ErrNotFound) {
+			s.core.Logger.Warn("Login failed: User not found for username: %s", username)
+			return nil, ErrAuthFailed
+		}
+		s.core.Logger.Error("Database error during login for username %s: %v", username, err)
+		return nil, err
+	}
+
+	// Check if user is active and allows password login
+	if user.Status != "active" {
+		s.core.Logger.Warn("Login failed: User account is inactive for username: %s", username)
+		return nil, ErrAccountInactive
+	}
+
+	token, err := s.core.TokenService.GetByValue(ctx, tokenValue)
+	if err != nil {
+		s.core.Logger.Error("Error retrieving token for username %s: %v", username, err)
+		if errors.Is(err, storage.ErrNotFound) {
+			s.core.Logger.Warn("Login failed: Token not found for username: %s", username)
+			return nil, ErrAuthFailed
+		}
+	}
+
+	if token == nil || (token.UserID != user.ID) {
+		s.core.Logger.Warn("Login failed: Token does not match user for username: %s", username)
+		return nil, ErrAuthFailed
+	}
+
+	s.core.Logger.Info("Login successful for username: %s with token", username)
 	return user, nil
 }

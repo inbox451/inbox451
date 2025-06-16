@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-
 	"inbox451/internal/models"
 )
 
@@ -147,6 +146,25 @@ func (s *TokenService) DeleteByUser(ctx context.Context, userID int, tokenID int
 
 	s.core.Logger.Debug("Successfully deleted token with ID: %d for userId %d", tokenID, userID)
 	return nil
+}
+
+func (s *TokenService) GetByValue(ctx context.Context, tokenValue string) (*models.Token, error) {
+	token, err := s.core.Repository.GetTokenByValue(ctx, tokenValue)
+	if err != nil {
+		s.core.Logger.Error("Failed to fetch token by value: %v", err)
+		return nil, err
+	}
+
+	if token == nil {
+		tokenMask := tokenValue
+		if len(tokenValue) > 6 {
+			tokenMask = tokenValue[:3] + "..." + tokenValue[len(tokenValue)-3:]
+		}
+		s.core.Logger.Info("Token not found with value token=%s", tokenMask)
+		return nil, ErrNotFound
+	}
+
+	return token, nil
 }
 
 // GenerateSecureTokenBase64 generates a cryptographically secure random token
