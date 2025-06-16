@@ -24,7 +24,7 @@ func (be *ImapBackend) Login(connInfo *imap.ConnInfo, username string, password 
 	be.core.Logger.Info("IMAP Login attempt for username: %s", username)
 
 	ctx := context.Background()
-	user, err := be.core.UserService.LoginUser(ctx, username, password)
+	user, err := be.core.UserService.LoginWithPassword(ctx, username, password)
 	if err != nil {
 		be.core.Logger.Warn("IMAP Login failed for username: %s, error: %v", username, err)
 		return nil, backend.ErrInvalidCredentials

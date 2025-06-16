@@ -318,7 +318,7 @@ func TestUserService_Delete(t *testing.T) {
 	}
 }
 
-func TestUserService_LoginUser(t *testing.T) {
+func TestUserService_LoginWithPassword(t *testing.T) {
 	tests := []struct {
 		name     string
 		username string
@@ -369,7 +369,7 @@ func TestUserService_LoginUser(t *testing.T) {
 			core, mockRepo := setupTestCore(t)
 			tt.mockFn(mockRepo)
 
-			got, err := core.UserService.LoginUser(context.Background(), tt.username, tt.password)
+			got, err := core.UserService.LoginWithPassword(context.Background(), tt.username, tt.password)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errType != nil {
