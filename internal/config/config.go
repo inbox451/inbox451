@@ -31,12 +31,12 @@ type OIDCConfig struct {
 }
 
 type SMTPTLSConfig struct {
-	Cert string `koanf:"cert"` // Path to the TLS certificate file
-	Key  string `koanf:"key"`  // Path to the TLS key file
+	Cert string `koanf:"cert_file"` // Path to the TLS certificate file
+	Key  string `koanf:"key_file"`  // Path to the TLS key file
 }
 type SMTPAgentConfig struct {
-	StartTLS bool   `koanf:"start_tls"`
-	Port     string `koanf:"port"`
+	EnableTLS bool   `koanf:"tls"`
+	Port      string `koanf:"port"`
 }
 
 type SMTPConfig struct {

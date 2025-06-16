@@ -8,6 +8,7 @@ import (
 	"github.com/emersion/go-sasl"
 	"inbox451/internal/core"
 	"inbox451/internal/models"
+	"inbox451/internal/util"
 	"io"
 	"os"
 	"strings"
@@ -31,6 +32,10 @@ type MSABackend struct {
 	core *core.Core
 }
 
+func (s *MSASession) AuthMechanisms() []string {
+	return []string{sasl.Plain}
+}
+
 func (backend MSABackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	backend.core.Logger.Info("MSA: New connection from %s", c.Conn().RemoteAddr())
 	session := &MSASession{
@@ -41,11 +46,8 @@ func (backend MSABackend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	return session, nil
 }
 
-func (s *MSASession) AuthMechanisms() []string {
-	return []string{sasl.Plain}
-}
-
 func (s *MSASession) Auth(mech string) (sasl.Server, error) {
+	s.Reset()
 	return sasl.NewPlainServer(func(identity, username, password string) error {
 		return s.AuthPlain(identity, username, password)
 	}), nil
@@ -58,7 +60,11 @@ func NewServer(core *core.Core) *MSAServer {
 	s.Domain = core.Config.Server.SMTP.Domain
 	s.Debug = os.Stdout
 
-	s.AllowInsecureAuth = core.Config.Server.SMTP.AllowInsecureAuth
+	s.AllowInsecureAuth = false //core.Config.Server.SMTP.AllowInsecureAuth
+
+	if core.Config.Server.SMTP.MSA.EnableTLS {
+		s.TLSConfig = util.GetTLSConfig(core, core.Config.Server.SMTP.TLS.Cert, core.Config.Server.SMTP.TLS.Key)
+	}
 
 	return &MSAServer{
 		core: core,
@@ -273,15 +279,4 @@ func (s *MSASession) Data(r io.Reader) error {
 
 	s.core.Logger.Info("MTA: Message stored successfully for %s", s.to)
 	return nil
-}
-
-func (s *MSASession) Extension(name string) bool {
-	// Todo: Implement support for starttls since implementations that require authentication
-	// before starttls are not compliant with RFC 4954
-	switch strings.ToLower(name) {
-	case "auth":
-		return true
-	default:
-		return true
-	}
 }
