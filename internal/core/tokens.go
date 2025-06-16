@@ -149,9 +149,6 @@ func (s *TokenService) DeleteByUser(ctx context.Context, userID int, tokenID int
 }
 
 func (s *TokenService) GetByValue(ctx context.Context, tokenValue string) (*models.Token, error) {
-	tokenMask := tokenValue[0:3] + "..." + tokenValue[len(tokenValue)-3:]
-	s.core.Logger.Debug("Fetching token by value: %s", tokenMask)
-
 	token, err := s.core.Repository.GetTokenByValue(ctx, tokenValue)
 	if err != nil {
 		s.core.Logger.Error("Failed to fetch token by value: %v", err)
@@ -159,7 +156,11 @@ func (s *TokenService) GetByValue(ctx context.Context, tokenValue string) (*mode
 	}
 
 	if token == nil {
-		s.core.Logger.Info("Token not found with value: %s", tokenMask)
+		tokenMask := tokenValue
+		if len(tokenValue) > 6 {
+			tokenMask = tokenValue[:3] + "..." + tokenValue[len(tokenValue)-3:]
+		}
+		s.core.Logger.Info("Token not found with value token=%s", tokenMask)
 		return nil, ErrNotFound
 	}
 

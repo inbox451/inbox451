@@ -193,7 +193,7 @@ func (s *UserService) LoginWithToken(ctx context.Context, username, tokenValue s
 		}
 	}
 
-	if token.UserID != user.ID {
+	if token == nil || (token.UserID != user.ID) {
 		s.core.Logger.Warn("Login failed: Token does not match user for username: %s", username)
 		return nil, ErrAuthFailed
 	}

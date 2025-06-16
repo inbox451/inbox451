@@ -63,7 +63,12 @@ func NewServer(core *core.Core) *MSAServer {
 	s.AllowInsecureAuth = core.Config.Server.SMTP.AllowInsecureAuth
 
 	if core.Config.Server.SMTP.MSA.EnableTLS {
-		s.TLSConfig = util.GetTLSConfig(core, core.Config.Server.SMTP.TLS.Cert, core.Config.Server.SMTP.TLS.Key)
+		config, err := util.GetTLSConfig(core, core.Config.Server.SMTP.TLS.Cert, core.Config.Server.SMTP.TLS.Key)
+		if err != nil {
+			core.Logger.Error("MSA: Failed to load TLS configuration: %v . Aborting!", err)
+			os.Exit(1)
+		}
+		s.TLSConfig = config
 	}
 
 	return &MSAServer{
@@ -164,7 +169,7 @@ func (s *MSASession) Rcpt(to string, opts *smtp.RcptOptions) error {
 
 	// Validate the domain of the recipient email address
 	expectedDomain := "@" + s.core.Config.Server.EmailDomain
-	if strings.HasSuffix(to, expectedDomain) == false {
+	if !strings.HasSuffix(to, expectedDomain) {
 		return &smtp.SMTPError{
 			Code:         550,
 			EnhancedCode: smtp.EnhancedCode{5, 7, 1},
@@ -178,19 +183,20 @@ func (s *MSASession) Rcpt(to string, opts *smtp.RcptOptions) error {
 
 	inbox, err := s.core.InboxService.GetByEmailWithWildcard(ctx, to)
 	if err != nil {
+		if errors.Is(err, core.ErrNotFound) {
+			s.core.Logger.Info("MTA: Recipient %s not found in inboxes", to)
+			return &smtp.SMTPError{
+				Code:         550,
+				EnhancedCode: smtp.EnhancedCode{5, 1, 1},
+				Message:      "Recipient address rejected: User unknown",
+			}
+		}
+
 		s.core.Logger.Error("MTA: Error fetching inbox for %s: %v", to, err)
 		return &smtp.SMTPError{
 			Code:         451,
 			EnhancedCode: smtp.EnhancedCode{4, 3, 0},
 			Message:      "Temporary error while processing recipient",
-		}
-	}
-
-	if inbox == nil {
-		return &smtp.SMTPError{
-			Code:         550,
-			EnhancedCode: smtp.EnhancedCode{5, 1, 1},
-			Message:      "Recipient address rejected: User unknown",
 		}
 	}
 
@@ -243,6 +249,15 @@ func (s *MSASession) Data(r io.Reader) error {
 
 	inbox, err := s.core.InboxService.GetByEmailWithWildcard(ctx, s.to)
 	if err != nil {
+		if errors.Is(err, core.ErrNotFound) {
+			s.core.Logger.Info("MTA: Recipient %s not found in inboxes", s.to)
+			return &smtp.SMTPError{
+				Code:         550,
+				EnhancedCode: smtp.EnhancedCode{5, 1, 1},
+				Message:      "Recipient address rejected: User unknown",
+			}
+		}
+
 		s.core.Logger.Error("MTA: Error fetching inbox for %s: %v", s.to, err)
 		return &smtp.SMTPError{
 			Code:         451,
@@ -251,15 +266,7 @@ func (s *MSASession) Data(r io.Reader) error {
 		}
 	}
 
-	if inbox == nil {
-		return &smtp.SMTPError{
-			Code:         550,
-			EnhancedCode: smtp.EnhancedCode{5, 1, 1},
-			Message:      "Recipient address rejected: User unknown",
-		}
-	}
-
-	message := &models.Message{
+	m := &models.Message{
 		InboxID:  inbox.ID,
 		Sender:   s.from,
 		Receiver: s.to,
@@ -268,7 +275,7 @@ func (s *MSASession) Data(r io.Reader) error {
 		IsRead:   false,
 	}
 
-	if err := s.core.MessageService.Store(ctx, message); err != nil {
+	if err := s.core.MessageService.Store(ctx, m); err != nil {
 		s.core.Logger.Error("MTA: Error storing message: %v", err)
 		return &smtp.SMTPError{
 			Code:         554,
