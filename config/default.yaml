@@ -2,13 +2,19 @@ server:
   http:
     port: ":8080"
   smtp:
-    port: ":1025"
-    hostname: "localhost"
-    username: ""
-    password: ""
+    host: "localhost"
+    domain: "smtp.example.com"
+    allow_insecure_auth: true
+    mta:
+      port: "1025"
+      tls: false
+    msa:
+      tls: false
+      port: "587"
   imap:
     port: ":1143"
     hostname: "localhost"
+  email_domain: "example.com"
 database:
   url: "postgres://mercury:mercury@localhost:5432/mercury?sslmode=disable"
   max_open_conns: 25

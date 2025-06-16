@@ -27,7 +27,6 @@ services:
       timeout: 5s
       retries: 5
   pgadmin:
-    container_name: pgadmin
     image: dpage/pgadmin4:latest
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-inbox451@inbox451.dev}
