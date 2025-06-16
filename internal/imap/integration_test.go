@@ -96,7 +96,10 @@ func (suite *IMAPIntegrationTestSuite) SetupSuite() {
 
 func (suite *IMAPIntegrationTestSuite) TearDownSuite() {
 	if suite.client != nil {
-		suite.client.Close()
+		err := suite.client.Close()
+		if err != nil {
+			return
+		}
 	}
 
 	if suite.imapServer != nil {
@@ -153,7 +156,10 @@ func (suite *IMAPIntegrationTestSuite) TearDownTest() {
 		if err := suite.client.Logout(); err != nil {
 			suite.T().Logf("Failed to logout: %v", err)
 		}
-		suite.client.Close()
+		err := suite.client.Close()
+		if err != nil {
+			return
+		}
 		suite.client = nil
 	}
 }
@@ -263,7 +269,12 @@ func (suite *IMAPIntegrationTestSuite) TestAuthentication() {
 		// Create new client for this test to avoid state issues
 		testClient, err := client.Dial(suite.testPort)
 		require.NoError(t, err)
-		defer testClient.Close()
+		defer func(testClient *client.Client) {
+			err := testClient.Close()
+			if err != nil {
+				suite.T().Logf("Failed to close test client: %v", err)
+			}
+		}(testClient)
 
 		err = testClient.Login(suite.testUser.Username, "wrongpassword")
 		assert.Error(t, err, "Login with invalid credentials should fail")
@@ -273,7 +284,12 @@ func (suite *IMAPIntegrationTestSuite) TestAuthentication() {
 		// Create new client for this test
 		testClient, err := client.Dial(suite.testPort)
 		require.NoError(t, err)
-		defer testClient.Close()
+		defer func(testClient *client.Client) {
+			err := testClient.Close()
+			if err != nil {
+				suite.T().Logf("Failed to close test client: %v", err)
+			}
+		}(testClient)
 
 		err = testClient.Login("nonexistent", "password")
 		assert.Error(t, err, "Login with nonexistent user should fail")
