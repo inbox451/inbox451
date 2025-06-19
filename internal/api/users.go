@@ -1,10 +1,8 @@
 package api
 
 import (
-	"net/http"
-	"strconv"
-
 	"inbox451/internal/models"
+	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
@@ -52,7 +50,7 @@ func (s *Server) getUsers(c echo.Context) error {
 }
 
 func (s *Server) getUser(c echo.Context) error {
-	userID, _ := strconv.Atoi(c.Param("userId"))
+	userID := c.Param("userId")
 	user, err := s.core.UserService.Get(c.Request().Context(), userID)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
@@ -64,7 +62,7 @@ func (s *Server) getUser(c echo.Context) error {
 }
 
 func (s *Server) updateUser(c echo.Context) error {
-	userID, _ := strconv.Atoi(c.Param("userId"))
+	userID := c.Param("userId")
 	var user models.User
 	if err := c.Bind(&user); err != nil {
 		return s.core.HandleError(err, http.StatusBadRequest)
@@ -83,7 +81,7 @@ func (s *Server) updateUser(c echo.Context) error {
 }
 
 func (s *Server) deleteUser(c echo.Context) error {
-	userID, _ := strconv.Atoi(c.Param("userId"))
+	userID := c.Param("userId")
 	if err := s.core.UserService.Delete(c.Request().Context(), userID); err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}

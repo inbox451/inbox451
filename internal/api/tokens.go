@@ -1,10 +1,8 @@
 package api
 
 import (
-	"net/http"
-	"strconv"
-
 	"inbox451/internal/models"
+	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/volatiletech/null/v9"
@@ -13,7 +11,7 @@ import (
 // GET /users/:userId/tokens/
 func (s *Server) ListTokensByUser(c echo.Context) error {
 	ctx := c.Request().Context()
-	userId, _ := strconv.Atoi(c.Param("userId"))
+	userId := c.Param("userId")
 
 	var query models.PaginationQuery
 	if err := c.Bind(&query); err != nil {
@@ -37,8 +35,8 @@ func (s *Server) ListTokensByUser(c echo.Context) error {
 
 // GET /users/:userId/tokens/:tokenId
 func (s *Server) GetTokenByUser(c echo.Context) error {
-	userID, _ := strconv.Atoi(c.Param("userId"))
-	tokenID, _ := strconv.Atoi(c.Param("tokenId"))
+	userID := c.Param("userId")
+	tokenID := c.Param("tokenId")
 
 	var query models.PaginationQuery
 	if err := c.Bind(&query); err != nil {
@@ -65,7 +63,7 @@ func (s *Server) CreateTokenForUser(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	// Get user ID from URL
-	userID, _ := strconv.Atoi(c.Param("userId"))
+	userID := c.Param("userId")
 
 	// Token Input DTO
 	type TokenInput struct {
@@ -97,8 +95,8 @@ func (s *Server) CreateTokenForUser(c echo.Context) error {
 }
 
 func (s *Server) DeleteTokenByUser(c echo.Context) error {
-	userID, _ := strconv.Atoi(c.Param("userId"))
-	tokenID, _ := strconv.Atoi(c.Param("tokenId"))
+	userID := c.Param("userId")
+	tokenID := c.Param("tokenId")
 	if err := s.core.TokenService.DeleteByUser(c.Request().Context(), userID, tokenID); err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}

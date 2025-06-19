@@ -1,17 +1,15 @@
 package api
 
 import (
-	"net/http"
-	"strconv"
-
 	"inbox451/internal/models"
 	"inbox451/internal/storage"
+	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
 func (s *Server) getMessages(c echo.Context) error {
-	inboxID, _ := strconv.Atoi(c.Param("inboxId"))
+	inboxID := c.Param("inboxId")
 
 	var query models.MessageQuery
 	if err := c.Bind(&query); err != nil {
@@ -34,7 +32,7 @@ func (s *Server) getMessages(c echo.Context) error {
 }
 
 func (s *Server) getMessage(c echo.Context) error {
-	messageID, _ := strconv.Atoi(c.Param("messageId"))
+	messageID := c.Param("messageId")
 
 	message, err := s.core.MessageService.Get(c.Request().Context(), messageID)
 	if err != nil {
@@ -50,7 +48,7 @@ func (s *Server) getMessage(c echo.Context) error {
 }
 
 func (s *Server) markMessageRead(c echo.Context) error {
-	messageID, _ := strconv.Atoi(c.Param("messageId"))
+	messageID := c.Param("messageId")
 
 	err := s.core.MessageService.MarkAsRead(c.Request().Context(), messageID)
 	if err != nil {
@@ -63,7 +61,7 @@ func (s *Server) markMessageRead(c echo.Context) error {
 }
 
 func (s *Server) markMessageUnread(c echo.Context) error {
-	messageID, _ := strconv.Atoi(c.Param("messageId"))
+	messageID := c.Param("messageId")
 
 	err := s.core.MessageService.MarkAsUnread(c.Request().Context(), messageID)
 	if err != nil {
@@ -76,7 +74,7 @@ func (s *Server) markMessageUnread(c echo.Context) error {
 }
 
 func (s *Server) deleteMessage(c echo.Context) error {
-	messageID, _ := strconv.Atoi(c.Param("messageId"))
+	messageID := c.Param("messageId")
 
 	err := s.core.MessageService.Delete(c.Request().Context(), messageID)
 	if err != nil {

@@ -29,30 +29,30 @@ func V0_1_0(db *sqlx.DB, config *config.Config, log *log.Logger) error {
 		$$`,
 
 		`CREATE TABLE IF NOT EXISTS projects (
-			id SERIAL PRIMARY KEY,
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			name VARCHAR(100) NOT NULL CHECK (LENGTH(name) >= 2),
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS users (
-			id SERIAL PRIMARY KEY,
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			name VARCHAR(255) NOT NULL,
 			username VARCHAR(255) NOT NULL UNIQUE,
-			password VARCHAR(255) NOT NULL,
+			password VARCHAR(255) NULL,
 			email VARCHAR(255) NOT NULL UNIQUE,
-			status VARCHAR(50) NOT NULL,
+			status VARCHAR(50) NOT NULL DEFAULT 'inactive',
 			role user_role NOT NULL DEFAULT 'user',
-			password_login BOOLEAN NOT NULL DEFAULT true,
+			password_login BOOLEAN NOT NULL DEFAULT false,
 			loggedin_at TIMESTAMP WITH TIME ZONE,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS project_users (
-			id SERIAL PRIMARY KEY,
-			project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-			user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			role project_role NOT NULL DEFAULT 'user',
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -60,16 +60,16 @@ func V0_1_0(db *sqlx.DB, config *config.Config, log *log.Logger) error {
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS inboxes (
-			id SERIAL PRIMARY KEY,
-			project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
 			email VARCHAR(255) NOT NULL UNIQUE,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS tokens (
-			id SERIAL PRIMARY KEY,
-			user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			token VARCHAR(255) NOT NULL UNIQUE,
 			name VARCHAR(255) NOT NULL,
 			expires_at TIMESTAMP WITH TIME ZONE,
@@ -84,8 +84,8 @@ func V0_1_0(db *sqlx.DB, config *config.Config, log *log.Logger) error {
 		`,
 
 		`CREATE TABLE IF NOT EXISTS forward_rules (
-			id SERIAL PRIMARY KEY,
-			inbox_id INTEGER NOT NULL REFERENCES inboxes(id) ON DELETE CASCADE,
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			inbox_id UUID NOT NULL REFERENCES inboxes(id) ON DELETE CASCADE,
 			sender VARCHAR(255),
 			receiver VARCHAR(255),
 			subject VARCHAR(200),
@@ -95,8 +95,8 @@ func V0_1_0(db *sqlx.DB, config *config.Config, log *log.Logger) error {
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS messages (
-			id SERIAL PRIMARY KEY,
-			inbox_id INTEGER NOT NULL REFERENCES inboxes(id) ON DELETE CASCADE,
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			inbox_id UUID NOT NULL REFERENCES inboxes(id) ON DELETE CASCADE,
 			sender VARCHAR(255) NOT NULL,
 			receiver VARCHAR(255) NOT NULL,
 			subject VARCHAR(200) NOT NULL,
@@ -107,9 +107,9 @@ func V0_1_0(db *sqlx.DB, config *config.Config, log *log.Logger) error {
 		)`,
 
 		`CREATE TABLE sessions (
-		    id SERIAL PRIMARY KEY,
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		    session_id VARCHAR(255) NOT NULL,
-		    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+		    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 		    data JSONB DEFAULT '{}'::jsonb,
 		    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 		    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,

@@ -13,7 +13,7 @@ func (r *repository) CreateInbox(ctx context.Context, inbox *models.Inbox) error
 		Scan(&inbox.ID, &inbox.CreatedAt, &inbox.UpdatedAt)
 }
 
-func (r *repository) GetInbox(ctx context.Context, id int) (*models.Inbox, error) {
+func (r *repository) GetInbox(ctx context.Context, id string) (*models.Inbox, error) {
 	var inbox models.Inbox
 	err := r.queries.GetInbox.GetContext(ctx, &inbox, id)
 	return &inbox, handleDBError(err)
@@ -39,7 +39,7 @@ func (r *repository) UpdateInbox(ctx context.Context, inbox *models.Inbox) error
 	return handleRowsAffected(result)
 }
 
-func (r *repository) DeleteInbox(ctx context.Context, id int) error {
+func (r *repository) DeleteInbox(ctx context.Context, id string) error {
 	result, err := r.queries.DeleteInbox.ExecContext(ctx, id)
 	if err != nil {
 		return handleDBError(err)
@@ -47,7 +47,7 @@ func (r *repository) DeleteInbox(ctx context.Context, id int) error {
 	return handleRowsAffected(result)
 }
 
-func (r *repository) ListInboxesByProject(ctx context.Context, projectID, limit, offset int) ([]*models.Inbox, int, error) {
+func (r *repository) ListInboxesByProject(ctx context.Context, projectID string, limit, offset int) ([]*models.Inbox, int, error) {
 	var total int
 	err := r.queries.CountInboxesByProject.GetContext(ctx, &total, projectID)
 	if err != nil {

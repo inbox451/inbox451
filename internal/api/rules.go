@@ -1,16 +1,14 @@
 package api
 
 import (
-	"net/http"
-	"strconv"
-
 	"inbox451/internal/models"
+	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
 func (s *Server) createRule(c echo.Context) error {
-	inboxID, _ := strconv.Atoi(c.Param("inboxId"))
+	inboxID := c.Param("inboxId")
 	var rule models.ForwardRule
 	if err := c.Bind(&rule); err != nil {
 		return s.core.HandleError(err, http.StatusBadRequest)
@@ -29,7 +27,7 @@ func (s *Server) createRule(c echo.Context) error {
 }
 
 func (s *Server) getRules(c echo.Context) error {
-	inboxID, _ := strconv.Atoi(c.Param("inboxId"))
+	inboxID := c.Param("inboxId")
 
 	var query models.PaginationQuery
 	if err := c.Bind(&query); err != nil {
@@ -52,7 +50,7 @@ func (s *Server) getRules(c echo.Context) error {
 }
 
 func (s *Server) getRule(c echo.Context) error {
-	ruleID, _ := strconv.Atoi(c.Param("ruleId"))
+	ruleID := c.Param("ruleId")
 	rule, err := s.core.RuleService.Get(c.Request().Context(), ruleID)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
@@ -64,8 +62,8 @@ func (s *Server) getRule(c echo.Context) error {
 }
 
 func (s *Server) updateRule(c echo.Context) error {
-	ruleID, _ := strconv.Atoi(c.Param("ruleId"))
-	inboxID, _ := strconv.Atoi(c.Param("inboxId"))
+	ruleID := c.Param("ruleId")
+	inboxID := c.Param("inboxId")
 
 	var rule models.ForwardRule
 	if err := c.Bind(&rule); err != nil {
@@ -88,7 +86,7 @@ func (s *Server) updateRule(c echo.Context) error {
 }
 
 func (s *Server) deleteRule(c echo.Context) error {
-	ruleID, _ := strconv.Atoi(c.Param("ruleId"))
+	ruleID := c.Param("ruleId")
 	if err := s.core.RuleService.Delete(c.Request().Context(), ruleID); err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}

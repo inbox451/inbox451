@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (r *repository) ListTokensByUser(ctx context.Context, user_id int, limit, offset int) ([]*models.Token, int, error) {
+func (r *repository) ListTokensByUser(ctx context.Context, user_id string, limit, offset int) ([]*models.Token, int, error) {
 	var total int
 	err := r.queries.CountTokensByUser.GetContext(ctx, &total, user_id)
 	if err != nil {
@@ -26,7 +26,7 @@ func (r *repository) ListTokensByUser(ctx context.Context, user_id int, limit, o
 	return tokens, total, nil
 }
 
-func (r *repository) GetTokenByUser(ctx context.Context, token_id int, user_id int) (*models.Token, error) {
+func (r *repository) GetTokenByUser(ctx context.Context, token_id string, user_id string) (*models.Token, error) {
 	var token models.Token
 	err := r.queries.GetTokenByUser.GetContext(ctx, &token, token_id, user_id)
 	return &token, handleDBError(err)
@@ -40,7 +40,7 @@ func (r *repository) GetTokenByValue(ctx context.Context, tokenValue string) (*m
 }
 
 // UpdateTokenLastUsed updates the last_used_at timestamp for a token.
-func (r *repository) UpdateTokenLastUsed(ctx context.Context, tokenID int) error {
+func (r *repository) UpdateTokenLastUsed(ctx context.Context, tokenID string) error {
 	_, err := r.queries.UpdateTokenLastUsed.ExecContext(ctx, tokenID)
 	return handleDBError(err) // Doesn't need handleRowsAffected, it's okay if it doesn't update
 }
@@ -73,7 +73,7 @@ func (r *repository) CreateToken(ctx context.Context, token *models.Token) error
 	return handleDBError(err)
 }
 
-func (r *repository) DeleteToken(ctx context.Context, tokenID int) error {
+func (r *repository) DeleteToken(ctx context.Context, tokenID string) error {
 	result, err := r.queries.DeleteToken.ExecContext(ctx, tokenID)
 	if err != nil {
 		return handleDBError(err)

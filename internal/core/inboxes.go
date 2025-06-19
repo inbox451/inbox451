@@ -49,7 +49,7 @@ func (s *InboxService) Create(ctx context.Context, inbox *models.Inbox) error {
 	return nil
 }
 
-func (s *InboxService) Get(ctx context.Context, id int) (*models.Inbox, error) {
+func (s *InboxService) Get(ctx context.Context, id string) (*models.Inbox, error) {
 	s.core.Logger.Debug("Fetching inbox with ID: %d", id)
 
 	inbox, err := s.core.Repository.GetInbox(ctx, id)
@@ -97,7 +97,7 @@ func (s *InboxService) Update(ctx context.Context, inbox *models.Inbox) error {
 	return nil
 }
 
-func (s *InboxService) Delete(ctx context.Context, id int) error {
+func (s *InboxService) Delete(ctx context.Context, id string) error {
 	s.core.Logger.Info("Deleting inbox with ID: %d", id)
 
 	if err := s.core.Repository.DeleteInbox(ctx, id); err != nil {
@@ -109,7 +109,7 @@ func (s *InboxService) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (s *InboxService) ListByProject(ctx context.Context, projectID, limit, offset int) (*models.PaginatedResponse, error) {
+func (s *InboxService) ListByProject(ctx context.Context, projectID string, limit, offset int) (*models.PaginatedResponse, error) {
 	s.core.Logger.Info("Listing inboxes for project %d with limit: %d and offset: %d", projectID, limit, offset)
 
 	inboxes, total, err := s.core.Repository.ListInboxesByProject(ctx, projectID, limit, offset)

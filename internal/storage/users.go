@@ -26,7 +26,7 @@ func (r *repository) ListUsers(ctx context.Context, limit, offset int) ([]*model
 	return users, total, nil
 }
 
-func (r *repository) GetUser(ctx context.Context, userID int) (*models.User, error) {
+func (r *repository) GetUser(ctx context.Context, userID string) (*models.User, error) {
 	var user models.User
 	err := r.queries.GetUser.GetContext(ctx, &user, userID)
 	return &user, handleDBError(err)
@@ -90,7 +90,7 @@ func (r *repository) UpdateUser(ctx context.Context, user *models.User) error {
 		Scan(&user.UpdatedAt)
 }
 
-func (r *repository) DeleteUser(ctx context.Context, id int) error {
+func (r *repository) DeleteUser(ctx context.Context, id string) error {
 	result, err := r.queries.DeleteUser.ExecContext(ctx, id)
 	if err != nil {
 		return handleDBError(err)
