@@ -52,7 +52,7 @@ func (s *UserService) Create(ctx context.Context, user *models.User) error {
 }
 
 func (s *UserService) Get(ctx context.Context, userID string) (*models.User, error) {
-	s.core.Logger.Debug("Fetching user with ID: %d", userID)
+	s.core.Logger.Debug("Fetching user with ID: %s", userID)
 
 	user, err := s.core.Repository.GetUser(ctx, userID)
 	if err != nil {
@@ -61,7 +61,7 @@ func (s *UserService) Get(ctx context.Context, userID string) (*models.User, err
 	}
 
 	if user == nil {
-		s.core.Logger.Info("User not found with ID: %d", userID)
+		s.core.Logger.Info("User not found with ID: %s", userID)
 		return nil, ErrNotFound
 	}
 
@@ -69,12 +69,12 @@ func (s *UserService) Get(ctx context.Context, userID string) (*models.User, err
 }
 
 func (s *UserService) Update(ctx context.Context, user *models.User) error {
-	s.core.Logger.Info("Updating user with ID: %d", user.ID)
+	s.core.Logger.Info("Updating user with ID: %s", user.ID)
 
 	// Hash the password ONLY if it's being changed (i.e., not empty)
 	if user.Password.Valid && user.Password.String != "" {
 		if err := user.HashPassword(user.Password.String); err != nil {
-			s.core.Logger.Error("Failed to hash password during update for user %d: %v", user.ID, err)
+			s.core.Logger.Error("Failed to hash password during update for user %s: %v", user.ID, err)
 			return fmt.Errorf("password hashing failed: %w", err)
 		}
 	}
@@ -85,19 +85,19 @@ func (s *UserService) Update(ctx context.Context, user *models.User) error {
 		return err
 	}
 
-	s.core.Logger.Info("Successfully updated user with ID: %d", user.ID)
+	s.core.Logger.Info("Successfully updated user with ID: %s", user.ID)
 	return nil
 }
 
 func (s *UserService) Delete(ctx context.Context, id string) error {
-	s.core.Logger.Info("Deleting user with ID: %d", id)
+	s.core.Logger.Info("Deleting user with ID: %s", id)
 
 	if err := s.core.Repository.DeleteUser(ctx, id); err != nil {
 		s.core.Logger.Error("Failed to delete user: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully deleted user with ID: %d", id)
+	s.core.Logger.Info("Successfully deleted user with ID: %s", id)
 	return nil
 }
 

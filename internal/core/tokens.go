@@ -29,7 +29,7 @@ func NewTokensService(core *Core) TokenService {
 //   - *models.PaginatedResponse containing the tokens and pagination info
 //   - error if the operation fails
 func (s *TokenService) ListByUser(ctx context.Context, userId string, limit, offset int) (*models.PaginatedResponse, error) {
-	s.core.Logger.Info("Listing tokens for userId %d with limit: %d and offset: %d", userId, limit, offset)
+	s.core.Logger.Info("Listing tokens for userId %s with limit: %d and offset: %d", userId, limit, offset)
 
 	tokens, total, err := s.core.Repository.ListTokensByUser(ctx, userId, limit, offset)
 	if err != nil {
@@ -46,7 +46,7 @@ func (s *TokenService) ListByUser(ctx context.Context, userId string, limit, off
 		},
 	}
 
-	s.core.Logger.Info("Successfully retrieved %d tokens for userID %d (total: %d)", len(tokens), userId, total)
+	s.core.Logger.Info("Successfully retrieved %d tokens for userID %s (total: %d)", len(tokens), userId, total)
 	return response, nil
 }
 
@@ -62,7 +62,7 @@ func (s *TokenService) ListByUser(ctx context.Context, userId string, limit, off
 //   - ErrNotFound if token doesn't exist
 //   - error if the operation fails
 func (s *TokenService) GetByUser(ctx context.Context, tokenID string, userID string) (*models.Token, error) {
-	s.core.Logger.Debug("Fetching token with ID: %d for userID: %d ", tokenID, userID)
+	s.core.Logger.Debug("Fetching token with ID: %s for userID: %s ", tokenID, userID)
 
 	token, err := s.core.Repository.GetTokenByUser(ctx, tokenID, userID)
 	if err != nil {
@@ -71,7 +71,7 @@ func (s *TokenService) GetByUser(ctx context.Context, tokenID string, userID str
 	}
 
 	if token == nil {
-		s.core.Logger.Info("Token not found with ID: %d for userID %d", tokenID, userID)
+		s.core.Logger.Info("Token not found with ID: %d for userID %s", tokenID, userID)
 		return nil, ErrNotFound
 	}
 
@@ -89,7 +89,7 @@ func (s *TokenService) GetByUser(ctx context.Context, tokenID string, userID str
 //   - *models.Token containing the newly created token
 //   - error if the operation fails
 func (s *TokenService) CreateForUser(ctx context.Context, userID string, tokenData *models.Token) (*models.Token, error) {
-	s.core.Logger.Debug("Creating token for userId: %d", userID)
+	s.core.Logger.Debug("Creating token for userId: %s", userID)
 
 	newToken := models.Token{}
 	newToken.UserID = userID
@@ -131,7 +131,7 @@ func (s *TokenService) CreateForUser(ctx context.Context, userID string, tokenDa
 // Returns:
 //   - error if the operation fails or token doesn't exist
 func (s *TokenService) DeleteByUser(ctx context.Context, userID string, tokenID string) error {
-	s.core.Logger.Debug("Deleting token with ID: %d for userID %d", tokenID, userID)
+	s.core.Logger.Debug("Deleting token with ID: %s for userID %s", tokenID, userID)
 
 	// Check if token exists for this user
 	_, err := s.GetByUser(ctx, userID, tokenID)
@@ -144,7 +144,7 @@ func (s *TokenService) DeleteByUser(ctx context.Context, userID string, tokenID 
 		return err
 	}
 
-	s.core.Logger.Debug("Successfully deleted token with ID: %d for userId %d", tokenID, userID)
+	s.core.Logger.Debug("Successfully deleted token with ID: %s for userId %s", tokenID, userID)
 	return nil
 }
 

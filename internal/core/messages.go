@@ -65,37 +65,37 @@ func (s *MessageService) ListByInbox(ctx context.Context, inboxID string, limit,
 }
 
 func (s *MessageService) MarkAsRead(ctx context.Context, messageID string) error {
-	s.core.Logger.Debug("Marking message %d as read", messageID)
+	s.core.Logger.Debug("Marking message %s as read", messageID)
 
 	if err := s.core.Repository.UpdateMessageReadStatus(ctx, messageID, true); err != nil {
 		s.core.Logger.Error("Failed to mark message as read: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully marked message %d as read", messageID)
+	s.core.Logger.Info("Successfully marked message %s as read", messageID)
 	return nil
 }
 
 func (s *MessageService) MarkAsUnread(ctx context.Context, messageID string) error {
-	s.core.Logger.Debug("Marking message %d as unread", messageID)
+	s.core.Logger.Debug("Marking message %s as unread", messageID)
 
 	if err := s.core.Repository.UpdateMessageReadStatus(ctx, messageID, false); err != nil {
 		s.core.Logger.Error("Failed to mark message as unread: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully marked message %d as unread", messageID)
+	s.core.Logger.Info("Successfully marked message %s as unread", messageID)
 	return nil
 }
 
 func (s *MessageService) Delete(ctx context.Context, messageID string) error {
-	s.core.Logger.Debug("Deleting message with ID: %d", messageID)
+	s.core.Logger.Debug("Deleting message with ID: %s", messageID)
 
 	if err := s.core.Repository.DeleteMessage(ctx, messageID); err != nil {
 		s.core.Logger.Error("Failed to delete message: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully deleted message with ID: %d", messageID)
+	s.core.Logger.Info("Successfully deleted message with ID: %s", messageID)
 	return nil
 }
