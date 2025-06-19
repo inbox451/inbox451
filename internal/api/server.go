@@ -67,7 +67,7 @@ func NewServer(ctx context.Context, core *core.Core, db *sql.DB) *Server {
 
 	// Initialize Auth module
 	authCallbacks := &auth.Callbacks{
-		GetUser: func(id int) (*models.User, error) {
+		GetUser: func(id string) (*models.User, error) {
 			return s.core.UserService.Get(context.Background(), id)
 		},
 	}

@@ -26,7 +26,7 @@ func (s *MessageService) Store(ctx context.Context, message *models.Message) err
 	return nil
 }
 
-func (s *MessageService) Get(ctx context.Context, id int) (*models.Message, error) {
+func (s *MessageService) Get(ctx context.Context, id string) (*models.Message, error) {
 	s.core.Logger.Debug("Fetching message with ID: %d", id)
 
 	message, err := s.core.Repository.GetMessage(ctx, id)
@@ -43,7 +43,7 @@ func (s *MessageService) Get(ctx context.Context, id int) (*models.Message, erro
 	return message, nil
 }
 
-func (s *MessageService) ListByInbox(ctx context.Context, inboxID int, limit, offset int, isRead *bool) (*models.PaginatedResponse, error) {
+func (s *MessageService) ListByInbox(ctx context.Context, inboxID string, limit, offset int, isRead *bool) (*models.PaginatedResponse, error) {
 	s.core.Logger.Info("Listing messages for inbox %d with limit: %d, offset: %d, isRead: %v",
 		inboxID, limit, offset, isRead)
 
@@ -64,7 +64,7 @@ func (s *MessageService) ListByInbox(ctx context.Context, inboxID int, limit, of
 	return response, nil
 }
 
-func (s *MessageService) MarkAsRead(ctx context.Context, messageID int) error {
+func (s *MessageService) MarkAsRead(ctx context.Context, messageID string) error {
 	s.core.Logger.Debug("Marking message %d as read", messageID)
 
 	if err := s.core.Repository.UpdateMessageReadStatus(ctx, messageID, true); err != nil {
@@ -76,7 +76,7 @@ func (s *MessageService) MarkAsRead(ctx context.Context, messageID int) error {
 	return nil
 }
 
-func (s *MessageService) MarkAsUnread(ctx context.Context, messageID int) error {
+func (s *MessageService) MarkAsUnread(ctx context.Context, messageID string) error {
 	s.core.Logger.Debug("Marking message %d as unread", messageID)
 
 	if err := s.core.Repository.UpdateMessageReadStatus(ctx, messageID, false); err != nil {
@@ -88,7 +88,7 @@ func (s *MessageService) MarkAsUnread(ctx context.Context, messageID int) error 
 	return nil
 }
 
-func (s *MessageService) Delete(ctx context.Context, messageID int) error {
+func (s *MessageService) Delete(ctx context.Context, messageID string) error {
 	s.core.Logger.Debug("Deleting message with ID: %d", messageID)
 
 	if err := s.core.Repository.DeleteMessage(ctx, messageID); err != nil {

@@ -26,7 +26,7 @@ func (s *RuleService) Create(ctx context.Context, rule *models.ForwardRule) erro
 	return nil
 }
 
-func (s *RuleService) Get(ctx context.Context, id int) (*models.ForwardRule, error) {
+func (s *RuleService) Get(ctx context.Context, id string) (*models.ForwardRule, error) {
 	s.core.Logger.Debug("Fetching rule with ID: %d", id)
 
 	rule, err := s.core.Repository.GetRule(ctx, id)
@@ -55,7 +55,7 @@ func (s *RuleService) Update(ctx context.Context, rule *models.ForwardRule) erro
 	return nil
 }
 
-func (s *RuleService) Delete(ctx context.Context, id int) error {
+func (s *RuleService) Delete(ctx context.Context, id string) error {
 	s.core.Logger.Info("Deleting rule with ID: %d", id)
 
 	if err := s.core.Repository.DeleteRule(ctx, id); err != nil {
@@ -67,7 +67,7 @@ func (s *RuleService) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (s *RuleService) ListByInbox(ctx context.Context, inboxID, limit, offset int) (*models.PaginatedResponse, error) {
+func (s *RuleService) ListByInbox(ctx context.Context, inboxID string, limit, offset int) (*models.PaginatedResponse, error) {
 	s.core.Logger.Info("Listing rules for inbox %d with limit: %d and offset: %d", inboxID, limit, offset)
 
 	rules, total, err := s.core.Repository.ListRulesByInbox(ctx, inboxID, limit, offset)

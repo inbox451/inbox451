@@ -51,7 +51,7 @@ func (s *UserService) Create(ctx context.Context, user *models.User) error {
 	return nil
 }
 
-func (s *UserService) Get(ctx context.Context, userID int) (*models.User, error) {
+func (s *UserService) Get(ctx context.Context, userID string) (*models.User, error) {
 	s.core.Logger.Debug("Fetching user with ID: %d", userID)
 
 	user, err := s.core.Repository.GetUser(ctx, userID)
@@ -89,7 +89,7 @@ func (s *UserService) Update(ctx context.Context, user *models.User) error {
 	return nil
 }
 
-func (s *UserService) Delete(ctx context.Context, id int) error {
+func (s *UserService) Delete(ctx context.Context, id string) error {
 	s.core.Logger.Info("Deleting user with ID: %d", id)
 
 	if err := s.core.Repository.DeleteUser(ctx, id); err != nil {

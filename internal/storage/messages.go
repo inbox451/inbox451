@@ -13,7 +13,7 @@ func (r *repository) CreateMessage(ctx context.Context, message *models.Message)
 	return handleDBError(err)
 }
 
-func (r *repository) GetMessage(ctx context.Context, id int) (*models.Message, error) {
+func (r *repository) GetMessage(ctx context.Context, id string) (*models.Message, error) {
 	var message models.Message
 	err := r.queries.GetMessage.GetContext(ctx, &message, id)
 	if err != nil {
@@ -22,7 +22,7 @@ func (r *repository) GetMessage(ctx context.Context, id int) (*models.Message, e
 	return &message, nil
 }
 
-func (r *repository) ListMessagesByInbox(ctx context.Context, inboxID, limit, offset int) ([]*models.Message, int, error) {
+func (r *repository) ListMessagesByInbox(ctx context.Context, inboxID string, limit, offset int) ([]*models.Message, int, error) {
 	var total int
 	err := r.queries.CountMessagesByInbox.GetContext(ctx, &total, inboxID)
 	if err != nil {
@@ -41,7 +41,7 @@ func (r *repository) ListMessagesByInbox(ctx context.Context, inboxID, limit, of
 	return messages, total, nil
 }
 
-func (r *repository) UpdateMessageReadStatus(ctx context.Context, messageID int, isRead bool) error {
+func (r *repository) UpdateMessageReadStatus(ctx context.Context, messageID string, isRead bool) error {
 	result, err := r.queries.UpdateMessageReadStatus.ExecContext(ctx, isRead, messageID)
 	if err != nil {
 		return handleDBError(err)
@@ -49,7 +49,7 @@ func (r *repository) UpdateMessageReadStatus(ctx context.Context, messageID int,
 	return handleRowsAffected(result)
 }
 
-func (r *repository) DeleteMessage(ctx context.Context, messageID int) error {
+func (r *repository) DeleteMessage(ctx context.Context, messageID string) error {
 	result, err := r.queries.DeleteMessage.ExecContext(ctx, messageID)
 	if err != nil {
 		return handleDBError(err)
@@ -57,7 +57,7 @@ func (r *repository) DeleteMessage(ctx context.Context, messageID int) error {
 	return handleRowsAffected(result)
 }
 
-func (r *repository) ListMessagesByInboxWithFilter(ctx context.Context, inboxID int, isRead *bool, limit, offset int) ([]*models.Message, int, error) {
+func (r *repository) ListMessagesByInboxWithFilter(ctx context.Context, inboxID string, isRead *bool, limit, offset int) ([]*models.Message, int, error) {
 	var total int
 	var err error
 

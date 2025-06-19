@@ -55,7 +55,7 @@ type Auth struct {
 
 // Callbacks for session manager interaction with Echo context
 type Callbacks struct {
-	GetUser func(id int) (*models.User, error)
+	GetUser func(id string) (*models.User, error)
 }
 
 // Helper to initialize OIDC provider and config
@@ -250,7 +250,7 @@ func (a *Auth) GetAPIToken(tokenValue string) (*models.Token, bool) {
 }
 
 // updateTokenLastUsedAsync updates the last_used_at timestamp asynchronously.
-func (a *Auth) updateTokenLastUsedAsync(tokenID int) {
+func (a *Auth) updateTokenLastUsedAsync(tokenID string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := a.core.Repository.UpdateTokenLastUsed(ctx, tokenID); err != nil {
@@ -402,7 +402,7 @@ func (a *Auth) validateSession(c echo.Context) (*simplesessions.Session, *models
 		return nil, nil, simplesessions.ErrInvalidSession
 	}
 
-	userID, err := a.sessStore.Int(userIDVal, nil)
+	userID, err := a.sessStore.String(userIDVal, nil)
 	if err != nil {
 		// User linked to session not found in DB, invalidate session
 		if errors.Is(err, storage.ErrNotFound) {

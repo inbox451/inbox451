@@ -36,7 +36,7 @@ func (s *ProjectService) List(ctx context.Context, limit, offset int) (*models.P
 	return response, nil
 }
 
-func (s *ProjectService) ListByUser(ctx context.Context, userID int, limit, offset int) (*models.PaginatedResponse, error) {
+func (s *ProjectService) ListByUser(ctx context.Context, userID string, limit, offset int) (*models.PaginatedResponse, error) {
 	s.core.Logger.Debug("Listing projects with limit: %d and offset: %d for user %d", limit, offset, userID)
 
 	projects, total, err := s.core.Repository.ListProjectsByUser(ctx, userID, limit, offset)
@@ -58,7 +58,7 @@ func (s *ProjectService) ListByUser(ctx context.Context, userID int, limit, offs
 	return response, nil
 }
 
-func (s *ProjectService) Get(ctx context.Context, projectId int) (*models.Project, error) {
+func (s *ProjectService) Get(ctx context.Context, projectId string) (*models.Project, error) {
 	s.core.Logger.Debug("Fetching project with ID: %d", projectId)
 
 	project, err := s.core.Repository.GetProject(ctx, projectId)
@@ -111,7 +111,7 @@ func (s *ProjectService) AddUser(ctx context.Context, projectUser *models.Projec
 	return nil
 }
 
-func (s *ProjectService) RemoveUser(ctx context.Context, projectID int, userID int) error {
+func (s *ProjectService) RemoveUser(ctx context.Context, projectID string, userID string) error {
 	s.core.Logger.Debug("Remove user %d to project %d", userID, projectID)
 
 	if err := s.core.Repository.ProjectRemoveUser(ctx, projectID, userID); err != nil {
@@ -123,7 +123,7 @@ func (s *ProjectService) RemoveUser(ctx context.Context, projectID int, userID i
 	return nil
 }
 
-func (s *ProjectService) Delete(ctx context.Context, id int) error {
+func (s *ProjectService) Delete(ctx context.Context, id string) error {
 	s.core.Logger.Info("Deleting project with ID: %d", id)
 
 	if err := s.core.Repository.DeleteProject(ctx, id); err != nil {

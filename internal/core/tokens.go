@@ -28,7 +28,7 @@ func NewTokensService(core *Core) TokenService {
 // Returns:
 //   - *models.PaginatedResponse containing the tokens and pagination info
 //   - error if the operation fails
-func (s *TokenService) ListByUser(ctx context.Context, userId int, limit, offset int) (*models.PaginatedResponse, error) {
+func (s *TokenService) ListByUser(ctx context.Context, userId string, limit, offset int) (*models.PaginatedResponse, error) {
 	s.core.Logger.Info("Listing tokens for userId %d with limit: %d and offset: %d", userId, limit, offset)
 
 	tokens, total, err := s.core.Repository.ListTokensByUser(ctx, userId, limit, offset)
@@ -61,7 +61,7 @@ func (s *TokenService) ListByUser(ctx context.Context, userId int, limit, offset
 //   - *models.Token if found
 //   - ErrNotFound if token doesn't exist
 //   - error if the operation fails
-func (s *TokenService) GetByUser(ctx context.Context, tokenID int, userID int) (*models.Token, error) {
+func (s *TokenService) GetByUser(ctx context.Context, tokenID string, userID string) (*models.Token, error) {
 	s.core.Logger.Debug("Fetching token with ID: %d for userID: %d ", tokenID, userID)
 
 	token, err := s.core.Repository.GetTokenByUser(ctx, tokenID, userID)
@@ -88,7 +88,7 @@ func (s *TokenService) GetByUser(ctx context.Context, tokenID int, userID int) (
 // Returns:
 //   - *models.Token containing the newly created token
 //   - error if the operation fails
-func (s *TokenService) CreateForUser(ctx context.Context, userID int, tokenData *models.Token) (*models.Token, error) {
+func (s *TokenService) CreateForUser(ctx context.Context, userID string, tokenData *models.Token) (*models.Token, error) {
 	s.core.Logger.Debug("Creating token for userId: %d", userID)
 
 	newToken := models.Token{}
@@ -130,7 +130,7 @@ func (s *TokenService) CreateForUser(ctx context.Context, userID int, tokenData 
 //
 // Returns:
 //   - error if the operation fails or token doesn't exist
-func (s *TokenService) DeleteByUser(ctx context.Context, userID int, tokenID int) error {
+func (s *TokenService) DeleteByUser(ctx context.Context, userID string, tokenID string) error {
 	s.core.Logger.Debug("Deleting token with ID: %d for userID %d", tokenID, userID)
 
 	// Check if token exists for this user
