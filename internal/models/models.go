@@ -3,14 +3,13 @@ package models
 import (
 	"encoding/json"
 	"errors"
-
 	"golang.org/x/crypto/bcrypt"
 
 	null "github.com/volatiletech/null/v9"
 )
 
 type Base struct {
-	ID        int       `json:"id" db:"id"`
+	ID        string    `json:"id" db:"id"` // UUID primary key
 	CreatedAt null.Time `json:"created_at" db:"created_at"`
 	UpdatedAt null.Time `json:"updated_at" db:"updated_at"`
 }
@@ -93,16 +92,6 @@ type ForwardRule struct {
 	Sender   string `json:"sender" db:"sender" validate:"omitempty,email"`
 	Receiver string `json:"receiver" db:"receiver" validate:"omitempty,email"`
 	Subject  string `json:"subject" db:"subject" validate:"omitempty,max=200"`
-}
-
-type Message struct {
-	Base
-	InboxID  int    `json:"inbox_id" db:"inbox_id" validate:"required"`
-	Sender   string `json:"sender" db:"sender" validate:"required,email"`
-	Receiver string `json:"receiver" db:"receiver" validate:"required,email"`
-	Subject  string `json:"subject" db:"subject" validate:"required,max=200"`
-	Body     string `json:"body" db:"body" validate:"required"`
-	IsRead   bool   `json:"is_read" db:"is_read"`
 }
 
 type Session struct {
