@@ -65,7 +65,7 @@ func NewServer(core *core.Core) *MSAServer {
 	s.AllowInsecureAuth = core.Config.Server.SMTP.AllowInsecureAuth
 
 	if core.Config.Server.SMTP.MSA.EnableTLS {
-		config, err := util.GetTLSConfig(core, core.Config.Server.SMTP.TLS.Cert, core.Config.Server.SMTP.TLS.Key)
+		config, err := util.GetTLSConfig(core, core.Config.Server.TLS.Cert, core.Config.Server.TLS.Key)
 		if err != nil {
 			core.Logger.Error("MSA: Failed to load TLS configuration: %v . Aborting!", err)
 			os.Exit(1)
