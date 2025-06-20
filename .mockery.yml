@@ -1,0 +1,11 @@
+dir: internal/mocks
+structname: "{{.InterfaceName}}"
+pkgname: mocks
+filename: mocks.go
+template: testify
+template-data:
+  unroll-variadic: true
+packages:
+  inbox451/internal/storage:
+    config:
+      all: true

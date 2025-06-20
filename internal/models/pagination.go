@@ -12,8 +12,8 @@ type Pagination struct {
 }
 
 type PaginatedResponse struct {
-	Data       interface{} `json:"data"`
-	Pagination Pagination  `json:"pagination"`
+	Data       any        `json:"data"`
+	Pagination Pagination `json:"pagination"`
 }
 
 type MessageQuery struct {

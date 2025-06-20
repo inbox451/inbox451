@@ -39,7 +39,7 @@ func initDB(cfg *config.Config) (*sqlx.DB, *sql.DB, error) {
 	var err error
 
 	const maxRetries = 5
-	for i := 0; i < maxRetries; i++ {
+	for i := range maxRetries {
 		db, err = sqlx.Connect("postgres", cfg.Database.URL)
 		if err == nil {
 			break
@@ -140,7 +140,7 @@ func handleGracefulShutdown(core *core.Core, servers []ServerInstance) error {
 
 	// Wait for all servers to shut down or timeout
 	var shutdownErrors []error
-	for i := 0; i < len(servers); i++ {
+	for range len(servers) {
 		if err := <-errChan; err != nil {
 			shutdownErrors = append(shutdownErrors, err)
 		}

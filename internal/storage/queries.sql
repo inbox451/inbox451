@@ -286,3 +286,64 @@ DELETE FROM sessions;
 
 -- name: update-session
 UPDATE sessions SET data=$1  WHERE id=$2;
+
+-- =============================================================================
+-- IMAP-related queries
+-- =============================================================================
+
+-- name: update-message-deleted-status
+UPDATE messages
+SET is_deleted = $1, updated_at = CURRENT_TIMESTAMP
+WHERE id = $2;
+
+-- name: list-messages-by-inbox-with-filters
+SELECT id, inbox_id, sender, receiver, subject, body, is_read, is_deleted, created_at, updated_at
+FROM messages
+WHERE inbox_id = $1
+  AND ($2::BOOLEAN IS NULL OR is_read = $2)
+  AND ($3::BOOLEAN IS NULL OR is_deleted = $3)
+ORDER BY id
+LIMIT $4 OFFSET $5;
+
+-- name: count-messages-by-inbox-with-filters
+SELECT COUNT(*)
+FROM messages
+WHERE inbox_id = $1
+  AND ($2::BOOLEAN IS NULL OR is_read = $2)
+  AND ($3::BOOLEAN IS NULL OR is_deleted = $3);
+
+-- name: list-inboxes-by-user
+SELECT DISTINCT i.id, i.project_id, i.email, i.created_at, i.updated_at
+FROM inboxes i
+INNER JOIN project_users pu ON i.project_id = pu.project_id
+WHERE pu.user_id = $1
+ORDER BY i.email;
+
+-- name: get-inbox-by-email-and-user
+SELECT DISTINCT i.id, i.project_id, i.email, i.created_at, i.updated_at
+FROM inboxes i
+INNER JOIN project_users pu ON i.project_id = pu.project_id
+WHERE i.email = $1 AND pu.user_id = $2;
+
+-- name: get-messages-by-uids
+SELECT id, inbox_id, sender, receiver, subject, body, is_read, is_deleted, created_at, updated_at
+FROM messages
+WHERE inbox_id = $1 AND id = ANY($2::int[])
+ORDER BY id;
+
+-- name: get-all-message-uids-for-inbox
+SELECT id
+FROM messages
+WHERE inbox_id = $1 AND is_deleted = false
+ORDER BY id;
+
+-- name: get-all-message-uids-for-inbox-including-deleted
+SELECT id
+FROM messages
+WHERE inbox_id = $1
+ORDER BY id;
+
+-- name: get-max-message-uid
+SELECT COALESCE(MAX(id), 0) AS max_uid
+FROM messages
+WHERE inbox_id = $1;

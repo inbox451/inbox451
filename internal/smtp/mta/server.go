@@ -12,13 +12,15 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/emersion/go-message"
-	"github.com/emersion/go-smtp"
-	"inbox451/internal/core"
-	"inbox451/internal/models"
 	"io"
 	"strings"
 	"time"
+
+	"inbox451/internal/core"
+	"inbox451/internal/models"
+
+	"github.com/emersion/go-message"
+	"github.com/emersion/go-smtp"
 )
 
 type MTAServer struct {

@@ -4,17 +4,19 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/emersion/go-message"
-	"github.com/emersion/go-sasl"
-	"inbox451/internal/core"
-	"inbox451/internal/models"
-	"inbox451/internal/util"
 	"io"
 	"os"
 	"strings"
 	"time"
+
+	"inbox451/internal/core"
+	"inbox451/internal/models"
+	"inbox451/internal/util"
+
+	"github.com/emersion/go-message"
+	"github.com/emersion/go-sasl"
+	"github.com/emersion/go-smtp"
 )
-import "github.com/emersion/go-smtp"
 
 type MSAServer struct {
 	core *core.Core
@@ -63,7 +65,7 @@ func NewServer(core *core.Core) *MSAServer {
 	s.AllowInsecureAuth = core.Config.Server.SMTP.AllowInsecureAuth
 
 	if core.Config.Server.SMTP.MSA.EnableTLS {
-		config, err := util.GetTLSConfig(core, core.Config.Server.SMTP.TLS.Cert, core.Config.Server.SMTP.TLS.Key)
+		config, err := util.GetTLSConfig(core, core.Config.Server.TLS.Cert, core.Config.Server.TLS.Key)
 		if err != nil {
 			core.Logger.Error("MSA: Failed to load TLS configuration: %v . Aborting!", err)
 			os.Exit(1)

@@ -47,17 +47,57 @@ server:
   http:
     port: ":8080"
   smtp:
-    port: ":1025"
+    domain: "smtp.example.com"
     hostname: "localhost"
+    allow_insecure_auth: true
+    msa:
+      port: "587"
+      tls: false
+    mta:
+      port: "1025"
+      tls: false
   imap:
     port: ":1143"
     hostname: "localhost"
+    tls: false
+    allow_insecure_auth: true
+  # Shared TLS certificate configuration for all services
+  tls:
+    cert_file: "/path/to/cert.pem"
+    key_file: "/path/to/key.pem"
   email_domain: "example.com"
 database:
   url: "postgres://inbox:inbox@localhost:5432/inbox451?sslmode=disable"
 logging:
   level: "info"
   format: "json"
+```
+
+### TLS Configuration
+
+To enable TLS/STARTTLS for SMTP and IMAP servers:
+
+1. Generate or obtain SSL/TLS certificates
+2. Update the configuration with certificate paths in the `server.tls` section
+3. Enable TLS for specific services:
+   - Set `server.smtp.msa.tls: true` for SMTP MSA (port 587)
+   - Set `server.smtp.mta.tls: true` for SMTP MTA (port 25)
+   - Set `server.imap.tls: true` for IMAP (port 1143)
+4. Set `allow_insecure_auth: false` to require encrypted connections for authentication
+
+Example TLS-enabled configuration:
+```yaml
+server:
+  smtp:
+    allow_insecure_auth: false
+    msa:
+      tls: true
+  imap:
+    tls: true
+    allow_insecure_auth: false
+  tls:
+    cert_file: "/etc/ssl/certs/mail.example.com.crt"
+    key_file: "/etc/ssl/private/mail.example.com.key"
 ```
 
 ## API Examples

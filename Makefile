@@ -30,11 +30,12 @@ FRONTEND_DEPS = \
 	frontend/tsconfig.json \
 	$(shell find frontend/app frontend/public -type f)
 
-.PHONY: build deps test dev pack-bin \
+.PHONY: build deps test test-unit dev pack-bin \
         build-frontend run-frontend \
         db-up db-down db-clean db-reset db-init db-install db-upgrade \
         release-dry-run release-snapshot release-tag install-goreleaser \
-        fmt lint mocks
+        fmt lint mocks \
+        test-imap-integration
 
 # ==================================================================================== #
 # DEVELOPMENT
@@ -49,9 +50,22 @@ deps: $(STUFFBIN)
 	go mod download
 	cd frontend && $(PNPM) install
 
-# Run tests
+# Run all tests (unit + integration)
 test:
 	go test -v ./...
+
+# Run unit tests only (excludes integration tests)
+test-unit:
+	go test -short -v ./...
+
+# ==================================================================================== #
+# IMAP TESTING
+# ==================================================================================== #
+
+# Run IMAP integration tests only
+test-imap-integration:
+	@echo "==> Running IMAP integration tests..."
+	@go test -v ./internal/imap/ -run TestIMAPIntegrationSuite -timeout 30s
 
 tls-certs:
 	@echo "==> Generating TLS certificates..."
@@ -62,7 +76,6 @@ tls-certs:
 		-subj "/C=PT/ST=Lisbon/L=Lisbon/O=Inbox451/CN=localhost"
 	@echo "==> Key generated at ./tmp/certs/key.pem"
 	@echo "==> Certificate generated at ./tmp/certs/cert.pem"
-
 # ==================================================================================== #
 # TESTING & MOCKING
 # ==================================================================================== #
@@ -70,8 +83,8 @@ tls-certs:
 # Install mockery
 install-mockery:
 	@echo "==> Installing mockery..."
-	go get github.com/vektra/mockery/v2
-	go install github.com/vektra/mockery/v2
+	go get github.com/vektra/mockery/v3
+	go install github.com/vektra/mockery/v3
 
 # Generate mocks
 mocks: install-mockery
@@ -82,7 +95,7 @@ mocks: install-mockery
 # Run tests with coverage
 test-coverage:
 	@echo "==> Running tests with coverage..."
-	@go test -coverprofile=coverage.txt ./...
+	@go test -short -coverprofile=coverage.txt ./...
 	@go tool cover -html=coverage.txt
 
 # Clean test cache and generated mocks
