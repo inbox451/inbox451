@@ -60,10 +60,10 @@ type Config struct {
 		HTTP struct {
 			Port string `koanf:"port"`
 		} `koanf:"http"`
-		SMTP        SMTPConfig      `koanf:"smtp"`
-		IMAP        IMAPConfig      `koanf:"imap"`
-		TLS         TLSFilesConfig  `koanf:"tls"`
-		EmailDomain string          `koanf:"email_domain"`
+		SMTP        SMTPConfig     `koanf:"smtp"`
+		IMAP        IMAPConfig     `koanf:"imap"`
+		TLS         TLSFilesConfig `koanf:"tls"`
+		EmailDomain string         `koanf:"email_domain"`
 	} `koanf:"server"`
 	Database DatabaseConfig `koanf:"database"`
 	Logging  struct {
