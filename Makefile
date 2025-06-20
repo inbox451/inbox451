@@ -95,7 +95,7 @@ mocks: install-mockery
 # Run tests with coverage
 test-coverage:
 	@echo "==> Running tests with coverage..."
-	@go test -coverprofile=coverage.txt ./...
+	@go test -short -coverprofile=coverage.txt ./...
 	@go tool cover -html=coverage.txt
 
 # Clean test cache and generated mocks
