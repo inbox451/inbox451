@@ -4,12 +4,23 @@ server:
     port: ":8080"
   smtp:
     domain: "smtp.example.com"
+    hostname: "localhost"
+    allow_insecure_auth: true  # Set to false to require TLS for authentication
     msa:
-      port: 587
+      port: "587"
+      tls: false  # Set to true to enable STARTTLS
     mta:
-      port: 1025
+      port: "1025"
+      tls: false  # Set to true to enable STARTTLS
   imap:
     port: ":1143"
+    hostname: "localhost"
+    tls: false  # Set to true to enable STARTTLS
+    allow_insecure_auth: true  # Set to false to require TLS for authentication
+  # Shared TLS certificate configuration for all services
+  tls:
+    cert_file: ""  # Path to TLS certificate file (e.g., "/etc/ssl/certs/mail.crt")
+    key_file: ""   # Path to TLS private key file (e.g., "/etc/ssl/private/mail.key")
   email_domain: "smtp.example.com"
 database:
   url: "postgres://inbox:inbox@localhost:5432/inbox451?sslmode=disable"

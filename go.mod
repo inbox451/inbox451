@@ -7,6 +7,7 @@ require (
 	github.com/coreos/go-oidc/v3 v3.14.1
 	github.com/emersion/go-imap v1.2.1
 	github.com/emersion/go-message v0.18.1
+	github.com/emersion/go-sasl v0.0.0-20241020182733-b788ff22d5a6
 	github.com/emersion/go-smtp v0.21.3
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/jmoiron/sqlx v1.4.0
@@ -26,13 +27,11 @@ require (
 	github.com/zerodha/simplesessions/v3 v3.0.0
 	golang.org/x/crypto v0.38.0
 	golang.org/x/mod v0.24.0
-	golang.org/x/net v0.40.0
 	golang.org/x/oauth2 v0.29.0
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/emersion/go-sasl v0.0.0-20241020182733-b788ff22d5a6 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.7 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
@@ -52,6 +51,7 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
+	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/time v0.8.0 // indirect

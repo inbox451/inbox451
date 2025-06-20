@@ -2,8 +2,10 @@ package imap
 
 import (
 	"context"
+	"os"
 
 	"inbox451/internal/core"
+	"inbox451/internal/util"
 
 	"github.com/emersion/go-imap/server"
 )
@@ -46,9 +48,18 @@ func NewServer(core *core.Core) *ImapServer {
 	// Enable debug logging
 	s.Debug = core.Logger.Writer()
 
-	// Allow unencrypted plain text authentication for development
-	// TODO: Remove this in production
-	s.AllowInsecureAuth = true
+	// Configure TLS if enabled
+	if core.Config.Server.IMAP.EnableTLS {
+		config, err := util.GetTLSConfig(core, core.Config.Server.TLS.Cert, core.Config.Server.TLS.Key)
+		if err != nil {
+			core.Logger.Error("IMAP: Failed to load TLS configuration: %v . Aborting!", err)
+			os.Exit(1)
+		}
+		s.TLSConfig = config
+	}
+
+	// Allow unencrypted plain text authentication based on config
+	s.AllowInsecureAuth = core.Config.Server.IMAP.AllowInsecureAuth
 
 	return &ImapServer{
 		core: core,
