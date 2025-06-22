@@ -224,7 +224,6 @@ func TestRepository_GetProject(t *testing.T) {
 func TestRepository_UpdateProject(t *testing.T) {
 	now := time.Now()
 	testProjectID1 := test.RandomTestUUID()
-	testInboxID1 := test.RandomTestUUID()
 	nonExistingProjectID := test.RandomTestUUID()
 
 	tests := []struct {
@@ -241,7 +240,7 @@ func TestRepository_UpdateProject(t *testing.T) {
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("UPDATE projects").
-					WithArgs("Updated Project", testInboxID1).
+					WithArgs("Updated Project", testProjectID1).
 					WillReturnRows(
 						sqlmock.NewRows([]string{"updated_at"}).
 							AddRow(now),
