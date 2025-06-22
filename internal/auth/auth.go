@@ -197,7 +197,7 @@ func (a *Auth) GetAPIToken(tokenValue string) (*models.Token, bool) {
 	if ok {
 		// Cache hit: Validate expiration
 		if token.ExpiresAt.Valid && token.ExpiresAt.Time.Before(time.Now()) {
-			a.log.Info("API token from cache expired: %s (ID: %d, expired_at: %s)", token.Name, token.ID, token.ExpiresAt.Time)
+			a.log.Info("API token from cache expired: %s (ID: %s, expired_at: %s)", token.Name, token.ID, token.ExpiresAt.Time)
 			// TODO: Understand if we should remove expired tokens from the cache
 			// We could remove the expired token from the cache here if desired but i'm not sure
 			// if this a good idea since users coule be hammering the API with expired tokens and we would then hit
@@ -210,7 +210,7 @@ func (a *Auth) GetAPIToken(tokenValue string) (*models.Token, bool) {
 
 		// Cache hit and token is valid: Update last used and return
 		go a.updateTokenLastUsedAsync(token.ID) // Update last used time
-		a.log.Debug("API token cache hit: %s (ID: %d)", token.Name, token.ID)
+		a.log.Debug("API token cache hit: %s (ID: %s)", token.Name, token.ID)
 		return &token, true
 	}
 
@@ -233,7 +233,7 @@ func (a *Auth) GetAPIToken(tokenValue string) (*models.Token, bool) {
 
 	// 3. Token found in DB: Validate expiration
 	if dbToken.ExpiresAt.Valid && dbToken.ExpiresAt.Time.Before(time.Now()) {
-		a.log.Info("API token fetched from DB is expired: %s (ID: %d, expired_at: %s)", dbToken.Name, dbToken.ID, dbToken.ExpiresAt.Time)
+		a.log.Info("API token fetched from DB is expired: %s (ID: %s, expired_at: %s)", dbToken.Name, dbToken.ID, dbToken.ExpiresAt.Time)
 		// Don't cache the expired token
 		return nil, false // Token found but expired
 	}
@@ -242,7 +242,7 @@ func (a *Auth) GetAPIToken(tokenValue string) (*models.Token, bool) {
 	a.Lock()
 	a.apiTokens[tokenValue] = *dbToken
 	a.Unlock()
-	a.log.Info("API token fetched from DB and cached: %s (ID: %d)", dbToken.Name, dbToken.ID)
+	a.log.Info("API token fetched from DB and cached: %s (ID: %s)", dbToken.Name, dbToken.ID)
 
 	// Update last used and return success
 	go a.updateTokenLastUsedAsync(dbToken.ID)
@@ -254,7 +254,7 @@ func (a *Auth) updateTokenLastUsedAsync(tokenID string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := a.core.Repository.UpdateTokenLastUsed(ctx, tokenID); err != nil {
-		a.log.Error("Failed to update last used time for token ID %d: %v", tokenID, err)
+		a.log.Error("Failed to update last used time for token ID %s: %v", tokenID, err)
 	}
 }
 
@@ -331,7 +331,7 @@ func (a *Auth) authenticateAPIToken(c echo.Context) (*models.User, error) {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, echo.NewHTTPError(http.StatusUnauthorized, "User associated with API token not found")
 		}
-		a.log.Error("Error fetching user for API token %d: %v", token.ID, err)
+		a.log.Error("Error fetching user for API token %s: %v", token.ID, err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Error authenticating API token")
 	}
 	if user.Status != "active" {
@@ -411,18 +411,18 @@ func (a *Auth) validateSession(c echo.Context) (*simplesessions.Session, *models
 			return nil, nil, simplesessions.ErrInvalidSession
 		}
 		// Other DB error fetching user
-		a.log.Error("Error fetching user %d for session %s: %v", userID, sess.ID(), err)
+		a.log.Error("Error fetching user %s for session %s: %v", userID, sess.ID(), err)
 		return nil, nil, fmt.Errorf("error fetching session user: %w", err)
 	}
 
 	user, err := a.cb.GetUser(userID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			a.log.Warn("User %d not found for session %s: %v", userID, sess.ID(), err)
+			a.log.Warn("User %s not found for session %s: %v", userID, sess.ID(), err)
 			_ = sess.Destroy()
 			return nil, nil, simplesessions.ErrInvalidSession
 		}
-		a.log.Error("Error fetching user %d for session %s: %v", userID, sess.ID(), err)
+		a.log.Error("Error fetching user %s for session %s: %v", userID, sess.ID(), err)
 		return nil, nil, fmt.Errorf("error fetching session user: %w", err)
 	}
 
@@ -442,7 +442,7 @@ func (a *Auth) SaveSession(u models.User, c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error saving session")
 	}
 
-	a.log.Info("Session saved successfully for user ID: %d", u.ID)
+	a.log.Info("Session saved successfully for user ID: %s", u.ID)
 	return nil
 }
 

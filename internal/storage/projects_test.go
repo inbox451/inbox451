@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"inbox451/internal/test"
 	"testing"
 	"time"
 
@@ -85,6 +86,7 @@ func setupProjectTestDB(t *testing.T) (*repository, sqlmock.Sqlmock) {
 
 func TestRepository_CreateProject(t *testing.T) {
 	now := time.Now()
+	testProjectID1 := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
@@ -102,7 +104,7 @@ func TestRepository_CreateProject(t *testing.T) {
 					WithArgs("Test Project").
 					WillReturnRows(
 						sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).
-							AddRow(1, now, now),
+							AddRow(testProjectID1, now, now),
 					)
 			},
 			wantErr: false,
@@ -147,10 +149,12 @@ func TestRepository_CreateProject(t *testing.T) {
 
 func TestRepository_GetProject(t *testing.T) {
 	now := time.Now()
+	testProjectID1 := test.RandomTestUUID()
+	nonExistingProjectID := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
-		id      int
+		id      string
 		mockFn  func(sqlmock.Sqlmock)
 		want    *models.Project
 		wantErr bool
@@ -158,19 +162,19 @@ func TestRepository_GetProject(t *testing.T) {
 	}{
 		{
 			name: "existing project",
-			id:   1,
+			id:   testProjectID1,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{
 					"id", "name", "created_at", "updated_at",
-				}).AddRow(1, "Test Project", now, now)
+				}).AddRow(testProjectID1, "Test Project", now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM projects").
-					WithArgs(1).
+					WithArgs(testProjectID1).
 					WillReturnRows(rows)
 			},
 			want: &models.Project{
 				Base: models.Base{
-					ID:        1,
+					ID:        testProjectID1,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},
@@ -180,10 +184,10 @@ func TestRepository_GetProject(t *testing.T) {
 		},
 		{
 			name: "non-existent project",
-			id:   999,
+			id:   nonExistingProjectID,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("SELECT (.+) FROM projects").
-					WithArgs(999).
+					WithArgs(nonExistingProjectID).
 					WillReturnError(sql.ErrNoRows)
 			},
 			want:    nil,
@@ -219,6 +223,9 @@ func TestRepository_GetProject(t *testing.T) {
 
 func TestRepository_UpdateProject(t *testing.T) {
 	now := time.Now()
+	testProjectID1 := test.RandomTestUUID()
+	testInboxID1 := test.RandomTestUUID()
+	nonExistingProjectID := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
@@ -229,12 +236,12 @@ func TestRepository_UpdateProject(t *testing.T) {
 		{
 			name: "successful update",
 			project: &models.Project{
-				Base: models.Base{ID: 1},
+				Base: models.Base{ID: testProjectID1},
 				Name: "Updated Project",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("UPDATE projects").
-					WithArgs("Updated Project", 1).
+					WithArgs("Updated Project", testInboxID1).
 					WillReturnRows(
 						sqlmock.NewRows([]string{"updated_at"}).
 							AddRow(now),
@@ -245,12 +252,12 @@ func TestRepository_UpdateProject(t *testing.T) {
 		{
 			name: "non-existent project",
 			project: &models.Project{
-				Base: models.Base{ID: 999},
+				Base: models.Base{ID: nonExistingProjectID},
 				Name: "Updated Project",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("UPDATE projects").
-					WithArgs("Updated Project", 999).
+					WithArgs("Updated Project", nonExistingProjectID).
 					WillReturnError(sql.ErrNoRows)
 			},
 			wantErr: true,
@@ -280,28 +287,30 @@ func TestRepository_UpdateProject(t *testing.T) {
 }
 
 func TestRepository_DeleteProject(t *testing.T) {
+	testProjectID1 := test.RandomTestUUID()
+	nonExistingProjectID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
-		id      int
+		id      string
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful deletion",
-			id:   1,
+			id:   testProjectID1,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM projects").
-					WithArgs(1).
+					WithArgs(testProjectID1).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			wantErr: false,
 		},
 		{
 			name: "non-existent project",
-			id:   999,
+			id:   nonExistingProjectID,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM projects").
-					WithArgs(999).
+					WithArgs(nonExistingProjectID).
 					WillReturnResult(sqlmock.NewResult(0, 0))
 			},
 			wantErr: true,
@@ -331,6 +340,8 @@ func TestRepository_DeleteProject(t *testing.T) {
 
 func TestRepository_ListProjects(t *testing.T) {
 	now := time.Now()
+	testProjectID1 := test.RandomTestUUID()
+	testProjectID2 := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
@@ -353,8 +364,8 @@ func TestRepository_ListProjects(t *testing.T) {
 				rows := sqlmock.NewRows([]string{
 					"id", "name", "created_at", "updated_at",
 				}).
-					AddRow(1, "Project 1", now, now).
-					AddRow(2, "Project 2", now, now)
+					AddRow(testProjectID1, "Project 1", now, now).
+					AddRow(testProjectID2, "Project 2", now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM projects").
 					WithArgs(10, 0).
@@ -363,7 +374,7 @@ func TestRepository_ListProjects(t *testing.T) {
 			want: []*models.Project{
 				{
 					Base: models.Base{
-						ID:        1,
+						ID:        testProjectID1,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
@@ -371,7 +382,7 @@ func TestRepository_ListProjects(t *testing.T) {
 				},
 				{
 					Base: models.Base{
-						ID:        2,
+						ID:        testProjectID2,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
@@ -421,10 +432,14 @@ func TestRepository_ListProjects(t *testing.T) {
 
 func TestRepository_ListProjectsByUser(t *testing.T) {
 	now := time.Now()
+	testProjectID1 := test.RandomTestUUID()
+	testProjectID2 := test.RandomTestUUID()
+	testUserID1 := test.RandomTestUUID()
+	testUserID2 := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
-		userID  int
+		userID  string
 		limit   int
 		offset  int
 		mockFn  func(sqlmock.Sqlmock)
@@ -434,29 +449,29 @@ func TestRepository_ListProjectsByUser(t *testing.T) {
 	}{
 		{
 			name:   "successful list",
-			userID: 1,
+			userID: testUserID1,
 			limit:  10,
 			offset: 0,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				countRows := sqlmock.NewRows([]string{"count"}).AddRow(2)
 				mock.ExpectQuery("SELECT COUNT").
-					WithArgs(1).
+					WithArgs(testUserID1).
 					WillReturnRows(countRows)
 
 				rows := sqlmock.NewRows([]string{
 					"id", "name", "created_at", "updated_at",
 				}).
-					AddRow(1, "Project 1", now, now).
-					AddRow(2, "Project 2", now, now)
+					AddRow(testProjectID1, "Project 1", now, now).
+					AddRow(testProjectID2, "Project 2", now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM projects").
-					WithArgs(1, 10, 0).
+					WithArgs(testUserID1, 10, 0).
 					WillReturnRows(rows)
 			},
 			want: []*models.Project{
 				{
 					Base: models.Base{
-						ID:        1,
+						ID:        testProjectID1,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
@@ -464,7 +479,7 @@ func TestRepository_ListProjectsByUser(t *testing.T) {
 				},
 				{
 					Base: models.Base{
-						ID:        2,
+						ID:        testProjectID2,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
@@ -476,13 +491,13 @@ func TestRepository_ListProjectsByUser(t *testing.T) {
 		},
 		{
 			name:   "empty list",
-			userID: 2,
+			userID: testUserID2,
 			limit:  10,
 			offset: 0,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				countRows := sqlmock.NewRows([]string{"count"}).AddRow(0)
 				mock.ExpectQuery("SELECT COUNT").
-					WithArgs(2).
+					WithArgs(testUserID2).
 					WillReturnRows(countRows)
 			},
 			want:    []*models.Project{},
@@ -516,6 +531,8 @@ func TestRepository_ListProjectsByUser(t *testing.T) {
 
 func TestRepository_ProjectAddUser(t *testing.T) {
 	now := time.Now()
+	testProjectID1 := test.RandomTestUUID()
+	testUserID1 := test.RandomTestUUID()
 
 	tests := []struct {
 		name        string
@@ -526,13 +543,13 @@ func TestRepository_ProjectAddUser(t *testing.T) {
 		{
 			name: "successful add",
 			projectUser: &models.ProjectUser{
-				ProjectID: 1,
-				UserID:    1,
+				ProjectID: testProjectID1,
+				UserID:    testUserID1,
 				Role:      "member",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("INSERT INTO project_users").
-					WithArgs(1, 1, "member").
+					WithArgs(testProjectID1, testUserID1, "member").
 					WillReturnRows(
 						sqlmock.NewRows([]string{"created_at", "updated_at"}).
 							AddRow(now, now),
@@ -543,13 +560,13 @@ func TestRepository_ProjectAddUser(t *testing.T) {
 		{
 			name: "duplicate user in project",
 			projectUser: &models.ProjectUser{
-				ProjectID: 1,
-				UserID:    1,
+				ProjectID: testProjectID1,
+				UserID:    testUserID1,
 				Role:      "member",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("INSERT INTO project_users").
-					WithArgs(1, 1, "member").
+					WithArgs(testProjectID1, testUserID1, "member").
 					WillReturnError(sql.ErrConnDone)
 			},
 			wantErr: true,
@@ -580,31 +597,35 @@ func TestRepository_ProjectAddUser(t *testing.T) {
 }
 
 func TestRepository_ProjectRemoveUser(t *testing.T) {
+	testProjectID1 := test.RandomTestUUID()
+	testUserID1 := test.RandomTestUUID()
+	testUserID2 := test.RandomTestUUID()
+	nonExistingProjectID := test.RandomTestUUID()
 	tests := []struct {
 		name      string
-		projectID int
-		userID    int
+		projectID string
+		userID    string
 		mockFn    func(sqlmock.Sqlmock)
 		wantErr   bool
 	}{
 		{
 			name:      "successful removal",
-			projectID: 1,
-			userID:    1,
+			projectID: testProjectID1,
+			userID:    testUserID1,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM project_users").
-					WithArgs(1, 1).
+					WithArgs(testProjectID1, testUserID1).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			wantErr: false,
 		},
 		{
 			name:      "non-existent relationship",
-			projectID: 999,
-			userID:    999,
+			projectID: nonExistingProjectID,
+			userID:    testUserID2,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM project_users").
-					WithArgs(999, 999).
+					WithArgs(nonExistingProjectID, testUserID2).
 					WillReturnResult(sqlmock.NewResult(0, 0))
 			},
 			wantErr: true,
