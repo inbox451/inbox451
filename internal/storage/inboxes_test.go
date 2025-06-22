@@ -397,7 +397,6 @@ func TestRepository_DeleteInbox(t *testing.T) {
 func TestRepository_ListInboxesByProject(t *testing.T) {
 	now := time.Now()
 	testProjectID1 := test.RandomTestUUID()
-	testProjectID2 := test.RandomTestUUID()
 	testInboxID1 := test.RandomTestUUID()
 	testInboxID2 := test.RandomTestUUID()
 
@@ -426,7 +425,7 @@ func TestRepository_ListInboxesByProject(t *testing.T) {
 					"id", "project_id", "email", "created_at", "updated_at",
 				}).
 					AddRow(testInboxID1, testProjectID1, "inbox1@example.com", now, now).
-					AddRow(testInboxID2, testProjectID2, "inbox2@example.com", now, now)
+					AddRow(testInboxID2, testProjectID1, "inbox2@example.com", now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM inboxes").
 					WithArgs(testProjectID1, 10, 0).
