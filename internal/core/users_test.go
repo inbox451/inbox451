@@ -275,8 +275,8 @@ func TestUserService_Update(t *testing.T) {
 }
 
 func TestUserService_Delete(t *testing.T) {
-	testID := test.StaticTestUUID()
-	unexistingID := test.RandomTestUUID()
+	testUserID1 := test.StaticTestUUID()
+	testNonExistingUserID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
 		userID  string
@@ -285,17 +285,17 @@ func TestUserService_Delete(t *testing.T) {
 	}{
 		{
 			name:   "successful deletion",
-			userID: test.StaticTestUUID(),
+			userID: testUserID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteUser", mock.Anything, testID).Return(nil)
+				m.On("DeleteUser", mock.Anything, testUserID1).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name:   "delete non-existent user",
-			userID: test.RandomTestUUID(),
+			userID: testNonExistingUserID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteUser", mock.Anything, unexistingID).Return(storage.ErrNotFound)
+				m.On("DeleteUser", mock.Anything, testNonExistingUserID).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},

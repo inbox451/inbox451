@@ -137,7 +137,7 @@ func TestRepository_CreateProject(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			assert.NotZero(t, tt.project.ID)
+			assert.NotEmpty(t, tt.project.ID)
 			assert.NotZero(t, tt.project.CreatedAt)
 			assert.NotZero(t, tt.project.UpdatedAt)
 
