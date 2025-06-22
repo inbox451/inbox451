@@ -38,19 +38,19 @@ func (s *InboxService) Create(ctx context.Context, inbox *models.Inbox) error {
 		}
 	}
 
-	s.core.Logger.Info("Creating new inbox for project %d: %s", inbox.ProjectID, inbox.Email)
+	s.core.Logger.Info("Creating new inbox for project %s: %s", inbox.ProjectID, inbox.Email)
 
 	if err := s.core.Repository.CreateInbox(ctx, inbox); err != nil {
 		s.core.Logger.Error("Failed to create inbox: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully created inbox with ID: %d", inbox.ID)
+	s.core.Logger.Info("Successfully created inbox with ID: %s", inbox.ID)
 	return nil
 }
 
 func (s *InboxService) Get(ctx context.Context, id string) (*models.Inbox, error) {
-	s.core.Logger.Debug("Fetching inbox with ID: %d", id)
+	s.core.Logger.Debug("Fetching inbox with ID: %s", id)
 
 	inbox, err := s.core.Repository.GetInbox(ctx, id)
 	if err != nil {
@@ -59,7 +59,7 @@ func (s *InboxService) Get(ctx context.Context, id string) (*models.Inbox, error
 	}
 
 	if inbox == nil {
-		s.core.Logger.Info("Inbox not found with ID: %d", id)
+		s.core.Logger.Info("Inbox not found with ID: %s", id)
 		return nil, ErrNotFound
 	}
 
@@ -86,31 +86,31 @@ func (s *InboxService) Update(ctx context.Context, inbox *models.Inbox) error {
 		}
 	}
 
-	s.core.Logger.Info("Updating inbox with ID: %d", inbox.ID)
+	s.core.Logger.Info("Updating inbox with ID: %s", inbox.ID)
 
 	if err := s.core.Repository.UpdateInbox(ctx, inbox); err != nil {
 		s.core.Logger.Error("Failed to update inbox: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully updated inbox with ID: %d", inbox.ID)
+	s.core.Logger.Info("Successfully updated inbox with ID: %s", inbox.ID)
 	return nil
 }
 
 func (s *InboxService) Delete(ctx context.Context, id string) error {
-	s.core.Logger.Info("Deleting inbox with ID: %d", id)
+	s.core.Logger.Info("Deleting inbox with ID: %s", id)
 
 	if err := s.core.Repository.DeleteInbox(ctx, id); err != nil {
 		s.core.Logger.Error("Failed to delete inbox: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully deleted inbox with ID: %d", id)
+	s.core.Logger.Info("Successfully deleted inbox with ID: %s", id)
 	return nil
 }
 
 func (s *InboxService) ListByProject(ctx context.Context, projectID string, limit, offset int) (*models.PaginatedResponse, error) {
-	s.core.Logger.Info("Listing inboxes for project %d with limit: %d and offset: %d", projectID, limit, offset)
+	s.core.Logger.Info("Listing inboxes for project %s with limit: %d and offset: %d", projectID, limit, offset)
 
 	inboxes, total, err := s.core.Repository.ListInboxesByProject(ctx, projectID, limit, offset)
 	if err != nil {

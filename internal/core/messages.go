@@ -15,19 +15,19 @@ func NewMessageService(core *Core) MessageService {
 }
 
 func (s *MessageService) Store(ctx context.Context, message *models.Message) error {
-	s.core.Logger.Info("Storing new message for inbox %d from %s", message.InboxID, message.Sender)
+	s.core.Logger.Info("Storing new message for inbox %s from %s", message.InboxID, message.Sender)
 
 	if err := s.core.Repository.CreateMessage(ctx, message); err != nil {
 		s.core.Logger.Error("Failed to store message: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully stored message with ID: %d", message.ID)
+	s.core.Logger.Info("Successfully stored message with ID: %s", message.ID)
 	return nil
 }
 
 func (s *MessageService) Get(ctx context.Context, id string) (*models.Message, error) {
-	s.core.Logger.Debug("Fetching message with ID: %d", id)
+	s.core.Logger.Debug("Fetching message with ID: %s", id)
 
 	message, err := s.core.Repository.GetMessage(ctx, id)
 	if err != nil {
@@ -36,7 +36,7 @@ func (s *MessageService) Get(ctx context.Context, id string) (*models.Message, e
 	}
 
 	if message == nil {
-		s.core.Logger.Info("Message not found with ID: %d", id)
+		s.core.Logger.Info("Message not found with ID: %s", id)
 		return nil, ErrNotFound
 	}
 
@@ -44,7 +44,7 @@ func (s *MessageService) Get(ctx context.Context, id string) (*models.Message, e
 }
 
 func (s *MessageService) ListByInbox(ctx context.Context, inboxID string, limit, offset int, isRead *bool) (*models.PaginatedResponse, error) {
-	s.core.Logger.Info("Listing messages for inbox %d with limit: %d, offset: %d, isRead: %v",
+	s.core.Logger.Info("Listing messages for inbox %s with limit: %d, offset: %d, isRead: %v",
 		inboxID, limit, offset, isRead)
 
 	messages, total, err := s.core.Repository.ListMessagesByInboxWithFilter(ctx, inboxID, isRead, limit, offset)

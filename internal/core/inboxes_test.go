@@ -107,7 +107,7 @@ func TestInboxService_Get(t *testing.T) {
 			name: "existing inbox",
 			id:   testInboxID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetInbox", mock.Anything, 1).Return(&models.Inbox{
+				m.On("GetInbox", mock.Anything, testInboxID).Return(&models.Inbox{
 					Base: models.Base{
 						ID:        testInboxID,
 						CreatedAt: null.TimeFrom(now),

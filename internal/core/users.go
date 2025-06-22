@@ -47,7 +47,7 @@ func (s *UserService) Create(ctx context.Context, user *models.User) error {
 		return err
 	}
 
-	s.core.Logger.Info("Successfully created user with ID: %d", user.ID)
+	s.core.Logger.Info("Successfully created user with ID: %s", user.ID)
 	return nil
 }
 

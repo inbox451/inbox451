@@ -15,19 +15,19 @@ func NewRuleService(core *Core) RuleService {
 }
 
 func (s *RuleService) Create(ctx context.Context, rule *models.ForwardRule) error {
-	s.core.Logger.Info("Creating new rule for inbox %d", rule.InboxID)
+	s.core.Logger.Info("Creating new rule for inbox %s", rule.InboxID)
 
 	if err := s.core.Repository.CreateRule(ctx, rule); err != nil {
 		s.core.Logger.Error("Failed to create rule: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully created rule with ID: %d", rule.ID)
+	s.core.Logger.Info("Successfully created rule with ID: %s", rule.ID)
 	return nil
 }
 
 func (s *RuleService) Get(ctx context.Context, id string) (*models.ForwardRule, error) {
-	s.core.Logger.Debug("Fetching rule with ID: %d", id)
+	s.core.Logger.Debug("Fetching rule with ID: %s", id)
 
 	rule, err := s.core.Repository.GetRule(ctx, id)
 	if err != nil {
@@ -36,7 +36,7 @@ func (s *RuleService) Get(ctx context.Context, id string) (*models.ForwardRule, 
 	}
 
 	if rule == nil {
-		s.core.Logger.Info("Rule not found with ID: %d", id)
+		s.core.Logger.Info("Rule not found with ID: %s", id)
 		return nil, ErrNotFound
 	}
 
@@ -44,31 +44,31 @@ func (s *RuleService) Get(ctx context.Context, id string) (*models.ForwardRule, 
 }
 
 func (s *RuleService) Update(ctx context.Context, rule *models.ForwardRule) error {
-	s.core.Logger.Info("Updating rule with ID: %d", rule.ID)
+	s.core.Logger.Info("Updating rule with ID: %s", rule.ID)
 
 	if err := s.core.Repository.UpdateRule(ctx, rule); err != nil {
 		s.core.Logger.Error("Failed to update rule: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully updated rule with ID: %d", rule.ID)
+	s.core.Logger.Info("Successfully updated rule with ID: %s", rule.ID)
 	return nil
 }
 
 func (s *RuleService) Delete(ctx context.Context, id string) error {
-	s.core.Logger.Info("Deleting rule with ID: %d", id)
+	s.core.Logger.Info("Deleting rule with ID: %s", id)
 
 	if err := s.core.Repository.DeleteRule(ctx, id); err != nil {
 		s.core.Logger.Error("Failed to delete rule: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully deleted rule with ID: %d", id)
+	s.core.Logger.Info("Successfully deleted rule with ID: %s", id)
 	return nil
 }
 
 func (s *RuleService) ListByInbox(ctx context.Context, inboxID string, limit, offset int) (*models.PaginatedResponse, error) {
-	s.core.Logger.Info("Listing rules for inbox %d with limit: %d and offset: %d", inboxID, limit, offset)
+	s.core.Logger.Info("Listing rules for inbox %s with limit: %d and offset: %d", inboxID, limit, offset)
 
 	rules, total, err := s.core.Repository.ListRulesByInbox(ctx, inboxID, limit, offset)
 	if err != nil {

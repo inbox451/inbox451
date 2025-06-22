@@ -33,7 +33,7 @@ func (s *TokenService) ListByUser(ctx context.Context, userId string, limit, off
 
 	tokens, total, err := s.core.Repository.ListTokensByUser(ctx, userId, limit, offset)
 	if err != nil {
-		s.core.Logger.Error("Failed to list tokens for userId %d: %v", userId, err)
+		s.core.Logger.Error("Failed to list tokens for userId %s: %v", userId, err)
 		return nil, err
 	}
 
@@ -71,7 +71,7 @@ func (s *TokenService) GetByUser(ctx context.Context, tokenID string, userID str
 	}
 
 	if token == nil {
-		s.core.Logger.Info("Token not found with ID: %d for userID %s", tokenID, userID)
+		s.core.Logger.Info("Token not found with ID: %s for userID %s", tokenID, userID)
 		return nil, ErrNotFound
 	}
 
