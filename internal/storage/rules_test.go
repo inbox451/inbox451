@@ -342,7 +342,6 @@ func TestRepository_DeleteRule(t *testing.T) {
 func TestRepository_ListRules(t *testing.T) {
 	now := time.Now()
 	testInboxID1 := test.RandomTestUUID()
-	testUserID2 := test.RandomTestUUID()
 	testRuleID1 := test.RandomTestUUID()
 	testRuleID2 := test.RandomTestUUID()
 
@@ -368,7 +367,7 @@ func TestRepository_ListRules(t *testing.T) {
 					"id", "inbox_id", "sender", "receiver", "subject", "created_at", "updated_at",
 				}).
 					AddRow(testRuleID1, testInboxID1, "sender1@example.com", "receiver1@example.com", "Subject 1", now, now).
-					AddRow(testUserID2, testInboxID1, "sender2@example.com", "receiver2@example.com", "Subject 2", now, now)
+					AddRow(testRuleID2, testInboxID1, "sender2@example.com", "receiver2@example.com", "Subject 2", now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM forward_rules").
 					WithArgs(10, 0).
@@ -445,7 +444,7 @@ func TestRepository_ListRulesByInbox(t *testing.T) {
 	testInboxID2 := test.RandomTestUUID()
 	testRuleID1 := test.RandomTestUUID()
 	testRuleID2 := test.RandomTestUUID()
-	
+
 	tests := []struct {
 		name    string
 		inboxID string
@@ -471,7 +470,7 @@ func TestRepository_ListRulesByInbox(t *testing.T) {
 					"id", "inbox_id", "sender", "receiver", "subject", "created_at", "updated_at",
 				}).
 					AddRow(testRuleID1, testInboxID1, "sender1@example.com", "receiver1@example.com", "Subject 1", now, now).
-					AddRow(testRuleID2, testInboxID2, "sender2@example.com", "receiver2@example.com", "Subject 2", now, now)
+					AddRow(testRuleID2, testInboxID1, "sender2@example.com", "receiver2@example.com", "Subject 2", now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM forward_rules").
 					WithArgs(testInboxID1, 10, 0).
