@@ -87,8 +87,8 @@ func TestUserService_Create(t *testing.T) {
 
 func TestUserService_Get(t *testing.T) {
 	now := time.Now()
-	testID := test.StaticTestUUID()
-	unexistingID := test.RandomTestUUID()
+	testUserID1 := test.StaticTestUUID()
+	testUnexistingUserID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
 		userID  string
@@ -99,11 +99,11 @@ func TestUserService_Get(t *testing.T) {
 	}{
 		{
 			name:   "existing user",
-			userID: testID,
+			userID: testUserID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetUser", mock.Anything, 1).Return(&models.User{
+				m.On("GetUser", mock.Anything, testUserID1).Return(&models.User{
 					Base: models.Base{
-						ID:        testID,
+						ID:        testUserID1,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
@@ -114,7 +114,7 @@ func TestUserService_Get(t *testing.T) {
 			},
 			want: &models.User{
 				Base: models.Base{
-					ID:        testID,
+					ID:        testUserID1,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},
@@ -126,9 +126,9 @@ func TestUserService_Get(t *testing.T) {
 		},
 		{
 			name:   "non-existent user",
-			userID: unexistingID,
+			userID: testUnexistingUserID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetUser", mock.Anything, 999).Return(nil, storage.ErrNotFound)
+				m.On("GetUser", mock.Anything, testUnexistingUserID).Return(nil, storage.ErrNotFound)
 			},
 			want:    nil,
 			wantErr: true,
