@@ -321,7 +321,7 @@ func TestInboxService_ListByProject(t *testing.T) {
 			limit:     10,
 			offset:    0,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListInboxesByProject", mock.Anything, 1, 10, 0).
+				m.On("ListInboxesByProject", mock.Anything, testProjectID, 10, 0).
 					Return([]*models.Inbox(nil), 0, errors.New("database error"))
 			},
 			want:    nil,
@@ -333,7 +333,7 @@ func TestInboxService_ListByProject(t *testing.T) {
 			limit:     10,
 			offset:    0,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListInboxesByProject", mock.Anything, 2, 10, 0).
+				m.On("ListInboxesByProject", mock.Anything, emptyProjectID, 10, 0).
 					Return([]*models.Inbox{}, 0, nil)
 			},
 			want: &models.PaginatedResponse{
