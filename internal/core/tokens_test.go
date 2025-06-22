@@ -294,7 +294,6 @@ func TestTokenService_CreateForUser(t *testing.T) {
 func TestTokenService_DeleteByUser(t *testing.T) {
 	testUserID1 := test.RandomTestUUID()
 	testTokenID1 := test.RandomTestUUID()
-	testTokenID2 := test.RandomTestUUID()
 	nonExistingTokenID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
@@ -308,9 +307,9 @@ func TestTokenService_DeleteByUser(t *testing.T) {
 			tokenID: testTokenID1,
 			userID:  testUserID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetTokenByUser", mock.Anything, testTokenID1, testUserID1).
+				m.On("GetTokenByUser", mock.Anything, testUserID1, testTokenID1).
 					Return(&models.Token{Base: models.Base{ID: testTokenID1}, UserID: testUserID1}, nil)
-				m.On("DeleteToken", mock.Anything, 1).Return(nil)
+				m.On("DeleteToken", mock.Anything, testTokenID1).Return(nil)
 			},
 			wantErr: false,
 		},
@@ -319,7 +318,7 @@ func TestTokenService_DeleteByUser(t *testing.T) {
 			tokenID: nonExistingTokenID,
 			userID:  testUserID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetTokenByUser", mock.Anything, testUserID1, testTokenID2).
+				m.On("GetTokenByUser", mock.Anything, testUserID1, nonExistingTokenID).
 					Return(nil, storage.ErrNotFound)
 			},
 			wantErr: true,
@@ -329,7 +328,7 @@ func TestTokenService_DeleteByUser(t *testing.T) {
 			tokenID: testTokenID1,
 			userID:  testUserID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetTokenByUser", mock.Anything, 1, 1).
+				m.On("GetTokenByUser", mock.Anything, testUserID1, testTokenID1).
 					Return(&models.Token{Base: models.Base{ID: testTokenID1}, UserID: testUserID1}, nil)
 				m.On("DeleteToken", mock.Anything, testTokenID1).
 					Return(errors.New("database error"))
