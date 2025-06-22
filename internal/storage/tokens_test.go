@@ -300,8 +300,8 @@ func TestRepository_ListTokensByUser(t *testing.T) {
 					"id", "user_id", "token", "name",
 					"expires_at", "created_at", "updated_at",
 				}).
-					AddRow(testTokenID1, testUserID1, "token1", "Token 1", expiresAt, now, now).
-					AddRow(testTokenID2, testUserID1, "token2", "Token 2", expiresAt, now, now)
+					AddRow(testUserID1, testTokenID1, "token1", "Token 1", expiresAt, now, now).
+					AddRow(testUserID1, testTokenID2, "token2", "Token 2", expiresAt, now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM tokens").
 					WithArgs(testUserID1, 10, 0).
