@@ -103,7 +103,7 @@ func TestRuleService_Get(t *testing.T) {
 			name: "existing rule",
 			id:   testRuleID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetRule", mock.Anything, 1).Return(&models.ForwardRule{
+				m.On("GetRule", mock.Anything, testRuleID1).Return(&models.ForwardRule{
 					Base: models.Base{
 						ID:        testRuleID1,
 						CreatedAt: null.TimeFrom(now),

@@ -261,7 +261,7 @@ func TestInboxService_Delete(t *testing.T) {
 }
 
 func TestInboxService_ListByProject(t *testing.T) {
-	testProjectID := test.RandomTestUUID()
+	testProjectID1 := test.RandomTestUUID()
 	testInboxID1 := test.RandomTestUUID()
 	testInboxID2 := test.RandomTestUUID()
 	emptyProjectID := test.RandomTestUUID()
@@ -276,34 +276,34 @@ func TestInboxService_ListByProject(t *testing.T) {
 	}{
 		{
 			name:      "successful list",
-			projectID: testProjectID,
+			projectID: testProjectID1,
 			limit:     10,
 			offset:    0,
 			mockFn: func(m *mocks.Repository) {
 				inboxes := []*models.Inbox{
 					{
 						Base:      models.Base{ID: testInboxID1},
-						ProjectID: testProjectID,
+						ProjectID: testProjectID1,
 						Email:     "inbox1@example.com",
 					},
 					{
 						Base:      models.Base{ID: testInboxID2},
-						ProjectID: testProjectID,
+						ProjectID: testProjectID1,
 						Email:     "inbox2@example.com",
 					},
 				}
-				m.On("ListInboxesByProject", mock.Anything, 1, 10, 0).Return(inboxes, 2, nil)
+				m.On("ListInboxesByProject", mock.Anything, testProjectID1, 10, 0).Return(inboxes, 2, nil)
 			},
 			want: &models.PaginatedResponse{
 				Data: []*models.Inbox{
 					{
 						Base:      models.Base{ID: testInboxID1},
-						ProjectID: testProjectID,
+						ProjectID: testProjectID1,
 						Email:     "inbox1@example.com",
 					},
 					{
 						Base:      models.Base{ID: testInboxID2},
-						ProjectID: testProjectID,
+						ProjectID: testProjectID1,
 						Email:     "inbox2@example.com",
 					},
 				},
@@ -317,11 +317,11 @@ func TestInboxService_ListByProject(t *testing.T) {
 		},
 		{
 			name:      "repository error",
-			projectID: testProjectID,
+			projectID: testProjectID1,
 			limit:     10,
 			offset:    0,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListInboxesByProject", mock.Anything, testProjectID, 10, 0).
+				m.On("ListInboxesByProject", mock.Anything, testProjectID1, 10, 0).
 					Return([]*models.Inbox(nil), 0, errors.New("database error"))
 			},
 			want:    nil,

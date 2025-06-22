@@ -60,7 +60,7 @@ func TestTokenService_ListByUser(t *testing.T) {
 					},
 					{
 						Base:   models.Base{ID: testTokenID2},
-						UserID: testUserID2,
+						UserID: testUserID1,
 						Name:   "Token 2",
 						Token:  "token2",
 					},
@@ -108,7 +108,7 @@ func TestTokenService_ListByUser(t *testing.T) {
 			limit:  10,
 			offset: 0,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListTokensByUser", mock.Anything, testTokenID2, 10, 0).
+				m.On("ListTokensByUser", mock.Anything, testUserID2, 10, 0).
 					Return([]*models.Token{}, 0, nil)
 			},
 			want: &models.PaginatedResponse{

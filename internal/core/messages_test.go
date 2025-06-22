@@ -166,7 +166,7 @@ func TestMessageService_Get(t *testing.T) {
 }
 
 func TestMessageService_ListByInbox(t *testing.T) {
-	testInboxID := test.RandomTestUUID()
+	testInboxID1 := test.RandomTestUUID()
 	testMessageID1 := test.RandomTestUUID()
 	testMessageID2 := test.RandomTestUUID()
 	isRead := true
@@ -182,7 +182,7 @@ func TestMessageService_ListByInbox(t *testing.T) {
 	}{
 		{
 			name:    "successful list with read filter",
-			inboxID: testInboxID,
+			inboxID: testInboxID1,
 			limit:   10,
 			offset:  0,
 			isRead:  &isRead,
@@ -190,22 +190,22 @@ func TestMessageService_ListByInbox(t *testing.T) {
 				messages := []*models.Message{
 					{
 						Base:     models.Base{ID: testMessageID1},
-						InboxID:  testInboxID,
+						InboxID:  testInboxID1,
 						Sender:   "sender1@example.com",
 						Receiver: "inbox@example.com",
 						Subject:  "Subject 1",
 						Body:     "Body 1",
-						IsRead:   true,
+						IsRead:   isRead,
 					},
 				}
-				m.On("ListMessagesByInboxWithFilter", mock.Anything, 1, &isRead, 10, 0).
+				m.On("ListMessagesByInboxWithFilter", mock.Anything, testInboxID1, &isRead, 10, 0).
 					Return(messages, 1, nil)
 			},
 			want: &models.PaginatedResponse{
 				Data: []*models.Message{
 					{
 						Base:     models.Base{ID: testMessageID1},
-						InboxID:  testInboxID,
+						InboxID:  testInboxID1,
 						Sender:   "sender1@example.com",
 						Receiver: "inbox@example.com",
 						Subject:  "Subject 1",
@@ -223,7 +223,7 @@ func TestMessageService_ListByInbox(t *testing.T) {
 		},
 		{
 			name:    "successful list without read filter",
-			inboxID: testInboxID,
+			inboxID: testInboxID1,
 			limit:   10,
 			offset:  0,
 			isRead:  nil,
@@ -231,7 +231,7 @@ func TestMessageService_ListByInbox(t *testing.T) {
 				messages := []*models.Message{
 					{
 						Base:     models.Base{ID: testMessageID1},
-						InboxID:  testInboxID,
+						InboxID:  testInboxID1,
 						Sender:   "sender1@example.com",
 						Receiver: "inbox@example.com",
 						Subject:  "Subject 1",
@@ -240,7 +240,7 @@ func TestMessageService_ListByInbox(t *testing.T) {
 					},
 					{
 						Base:     models.Base{ID: testMessageID2},
-						InboxID:  testInboxID,
+						InboxID:  testInboxID1,
 						Sender:   "sender2@example.com",
 						Receiver: "inbox@example.com",
 						Subject:  "Subject 2",
@@ -248,14 +248,14 @@ func TestMessageService_ListByInbox(t *testing.T) {
 						IsRead:   false,
 					},
 				}
-				m.On("ListMessagesByInboxWithFilter", mock.Anything, 1, (*bool)(nil), 10, 0).
+				m.On("ListMessagesByInboxWithFilter", mock.Anything, testInboxID1, (*bool)(nil), 10, 0).
 					Return(messages, 2, nil)
 			},
 			want: &models.PaginatedResponse{
 				Data: []*models.Message{
 					{
 						Base:     models.Base{ID: testMessageID1},
-						InboxID:  testInboxID,
+						InboxID:  testInboxID1,
 						Sender:   "sender1@example.com",
 						Receiver: "inbox@example.com",
 						Subject:  "Subject 1",
@@ -264,7 +264,7 @@ func TestMessageService_ListByInbox(t *testing.T) {
 					},
 					{
 						Base:     models.Base{ID: testMessageID2},
-						InboxID:  testInboxID,
+						InboxID:  testInboxID1,
 						Sender:   "sender2@example.com",
 						Receiver: "inbox@example.com",
 						Subject:  "Subject 2",
@@ -282,12 +282,12 @@ func TestMessageService_ListByInbox(t *testing.T) {
 		},
 		{
 			name:    "repository error",
-			inboxID: testInboxID,
+			inboxID: testInboxID1,
 			limit:   10,
 			offset:  0,
 			isRead:  nil,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListMessagesByInboxWithFilter", mock.Anything, 1, (*bool)(nil), 10, 0).
+				m.On("ListMessagesByInboxWithFilter", mock.Anything, testInboxID1, (*bool)(nil), 10, 0).
 					Return([]*models.Message(nil), 0, errors.New("database error"))
 			},
 			want:    nil,
