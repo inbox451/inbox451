@@ -24,7 +24,7 @@ func (r *repository) ListRules(ctx context.Context, limit, offset int) ([]*model
 	return rules, total, nil
 }
 
-func (r *repository) ListRulesByInbox(ctx context.Context, inboxID, limit, offset int) ([]*models.ForwardRule, int, error) {
+func (r *repository) ListRulesByInbox(ctx context.Context, inboxID string, limit, offset int) ([]*models.ForwardRule, int, error) {
 	var total int
 	err := r.queries.CountRulesByInbox.GetContext(ctx, &total, inboxID)
 	if err != nil {
@@ -42,7 +42,7 @@ func (r *repository) ListRulesByInbox(ctx context.Context, inboxID, limit, offse
 	return rules, total, nil
 }
 
-func (r *repository) GetRule(ctx context.Context, id int) (*models.ForwardRule, error) {
+func (r *repository) GetRule(ctx context.Context, id string) (*models.ForwardRule, error) {
 	var rule models.ForwardRule
 	err := r.queries.GetRule.GetContext(ctx, &rule, id)
 	return &rule, handleDBError(err)
@@ -61,7 +61,7 @@ func (r *repository) UpdateRule(ctx context.Context, rule *models.ForwardRule) e
 	return handleRowsAffected(result)
 }
 
-func (r *repository) DeleteRule(ctx context.Context, id int) error {
+func (r *repository) DeleteRule(ctx context.Context, id string) error {
 	result, err := r.queries.DeleteRule.ExecContext(ctx, id)
 	if err != nil {
 		return handleDBError(err)

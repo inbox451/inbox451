@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"inbox451/internal/test"
 	"testing"
 	"time"
 
@@ -61,6 +62,8 @@ func setupTokenTestDB(t *testing.T) (*repository, sqlmock.Sqlmock) {
 func TestRepository_CreateToken(t *testing.T) {
 	now := time.Now()
 	expiresAt := now.Add(24 * time.Hour)
+	testUserID1 := test.RandomTestUUID()
+	testTokenID1 := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
@@ -71,19 +74,19 @@ func TestRepository_CreateToken(t *testing.T) {
 		{
 			name: "successful creation",
 			token: &models.Token{
-				UserID:    1,
+				UserID:    testUserID1,
 				Token:     "test-token",
 				Name:      "Test Token",
 				ExpiresAt: null.TimeFrom(expiresAt),
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("INSERT INTO tokens").
-					WithArgs(1, "test-token", "Test Token", expiresAt).
+					WithArgs(testUserID1, "test-token", "Test Token", expiresAt).
 					WillReturnRows(
 						sqlmock.NewRows([]string{
 							"id", "user_id", "token", "name",
 							"expires_at", "created_at", "updated_at",
-						}).AddRow(1, 1, "test-token", "Test Token", expiresAt, now, now),
+						}).AddRow(testTokenID1, testUserID1, "test-token", "Test Token", expiresAt, now, now),
 					)
 			},
 			wantErr: false,
@@ -91,14 +94,14 @@ func TestRepository_CreateToken(t *testing.T) {
 		{
 			name: "database error",
 			token: &models.Token{
-				UserID:    1,
+				UserID:    testUserID1,
 				Token:     "test-token",
 				Name:      "Test Token",
 				ExpiresAt: null.TimeFrom(expiresAt),
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("INSERT INTO tokens").
-					WithArgs(1, "test-token", "Test Token", expiresAt).
+					WithArgs(testUserID1, "test-token", "Test Token", expiresAt).
 					WillReturnError(sql.ErrConnDone)
 			},
 			wantErr: true,
@@ -132,11 +135,14 @@ func TestRepository_CreateToken(t *testing.T) {
 func TestRepository_GetTokenByUser(t *testing.T) {
 	now := time.Now()
 	expiresAt := now.Add(24 * time.Hour)
+	testUserID1 := test.RandomTestUUID()
+	testTokenID1 := test.RandomTestUUID()
+	nonExistingTokenID := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
-		tokenID int
-		userID  int
+		tokenID string
+		userID  string
 		mockFn  func(sqlmock.Sqlmock)
 		want    *models.Token
 		wantErr bool
@@ -144,25 +150,25 @@ func TestRepository_GetTokenByUser(t *testing.T) {
 	}{
 		{
 			name:    "existing token",
-			tokenID: 1,
-			userID:  1,
+			tokenID: testTokenID1,
+			userID:  testUserID1,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{
 					"id", "user_id", "token", "name",
 					"expires_at", "created_at", "updated_at",
-				}).AddRow(1, 1, "test-token", "Test Token", expiresAt, now, now)
+				}).AddRow(testTokenID1, testUserID1, "test-token", "Test Token", expiresAt, now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM tokens").
-					WithArgs(1, 1).
+					WithArgs(testTokenID1, testUserID1).
 					WillReturnRows(rows)
 			},
 			want: &models.Token{
 				Base: models.Base{
-					ID:        1,
+					ID:        testTokenID1,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},
-				UserID:    1,
+				UserID:    testUserID1,
 				Token:     "test-token",
 				Name:      "Test Token",
 				ExpiresAt: null.TimeFrom(expiresAt),
@@ -171,11 +177,11 @@ func TestRepository_GetTokenByUser(t *testing.T) {
 		},
 		{
 			name:    "non-existent token",
-			tokenID: 999,
-			userID:  1,
+			tokenID: nonExistingTokenID,
+			userID:  testUserID1,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("SELECT (.+) FROM tokens").
-					WithArgs(999, 1).
+					WithArgs(nonExistingTokenID, testUserID1).
 					WillReturnError(sql.ErrNoRows)
 			},
 			want:    nil,
@@ -210,28 +216,30 @@ func TestRepository_GetTokenByUser(t *testing.T) {
 }
 
 func TestRepository_DeleteToken(t *testing.T) {
+	testTokenID1 := test.RandomTestUUID()
+	nonExistingTokenID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
-		tokenID int
+		tokenID string
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name:    "successful deletion",
-			tokenID: 1,
+			tokenID: testTokenID1,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM tokens").
-					WithArgs(1).
+					WithArgs(testTokenID1).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			wantErr: false,
 		},
 		{
 			name:    "non-existent token",
-			tokenID: 999,
+			tokenID: nonExistingTokenID,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM tokens").
-					WithArgs(999).
+					WithArgs(nonExistingTokenID).
 					WillReturnResult(sqlmock.NewResult(0, 0))
 			},
 			wantErr: true,
@@ -262,10 +270,14 @@ func TestRepository_DeleteToken(t *testing.T) {
 func TestRepository_ListTokensByUser(t *testing.T) {
 	now := time.Now()
 	expiresAt := now.Add(24 * time.Hour)
+	testUserID1 := test.RandomTestUUID()
+	testUserID2 := test.RandomTestUUID()
+	testTokenID1 := test.RandomTestUUID()
+	testTokenID2 := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
-		userID  int
+		userID  string
 		limit   int
 		offset  int
 		mockFn  func(sqlmock.Sqlmock)
@@ -275,45 +287,45 @@ func TestRepository_ListTokensByUser(t *testing.T) {
 	}{
 		{
 			name:   "successful list",
-			userID: 1,
+			userID: testUserID1,
 			limit:  10,
 			offset: 0,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				countRows := sqlmock.NewRows([]string{"count"}).AddRow(2)
 				mock.ExpectQuery("SELECT COUNT").
-					WithArgs(1).
+					WithArgs(testUserID1).
 					WillReturnRows(countRows)
 
 				rows := sqlmock.NewRows([]string{
 					"id", "user_id", "token", "name",
 					"expires_at", "created_at", "updated_at",
 				}).
-					AddRow(1, 1, "token1", "Token 1", expiresAt, now, now).
-					AddRow(2, 1, "token2", "Token 2", expiresAt, now, now)
+					AddRow(testTokenID1, testUserID1, "token1", "Token 1", expiresAt, now, now).
+					AddRow(testTokenID2, testUserID1, "token2", "Token 2", expiresAt, now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM tokens").
-					WithArgs(1, 10, 0).
+					WithArgs(testUserID1, 10, 0).
 					WillReturnRows(rows)
 			},
 			want: []*models.Token{
 				{
 					Base: models.Base{
-						ID:        1,
+						ID:        testTokenID1,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					UserID:    1,
+					UserID:    testUserID1,
 					Token:     "token1",
 					Name:      "Token 1",
 					ExpiresAt: null.TimeFrom(expiresAt),
 				},
 				{
 					Base: models.Base{
-						ID:        2,
+						ID:        testTokenID2,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					UserID:    1,
+					UserID:    testUserID1,
 					Token:     "token2",
 					Name:      "Token 2",
 					ExpiresAt: null.TimeFrom(expiresAt),
@@ -324,13 +336,13 @@ func TestRepository_ListTokensByUser(t *testing.T) {
 		},
 		{
 			name:   "empty list",
-			userID: 2,
+			userID: testUserID2,
 			limit:  10,
 			offset: 0,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				countRows := sqlmock.NewRows([]string{"count"}).AddRow(0)
 				mock.ExpectQuery("SELECT COUNT").
-					WithArgs(2).
+					WithArgs(testUserID2).
 					WillReturnRows(countRows)
 			},
 			want:    []*models.Token{},

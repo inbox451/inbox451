@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"inbox451/internal/test"
 	"io"
 	"testing"
 	"time"
@@ -86,9 +87,11 @@ func TestUserService_Create(t *testing.T) {
 
 func TestUserService_Get(t *testing.T) {
 	now := time.Now()
+	testUserID1 := test.StaticTestUUID()
+	testUnexistingUserID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
-		userID  int
+		userID  string
 		mockFn  func(*mocks.Repository)
 		want    *models.User
 		wantErr bool
@@ -96,11 +99,11 @@ func TestUserService_Get(t *testing.T) {
 	}{
 		{
 			name:   "existing user",
-			userID: 1,
+			userID: testUserID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetUser", mock.Anything, 1).Return(&models.User{
+				m.On("GetUser", mock.Anything, testUserID1).Return(&models.User{
 					Base: models.Base{
-						ID:        1,
+						ID:        testUserID1,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
@@ -111,7 +114,7 @@ func TestUserService_Get(t *testing.T) {
 			},
 			want: &models.User{
 				Base: models.Base{
-					ID:        1,
+					ID:        testUserID1,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},
@@ -123,9 +126,9 @@ func TestUserService_Get(t *testing.T) {
 		},
 		{
 			name:   "non-existent user",
-			userID: 999,
+			userID: testUnexistingUserID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetUser", mock.Anything, 999).Return(nil, storage.ErrNotFound)
+				m.On("GetUser", mock.Anything, testUnexistingUserID).Return(nil, storage.ErrNotFound)
 			},
 			want:    nil,
 			wantErr: true,
@@ -155,6 +158,8 @@ func TestUserService_Get(t *testing.T) {
 }
 
 func TestUserService_List(t *testing.T) {
+	testID_1 := test.RandomTestUUID()
+	testID_2 := test.RandomTestUUID()
 	tests := []struct {
 		name    string
 		limit   int
@@ -169,15 +174,15 @@ func TestUserService_List(t *testing.T) {
 			offset: 0,
 			mockFn: func(m *mocks.Repository) {
 				users := []*models.User{
-					{Base: models.Base{ID: 1}, Name: "User 1"},
-					{Base: models.Base{ID: 2}, Name: "User 2"},
+					{Base: models.Base{ID: testID_1}, Name: "User 1"},
+					{Base: models.Base{ID: testID_2}, Name: "User 2"},
 				}
 				m.On("ListUsers", mock.Anything, 10, 0).Return(users, 2, nil)
 			},
 			want: &models.PaginatedResponse{
 				Data: []*models.User{
-					{Base: models.Base{ID: 1}, Name: "User 1"},
-					{Base: models.Base{ID: 2}, Name: "User 2"},
+					{Base: models.Base{ID: testID_1}, Name: "User 1"},
+					{Base: models.Base{ID: testID_2}, Name: "User 2"},
 				},
 				Pagination: models.Pagination{
 					Total:  2,
@@ -218,6 +223,8 @@ func TestUserService_List(t *testing.T) {
 }
 
 func TestUserService_Update(t *testing.T) {
+	testID := test.StaticTestUUID()
+	unexistingID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
 		user    *models.User
@@ -227,7 +234,7 @@ func TestUserService_Update(t *testing.T) {
 		{
 			name: "successful update",
 			user: &models.User{
-				Base: models.Base{ID: 1},
+				Base: models.Base{ID: testID},
 				Name: "Updated Name",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -239,7 +246,7 @@ func TestUserService_Update(t *testing.T) {
 		{
 			name: "update non-existent user",
 			user: &models.User{
-				Base: models.Base{ID: 999},
+				Base: models.Base{ID: unexistingID},
 				Name: "Updated Name",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -268,25 +275,27 @@ func TestUserService_Update(t *testing.T) {
 }
 
 func TestUserService_Delete(t *testing.T) {
+	testUserID1 := test.StaticTestUUID()
+	testNonExistingUserID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
-		userID  int
+		userID  string
 		mockFn  func(*mocks.Repository)
 		wantErr bool
 	}{
 		{
 			name:   "successful deletion",
-			userID: 1,
+			userID: testUserID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteUser", mock.Anything, 1).Return(nil)
+				m.On("DeleteUser", mock.Anything, testUserID1).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name:   "delete non-existent user",
-			userID: 999,
+			userID: testNonExistingUserID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteUser", mock.Anything, 999).Return(storage.ErrNotFound)
+				m.On("DeleteUser", mock.Anything, testNonExistingUserID).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
