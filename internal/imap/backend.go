@@ -31,5 +31,5 @@ func (be *ImapBackend) Login(connInfo *imap.ConnInfo, username string, password 
 	}
 
 	be.core.Logger.Info("IMAP Token Login successful for username: %s", username)
-	return NewImapUser(user, be.core), nil
+	return NewImapUser(ctx, user, be.core), nil
 }

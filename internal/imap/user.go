@@ -14,13 +14,15 @@ import (
 type ImapUser struct {
 	userModel *models.User
 	core      *core.Core
+	ctx       context.Context
 }
 
 // NewImapUser creates a new IMAP user
-func NewImapUser(user *models.User, core *core.Core) backend.User {
+func NewImapUser(ctx context.Context, user *models.User, core *core.Core) backend.User {
 	return &ImapUser{
 		userModel: user,
 		core:      core,
+		ctx:       ctx,
 	}
 }
 
@@ -34,7 +36,7 @@ func (u *ImapUser) Username() string {
 
 // ListMailboxes returns a list of mailboxes for the user
 func (u *ImapUser) ListMailboxes(subscribed bool) ([]backend.Mailbox, error) {
-	ctx := context.Background()
+	ctx := u.ctx
 	inboxes, err := u.core.InboxService.ListByUser(ctx, u.userModel.ID)
 	if err != nil {
 		u.core.Logger.Error("Failed to list inboxes for user %d: %v", u.userModel.ID, err)
@@ -43,7 +45,7 @@ func (u *ImapUser) ListMailboxes(subscribed bool) ([]backend.Mailbox, error) {
 
 	mailboxes := make([]backend.Mailbox, len(inboxes))
 	for i, inbox := range inboxes {
-		mailboxes[i] = NewImapMailbox(inbox, u)
+		mailboxes[i] = NewImapMailbox(ctx, inbox, u)
 	}
 
 	u.core.Logger.Info("Listed %d mailboxes for user %d", len(mailboxes), u.userModel.ID)
@@ -52,7 +54,7 @@ func (u *ImapUser) ListMailboxes(subscribed bool) ([]backend.Mailbox, error) {
 
 // GetMailbox returns a specific mailbox
 func (u *ImapUser) GetMailbox(name string) (backend.Mailbox, error) {
-	ctx := context.Background()
+	ctx := u.ctx
 
 	// Handle special case for "INBOX" - map to user's first inbox
 	if name == "INBOX" {
@@ -66,7 +68,7 @@ func (u *ImapUser) GetMailbox(name string) (backend.Mailbox, error) {
 			return nil, backend.ErrNoSuchMailbox
 		}
 		u.core.Logger.Debug("IMAP GetMailbox: Mapping 'INBOX' to user %d's first inbox: %s", u.userModel.ID, inboxes[0].Email)
-		return NewImapMailbox(inboxes[0], u), nil
+		return NewImapMailbox(ctx, inboxes[0], u), nil
 	}
 
 	// Try to get inbox by email address
@@ -76,7 +78,7 @@ func (u *ImapUser) GetMailbox(name string) (backend.Mailbox, error) {
 		return nil, backend.ErrNoSuchMailbox
 	}
 
-	return NewImapMailbox(inbox, u), nil
+	return NewImapMailbox(ctx, inbox, u), nil
 }
 
 // CreateMailbox is not supported
