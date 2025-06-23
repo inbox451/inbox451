@@ -36,6 +36,7 @@ type IMAPIntegrationTestSuite struct {
 	testProject *models.Project
 	testInbox   *models.Inbox
 	testMessage *models.Message
+	testToken   *models.Token
 }
 
 func TestIMAPIntegrationSuite(t *testing.T) {
@@ -54,10 +55,15 @@ func (suite *IMAPIntegrationTestSuite) SetupSuite() {
 	ko := koanf.New(".")
 	cfg, err := config.LoadConfig("../../config.yml", ko)
 	if err != nil {
-		cfg = &config.Config{}
-		cfg.Database.MaxOpenConns = 25
-		cfg.Database.MaxIdleConns = 5
-		cfg.Database.ConnMaxLifetime = 5 * time.Minute
+		// Fallback to default test configuration
+		cfg = &config.Config{
+			Database: config.DatabaseConfig{
+				URL:             "postgres://inbox:inbox@localhost:5432/inbox451?sslmode=disable",
+				MaxOpenConns:    25,
+				MaxIdleConns:    5,
+				ConnMaxLifetime: 5 * time.Minute,
+			},
+		}
 		cfg.Logging.Level = logger.DEBUG
 	}
 
@@ -229,6 +235,14 @@ func (suite *IMAPIntegrationTestSuite) setupTestData() {
 	err = suite.core.MessageService.Store(ctx, message)
 	require.NoError(suite.T(), err, "Failed to create test message")
 	suite.testMessage = message
+
+	// Create API token for test user
+	tokenData := &models.Token{
+		Name: "Test Token",
+	}
+	token, err := suite.core.TokenService.CreateForUser(ctx, suite.testUser.ID, tokenData)
+	require.NoError(suite.T(), err, "Failed to create test token")
+	suite.testToken = token
 }
 
 func (suite *IMAPIntegrationTestSuite) cleanupTestData() {
@@ -261,7 +275,7 @@ func (suite *IMAPIntegrationTestSuite) cleanupTestData() {
 
 func (suite *IMAPIntegrationTestSuite) TestAuthentication() {
 	suite.T().Run("ValidCredentials", func(t *testing.T) {
-		err := suite.client.Login(suite.testUser.Username, "password123")
+		err := suite.client.Login(suite.testUser.Username, suite.testToken.Token)
 		assert.NoError(t, err, "Login with valid credentials should succeed")
 	})
 
@@ -276,7 +290,7 @@ func (suite *IMAPIntegrationTestSuite) TestAuthentication() {
 			}
 		}(testClient)
 
-		err = testClient.Login(suite.testUser.Username, "wrongpassword")
+		err = testClient.Login(suite.testUser.Username, "wrongtoken")
 		assert.Error(t, err, "Login with invalid credentials should fail")
 	})
 
@@ -291,14 +305,14 @@ func (suite *IMAPIntegrationTestSuite) TestAuthentication() {
 			}
 		}(testClient)
 
-		err = testClient.Login("nonexistent", "password")
+		err = testClient.Login("nonexistent", "invalidtoken")
 		assert.Error(t, err, "Login with nonexistent user should fail")
 	})
 }
 
 func (suite *IMAPIntegrationTestSuite) TestMailboxOperations() {
 	// First login
-	err := suite.client.Login(suite.testUser.Username, "password123")
+	err := suite.client.Login(suite.testUser.Username, suite.testToken.Token)
 	require.NoError(suite.T(), err)
 
 	suite.T().Run("ListMailboxes", func(t *testing.T) {
@@ -342,7 +356,7 @@ func (suite *IMAPIntegrationTestSuite) TestMailboxOperations() {
 
 func (suite *IMAPIntegrationTestSuite) TestMessageFetching() {
 	// Login and select mailbox
-	err := suite.client.Login(suite.testUser.Username, "password123")
+	err := suite.client.Login(suite.testUser.Username, suite.testToken.Token)
 	require.NoError(suite.T(), err)
 
 	_, err = suite.client.Select(suite.testInbox.Email, false)
@@ -403,7 +417,7 @@ func (suite *IMAPIntegrationTestSuite) TestMessageFetching() {
 
 func (suite *IMAPIntegrationTestSuite) TestMessageSearch() {
 	// Login and select mailbox
-	err := suite.client.Login(suite.testUser.Username, "password123")
+	err := suite.client.Login(suite.testUser.Username, suite.testToken.Token)
 	require.NoError(suite.T(), err)
 
 	_, err = suite.client.Select(suite.testInbox.Email, false)
@@ -430,7 +444,7 @@ func (suite *IMAPIntegrationTestSuite) TestMessageSearch() {
 
 func (suite *IMAPIntegrationTestSuite) TestFlagOperations() {
 	// Login and select mailbox
-	err := suite.client.Login(suite.testUser.Username, "password123")
+	err := suite.client.Login(suite.testUser.Username, suite.testToken.Token)
 	require.NoError(suite.T(), err)
 
 	_, err = suite.client.Select(suite.testInbox.Email, false)
@@ -523,7 +537,7 @@ func (suite *IMAPIntegrationTestSuite) TestFlagOperations() {
 
 func (suite *IMAPIntegrationTestSuite) TestExpunge() {
 	// Login and select mailbox
-	err := suite.client.Login(suite.testUser.Username, "password123")
+	err := suite.client.Login(suite.testUser.Username, suite.testToken.Token)
 	require.NoError(suite.T(), err)
 
 	mbox, err := suite.client.Select(suite.testInbox.Email, false)
@@ -555,7 +569,7 @@ func (suite *IMAPIntegrationTestSuite) TestExpunge() {
 // Benchmark tests for performance
 func (suite *IMAPIntegrationTestSuite) TestPerformance() {
 	// Login
-	err := suite.client.Login(suite.testUser.Username, "password123")
+	err := suite.client.Login(suite.testUser.Username, suite.testToken.Token)
 	require.NoError(suite.T(), err)
 
 	_, err = suite.client.Select(suite.testInbox.Email, false)

@@ -15,13 +15,15 @@ import (
 type ImapMailbox struct {
 	inboxModel *models.Inbox
 	user       *ImapUser
+	ctx        context.Context
 }
 
 // NewImapMailbox creates a new IMAP mailbox
-func NewImapMailbox(inbox *models.Inbox, user *ImapUser) backend.Mailbox {
+func NewImapMailbox(ctx context.Context, inbox *models.Inbox, user *ImapUser) backend.Mailbox {
 	return &ImapMailbox{
 		inboxModel: inbox,
 		user:       user,
+		ctx:        ctx,
 	}
 }
 
@@ -42,7 +44,7 @@ func (m *ImapMailbox) Info() (*imap.MailboxInfo, error) {
 
 // Status returns mailbox status
 func (m *ImapMailbox) Status(items []imap.StatusItem) (*imap.MailboxStatus, error) {
-	ctx := context.Background()
+	ctx := m.ctx
 	status := imap.NewMailboxStatus(m.inboxModel.Email, items)
 
 	// Get total message count (non-deleted)
@@ -89,7 +91,7 @@ func (m *ImapMailbox) Status(items []imap.StatusItem) (*imap.MailboxStatus, erro
 // ListMessages returns a list of messages
 func (m *ImapMailbox) ListMessages(uid bool, seqSet *imap.SeqSet, items []imap.FetchItem, ch chan<- *imap.Message) error {
 	defer close(ch)
-	ctx := context.Background()
+	ctx := m.ctx
 
 	// Resolve sequence set to UIDs
 	uids, err := m.resolveSeqSetToUIDs(ctx, seqSet, uid)
@@ -124,7 +126,7 @@ func (m *ImapMailbox) ListMessages(uid bool, seqSet *imap.SeqSet, items []imap.F
 
 // SearchMessages searches for messages matching the given criteria
 func (m *ImapMailbox) SearchMessages(uid bool, criteria *imap.SearchCriteria) ([]uint32, error) {
-	ctx := context.Background()
+	ctx := m.ctx
 
 	// For basic implementation, handle common flag searches
 	filters := models.MessageFilters{}
@@ -166,12 +168,29 @@ func (m *ImapMailbox) SearchMessages(uid bool, criteria *imap.SearchCriteria) ([
 		}
 	}
 
-	// Get all messages matching filters (use large limit for search to get all messages)
-	messages, _, err := m.user.core.Repository.ListMessagesByInboxWithFilters(ctx, m.inboxModel.ID, filters, 1000, 0)
-	if err != nil {
-		m.user.core.Logger.Error("Failed to search messages: %v", err)
-		return nil, err
+	// Fetch all messages matching filters using pagination
+	const batchSize = 100
+	var allMessages []*models.Message
+	offset := 0
+
+	for {
+		messages, totalCount, err := m.user.core.Repository.ListMessagesByInboxWithFilters(ctx, m.inboxModel.ID, filters, batchSize, offset)
+		if err != nil {
+			m.user.core.Logger.Error("Failed to search messages: %v", err)
+			return nil, err
+		}
+
+		allMessages = append(allMessages, messages...)
+
+		// Check if we've fetched all messages
+		if len(allMessages) >= totalCount || len(messages) < batchSize {
+			break
+		}
+
+		offset += batchSize
 	}
+
+	messages := allMessages
 
 	// Handle search criteria based on header fields, body, etc.
 	results := []uint32{}
@@ -197,7 +216,7 @@ func (m *ImapMailbox) Check() error {
 
 // ExpungeMessages permanently deletes messages with given UIDs
 func (m *ImapMailbox) ExpungeMessages(uids []uint32) error {
-	ctx := context.Background()
+	ctx := m.ctx
 
 	// Delete each message
 	for _, uid := range uids {
@@ -228,7 +247,7 @@ func (m *ImapMailbox) CreateMessage(flags []string, date time.Time, body imap.Li
 
 // UpdateMessagesFlags handles flag updates for messages
 func (m *ImapMailbox) UpdateMessagesFlags(uid bool, seqSet *imap.SeqSet, operation imap.FlagsOp, flags []string) error {
-	ctx := context.Background()
+	ctx := m.ctx
 
 	// Resolve sequence set to UIDs
 	uids, err := m.resolveSeqSetToUIDs(ctx, seqSet, uid)
@@ -241,6 +260,36 @@ func (m *ImapMailbox) UpdateMessagesFlags(uid bool, seqSet *imap.SeqSet, operati
 
 	// Update flags for each message
 	for _, messageUID := range uids {
+		// For SetFlags operation, first clear all flags
+		if operation == imap.SetFlags {
+			// Clear Seen flag if not in the new flags list
+			seenInFlags := false
+			deletedInFlags := false
+			for _, flag := range flags {
+				if flag == imap.SeenFlag {
+					seenInFlags = true
+				}
+				if flag == imap.DeletedFlag {
+					deletedInFlags = true
+				}
+			}
+
+			// Clear flags that are not in the new set
+			if !seenInFlags {
+				if err := m.user.core.MessageService.MarkAsUnread(ctx, int(messageUID)); err != nil {
+					m.user.core.Logger.Error("Failed to mark message %d as unread: %v", messageUID, err)
+					failedUpdates++
+				}
+			}
+			if !deletedInFlags {
+				if err := m.user.core.MessageService.MarkAsUndeleted(ctx, int(messageUID)); err != nil {
+					m.user.core.Logger.Error("Failed to mark message %d as undeleted: %v", messageUID, err)
+					failedUpdates++
+				}
+			}
+		}
+
+		// Now apply the requested flags
 		for _, flag := range flags {
 			switch flag {
 			case imap.SeenFlag:
@@ -283,7 +332,7 @@ func (m *ImapMailbox) UpdateMessagesFlags(uid bool, seqSet *imap.SeqSet, operati
 
 // Expunge permanently deletes messages marked as deleted
 func (m *ImapMailbox) Expunge() error {
-	ctx := context.Background()
+	ctx := m.ctx
 
 	// Get all messages marked as deleted
 	trueVal := true
