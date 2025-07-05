@@ -84,7 +84,12 @@ func (suite *IMAPIntegrationTestSuite) SetupSuite() {
 	require.NoError(suite.T(), err, "Failed to create IMAP server")
 
 	// Set the test port based on the server's configured address
-	suite.testPort = suite.imapServer.imap.Addr
+	serverAddr := suite.imapServer.imap.Addr
+	if serverAddr == ":1143" || serverAddr == "" {
+		suite.testPort = "localhost:1143"
+	} else {
+		suite.testPort = serverAddr
+	}
 
 	// Start IMAP server in goroutine
 	go func() {
@@ -135,27 +140,33 @@ func (suite *IMAPIntegrationTestSuite) SetupTest() {
 func (suite *IMAPIntegrationTestSuite) ensureTestMessage() {
 	ctx := context.Background()
 
-	// Check if we need to create a new message (filter for non-deleted messages only)
+	// Always create a fresh unread message for each test
+	// First, delete any existing messages to ensure clean state
 	isDeleted := false
 	filters := models.MessageFilters{
 		IsDeleted: &isDeleted,
 	}
-	response, err := suite.core.MessageService.ListByInbox(ctx, suite.testInbox.ID, 10, 0, filters)
-	if err != nil || response == nil || len(response.Data.([]*models.Message)) == 0 {
-		// Create a fresh test message
-		message := &models.Message{
-			InboxID:   suite.testInbox.ID,
-			Sender:    "sender@example.com",
-			Receiver:  suite.testInbox.Email,
-			Subject:   "Test Message",
-			Body:      "This is a test message body",
-			IsRead:    false,
-			IsDeleted: false,
+	response, err := suite.core.MessageService.ListByInbox(ctx, suite.testInbox.ID, 100, 0, filters)
+	if err == nil && response != nil {
+		messages := response.Data.([]*models.Message)
+		for _, msg := range messages {
+			suite.core.MessageService.Delete(ctx, msg.ID)
 		}
-
-		err = suite.core.MessageService.Store(ctx, message)
-		require.NoError(suite.T(), err, "Failed to create fresh test message")
 	}
+
+	// Create a fresh test message
+	message := &models.Message{
+		InboxID:   suite.testInbox.ID,
+		Sender:    "sender@example.com",
+		Receiver:  suite.testInbox.Email,
+		Subject:   "Test Message",
+		Body:      "This is a test message body",
+		IsRead:    false,
+		IsDeleted: false,
+	}
+
+	err = suite.core.MessageService.Store(ctx, message)
+	require.NoError(suite.T(), err, "Failed to create fresh test message")
 }
 
 func (suite *IMAPIntegrationTestSuite) TearDownTest() {

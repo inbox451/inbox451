@@ -38,7 +38,12 @@ func NewServer(core *core.Core) (*ImapServer, error) {
 	if core.Config.Server.IMAP.Address != "" {
 		s.Addr = core.Config.Server.IMAP.Address
 	} else if core.Config.Server.IMAP.Port != "" {
-		s.Addr = ":" + core.Config.Server.IMAP.Port
+		port := core.Config.Server.IMAP.Port
+		if port[0] == ':' {
+			s.Addr = port
+		} else {
+			s.Addr = ":" + port
+		}
 	} else {
 		s.Addr = ":1143"
 	}
