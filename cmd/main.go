@@ -85,10 +85,16 @@ func startServers(core *core.Core, db *sql.DB) error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
+	// Initialize IMAP server
+	imapServer, err := imap.NewServer(core)
+	if err != nil {
+		return fmt.Errorf("failed to create IMAP server: %w", err)
+	}
+
 	// Initialize all servers
 	servers := []ServerInstance{
 		{server: api.NewServer(context.Background(), core, db), name: "HTTP"},
-		{server: imap.NewServer(core), name: "IMAP"},
+		{server: imapServer, name: "IMAP"},
 		{server: mta.NewServer(core), name: "SMTP: Mail Transfer Agent (MTA)"},
 		{server: msa.NewServer(core), name: "SMTP Mail Submission Agent (MSA)"},
 	}

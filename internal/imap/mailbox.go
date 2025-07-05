@@ -11,6 +11,13 @@ import (
 	"github.com/emersion/go-imap/backend"
 )
 
+const (
+	// MaxSequenceRange defines the maximum allowed range size to prevent performance issues
+	MaxSequenceRange = 10000
+	// MaxUID defines the maximum allowed UID value (2^32 - 1)
+	MaxUID = 4294967295
+)
+
 // ImapMailbox implements go-imap/backend.Mailbox interface
 type ImapMailbox struct {
 	inboxModel *models.Inbox
@@ -53,7 +60,7 @@ func (m *ImapMailbox) Status(items []imap.StatusItem) (*imap.MailboxStatus, erro
 	_, total, err := m.user.core.Repository.ListMessagesByInboxWithFilters(ctx, m.inboxModel.ID, filters, 1, 0)
 	if err != nil {
 		m.user.core.Logger.Error("Failed to get message count for inbox %s: %v", m.inboxModel.ID, err)
-		return status, nil
+		return nil, err
 	}
 	status.Messages = uint32(total)
 
@@ -62,9 +69,9 @@ func (m *ImapMailbox) Status(items []imap.StatusItem) (*imap.MailboxStatus, erro
 	_, unreadTotal, err := m.user.core.Repository.ListMessagesByInboxWithFilters(ctx, m.inboxModel.ID, filters, 1, 0)
 	if err != nil {
 		m.user.core.Logger.Error("Failed to get unread message count for inbox %s: %v", m.inboxModel.ID, err)
-	} else {
-		status.Unseen = uint32(unreadTotal)
+		return nil, err
 	}
+	status.Unseen = uint32(unreadTotal)
 
 	// Set recent messages count (for simplicity, assume all unseen are recent)
 	status.Recent = status.Unseen
@@ -73,10 +80,9 @@ func (m *ImapMailbox) Status(items []imap.StatusItem) (*imap.MailboxStatus, erro
 	maxUID, err := m.user.core.Repository.GetMaxMessageUID(ctx, m.inboxModel.ID)
 	if err != nil {
 		m.user.core.Logger.Error("Failed to get max UID for inbox %s: %v", m.inboxModel.ID, err)
-		status.UidNext = 1
-	} else {
-		status.UidNext = maxUID + 1
+		return nil, err
 	}
+	status.UidNext = maxUID + 1
 
 	// Set UID validity (use inbox creation timestamp)
 	if m.inboxModel.CreatedAt.Valid {
@@ -217,6 +223,7 @@ func (m *ImapMailbox) Check() error {
 // ExpungeMessages permanently deletes messages with given UIDs
 func (m *ImapMailbox) ExpungeMessages(uids []uint32) error {
 	ctx := m.ctx
+	var failedUIDs []uint32
 
 	// Delete each message
 	for _, uid := range uids {
@@ -224,16 +231,24 @@ func (m *ImapMailbox) ExpungeMessages(uids []uint32) error {
 		messageID, err := m.user.core.Repository.GetMessageIDFromUID(ctx, m.inboxModel.ID, uid)
 		if err != nil {
 			m.user.core.Logger.Error("Failed to find message ID for UID %d in inbox %s: %v", uid, m.inboxModel.ID, err)
+			failedUIDs = append(failedUIDs, uid)
 			continue // Skip to the next UID
 		}
 
 		if err := m.user.core.MessageService.Delete(ctx, messageID); err != nil {
 			m.user.core.Logger.Error("Failed to expunge message %d: %v", uid, err)
+			failedUIDs = append(failedUIDs, uid)
 			// Continue with other messages even if one fails
 		}
 	}
 
-	m.user.core.Logger.Info("Expunged %d messages from inbox %s", len(uids), m.inboxModel.ID)
+	successCount := len(uids) - len(failedUIDs)
+
+	if len(failedUIDs) > 0 {
+		m.user.core.Logger.Error("Failed to expunge %d messages (UIDs: %v) from inbox %s", len(failedUIDs), failedUIDs, m.inboxModel.ID)
+	}
+
+	m.user.core.Logger.Info("Expunged %d messages from inbox %s", successCount, m.inboxModel.ID)
 	return nil
 }
 
@@ -349,24 +364,45 @@ func (m *ImapMailbox) UpdateMessagesFlags(uid bool, seqSet *imap.SeqSet, operati
 func (m *ImapMailbox) Expunge() error {
 	ctx := m.ctx
 
-	// Get all messages marked as deleted
+	// Get messages marked as deleted in batches to prevent memory issues
 	trueVal := true
 	filters := models.MessageFilters{IsDeleted: &trueVal}
-	messages, _, err := m.user.core.Repository.ListMessagesByInboxWithFilters(ctx, m.inboxModel.ID, filters, 0, 0)
-	if err != nil {
-		m.user.core.Logger.Error("Failed to get deleted messages for expunge: %v", err)
-		return err
-	}
 
-	// Permanently delete each message
-	for _, msg := range messages {
-		if err := m.user.core.MessageService.Delete(ctx, msg.ID); err != nil {
-			m.user.core.Logger.Error("Failed to expunge message %s: %v", msg.ID, err)
-			// Continue with other messages even if one fails
+	const batchSize = 100
+	offset := 0
+	totalExpunged := 0
+
+	for {
+		messages, _, err := m.user.core.Repository.ListMessagesByInboxWithFilters(ctx, m.inboxModel.ID, filters, batchSize, offset)
+		if err != nil {
+			m.user.core.Logger.Error("Failed to get deleted messages for expunge: %v", err)
+			return err
 		}
+
+		// If no messages returned, we're done
+		if len(messages) == 0 {
+			break
+		}
+
+		// Permanently delete each message in this batch
+		for _, msg := range messages {
+			if err := m.user.core.MessageService.Delete(ctx, msg.ID); err != nil {
+				m.user.core.Logger.Error("Failed to expunge message %s: %v", msg.ID, err)
+				// Continue with other messages even if one fails
+			} else {
+				totalExpunged++
+			}
+		}
+
+		// If we got fewer messages than the batch size, we're done
+		if len(messages) < batchSize {
+			break
+		}
+
+		offset += batchSize
 	}
 
-	m.user.core.Logger.Info("Expunged %d messages from inbox %s", len(messages), m.inboxModel.ID)
+	m.user.core.Logger.Info("Expunged %d messages from inbox %s", totalExpunged, m.inboxModel.ID)
 	return nil
 }
 
@@ -383,10 +419,25 @@ func (m *ImapMailbox) resolveSeqSetToUIDs(ctx context.Context, seqSet *imap.SeqS
 		for _, seq := range seqSet.Set {
 			if seq.Stop == 0 {
 				// Single number
-				uids = append(uids, seq.Start)
+				if seq.Start > 0 && seq.Start <= MaxUID {
+					uids = append(uids, seq.Start)
+				}
 			} else {
-				// Range
-				for i := seq.Start; i <= seq.Stop; i++ {
+				// Range - validate bounds before iterating
+				start := seq.Start
+				stop := seq.Stop
+
+				// Skip invalid ranges
+				if start == 0 || stop == 0 || start > stop || start > MaxUID || stop > MaxUID {
+					continue
+				}
+
+				// Limit range size to prevent performance issues
+				if stop-start+1 > MaxSequenceRange {
+					stop = start + MaxSequenceRange - 1
+				}
+
+				for i := start; i <= stop; i++ {
 					uids = append(uids, i)
 				}
 			}
@@ -404,12 +455,30 @@ func (m *ImapMailbox) resolveSeqSetToUIDs(ctx context.Context, seqSet *imap.SeqS
 	for _, seq := range seqSet.Set {
 		if seq.Stop == 0 {
 			// Single sequence number
-			if int(seq.Start-1) < len(allUIDs) {
+			if seq.Start > 0 && int(seq.Start-1) < len(allUIDs) {
 				uids = append(uids, allUIDs[seq.Start-1])
 			}
 		} else {
-			// Range of sequence numbers
-			for i := seq.Start; i <= seq.Stop && int(i-1) < len(allUIDs); i++ {
+			// Range of sequence numbers - validate bounds before iterating
+			start := seq.Start
+			stop := seq.Stop
+
+			// Skip invalid ranges
+			if start == 0 || stop == 0 || start > stop {
+				continue
+			}
+
+			// Limit range size to prevent performance issues
+			if stop-start+1 > MaxSequenceRange {
+				stop = start + MaxSequenceRange - 1
+			}
+
+			// Ensure we don't exceed available UIDs
+			if int(stop) > len(allUIDs) {
+				stop = uint32(len(allUIDs))
+			}
+
+			for i := start; i <= stop && int(i-1) < len(allUIDs); i++ {
 				uids = append(uids, allUIDs[i-1])
 			}
 		}

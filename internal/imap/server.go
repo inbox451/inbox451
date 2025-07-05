@@ -2,7 +2,7 @@ package imap
 
 import (
 	"context"
-	"os"
+	"fmt"
 
 	"inbox451/internal/core"
 	"inbox451/internal/util"
@@ -27,7 +27,7 @@ func (s *ImapServer) Shutdown(ctx context.Context) error {
 }
 
 // NewServer creates and configures a new IMAP server
-func NewServer(core *core.Core) *ImapServer {
+func NewServer(core *core.Core) (*ImapServer, error) {
 	core.Logger.Info("IMAP Server initializing")
 
 	// Create the backend
@@ -38,7 +38,7 @@ func NewServer(core *core.Core) *ImapServer {
 	if core.Config.Server.IMAP.Address != "" {
 		s.Addr = core.Config.Server.IMAP.Address
 	} else if core.Config.Server.IMAP.Port != "" {
-		s.Addr = core.Config.Server.IMAP.Port
+		s.Addr = ":" + core.Config.Server.IMAP.Port
 	} else {
 		s.Addr = ":1143"
 	}
@@ -52,8 +52,7 @@ func NewServer(core *core.Core) *ImapServer {
 	if core.Config.Server.IMAP.EnableTLS {
 		config, err := util.GetTLSConfig(core, core.Config.Server.TLS.Cert, core.Config.Server.TLS.Key)
 		if err != nil {
-			core.Logger.Error("IMAP: Failed to load TLS configuration: %v . Aborting!", err)
-			os.Exit(1)
+			return nil, fmt.Errorf("IMAP: Failed to load TLS configuration: %w", err)
 		}
 		s.TLSConfig = config
 	}
@@ -64,5 +63,5 @@ func NewServer(core *core.Core) *ImapServer {
 	return &ImapServer{
 		core: core,
 		imap: s,
-	}
+	}, nil
 }

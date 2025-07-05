@@ -80,7 +80,8 @@ func (suite *IMAPIntegrationTestSuite) SetupSuite() {
 	require.NoError(suite.T(), err, "Failed to initialize core")
 
 	// Create IMAP server
-	suite.imapServer = NewServer(suite.core)
+	suite.imapServer, err = NewServer(suite.core)
+	require.NoError(suite.T(), err, "Failed to create IMAP server")
 
 	// Set the test port based on the server's configured address
 	suite.testPort = suite.imapServer.imap.Addr
