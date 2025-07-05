@@ -8,7 +8,6 @@ import (
 	"github.com/lib/pq"
 )
 
-
 func (r *repository) CreateMessage(ctx context.Context, message *models.Message) error {
 	err := r.queries.CreateMessage.QueryRowContext(ctx,
 		message.InboxID, message.Sender, message.Receiver, message.Subject, message.Body).

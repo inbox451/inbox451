@@ -11,7 +11,6 @@ import (
 	"github.com/emersion/go-imap"
 )
 
-
 // parseEmailToAddress converts email string to IMAP address
 func parseEmailToAddress(email string) (*imap.Address, error) {
 	addr, err := mail.ParseAddress(email)
@@ -218,4 +217,3 @@ func buildImapMessage(dbMsg *models.Message, seqNum uint32, items []imap.FetchIt
 
 	return imapMsg, nil
 }
-

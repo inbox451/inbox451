@@ -3,11 +3,12 @@ package core
 import (
 	"context"
 	"errors"
-	"inbox451/internal/test"
 	"io"
 	"net/http"
 	"testing"
 	"time"
+
+	"inbox451/internal/test"
 
 	"inbox451/internal/config"
 	"inbox451/internal/logger"
