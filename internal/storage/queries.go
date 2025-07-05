@@ -93,6 +93,7 @@ type Queries struct {
 	GetAllMessageUIDsForInbox                 *sqlx.Stmt `query:"get-all-message-uids-for-inbox"`
 	GetAllMessageUIDsForInboxIncludingDeleted *sqlx.Stmt `query:"get-all-message-uids-for-inbox-including-deleted"`
 	GetMaxMessageUID                          *sqlx.Stmt `query:"get-max-message-uid"`
+	GetMessageIDFromUID                       *sqlx.Stmt `query:"get-message-id-from-uid"`
 }
 
 func PrepareQueries(db *sqlx.DB) (*Queries, error) {

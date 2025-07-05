@@ -57,6 +57,7 @@ type Repository interface {
 	GetAllMessageUIDsForInbox(ctx context.Context, inboxID string) ([]uint32, error)
 	GetAllMessageUIDsForInboxIncludingDeleted(ctx context.Context, inboxID string) ([]uint32, error)
 	GetMaxMessageUID(ctx context.Context, inboxID string) (uint32, error)
+	GetMessageIDFromUID(ctx context.Context, inboxID string, uid uint32) (string, error)
 
 	// User operations
 	ListUsers(ctx context.Context, limit, offset int) ([]*models.User, int, error)

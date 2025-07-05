@@ -1,9 +1,7 @@
 package imap
 
 import (
-	"context"
 	"fmt"
-	"hash/fnv"
 	"net/mail"
 	"strings"
 	"time"
@@ -13,25 +11,6 @@ import (
 	"github.com/emersion/go-imap"
 )
 
-// stringToUID converts a string ID (UUID) to a uint32 UID for IMAP
-// Uses FNV-1a hash to ensure consistent mapping
-func stringToUID(id string) uint32 {
-	h := fnv.New32a()
-	h.Write([]byte(id))
-	return h.Sum32()
-}
-
-// uidToString converts a uint32 UID back to string ID
-// This requires looking up the actual message ID from the database
-// as the hash is one-way
-func uidToString(uid uint32, messages []*models.Message) string {
-	for _, msg := range messages {
-		if stringToUID(msg.ID) == uid {
-			return msg.ID
-		}
-	}
-	return ""
-}
 
 // parseEmailToAddress converts email string to IMAP address
 func parseEmailToAddress(email string) (*imap.Address, error) {
@@ -182,7 +161,7 @@ func buildImapMessage(dbMsg *models.Message, seqNum uint32, items []imap.FetchIt
 			imapMsg.Flags = flags
 
 		case imap.FetchUid:
-			imapMsg.Items[item] = stringToUID(dbMsg.ID)
+			imapMsg.Items[item] = dbMsg.UID
 
 		case imap.FetchInternalDate:
 			imapMsg.Items[item] = dbMsg.CreatedAt.Time
@@ -240,16 +219,3 @@ func buildImapMessage(dbMsg *models.Message, seqNum uint32, items []imap.FetchIt
 	return imapMsg, nil
 }
 
-// uidToStringByLookup converts a uint32 UID back to string ID by looking up messages
-// This is a helper for the mailbox functions that need to convert UIDs to message IDs
-func uidToStringByLookup(ctx context.Context, m *ImapMailbox, uid uint32) string {
-	// Get all messages from the inbox to find the matching UID
-	filters := models.MessageFilters{} // Get all messages including deleted
-	messages, _, err := m.user.core.Repository.ListMessagesByInboxWithFilters(ctx, m.inboxModel.ID, filters, 0, 0)
-	if err != nil {
-		m.user.core.Logger.Error("Failed to lookup message by UID %d: %v", uid, err)
-		return ""
-	}
-
-	return uidToString(uid, messages)
-}

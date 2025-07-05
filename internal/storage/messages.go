@@ -2,23 +2,17 @@ package storage
 
 import (
 	"context"
-	"hash/fnv"
 
 	"inbox451/internal/models"
+
+	"github.com/lib/pq"
 )
 
-// stringToUID converts a string ID (UUID) to a uint32 UID for IMAP
-// Uses FNV-1a hash to ensure consistent mapping
-func stringToUID(id string) uint32 {
-	h := fnv.New32a()
-	h.Write([]byte(id))
-	return h.Sum32()
-}
 
 func (r *repository) CreateMessage(ctx context.Context, message *models.Message) error {
 	err := r.queries.CreateMessage.QueryRowContext(ctx,
 		message.InboxID, message.Sender, message.Receiver, message.Subject, message.Body).
-		Scan(&message.ID, &message.CreatedAt, &message.UpdatedAt)
+		Scan(&message.ID, &message.CreatedAt, &message.UpdatedAt, &message.UID)
 	return handleDBError(err)
 }
 
@@ -125,50 +119,26 @@ func (r *repository) ListMessagesByInboxWithFilters(ctx context.Context, inboxID
 }
 
 // GetMessagesByUIDs returns messages by their IDs (UIDs in IMAP context)
-// Now works with UUID strings by getting all messages and filtering by UID hash
 func (r *repository) GetMessagesByUIDs(ctx context.Context, inboxID string, uids []uint32) ([]*models.Message, error) {
 	if len(uids) == 0 {
 		return []*models.Message{}, nil
 	}
 
-	// Get all messages for the inbox and filter by UID hash
-	filters := models.MessageFilters{} // Get all messages including deleted
-	allMessages, _, err := r.ListMessagesByInboxWithFilters(ctx, inboxID, filters, 0, 0)
+	var messages []*models.Message
+	err := r.queries.GetMessagesByUIDs.SelectContext(ctx, &messages, inboxID, pq.Array(uids))
 	if err != nil {
-		return nil, err
+		return nil, handleDBError(err)
 	}
 
-	// Filter messages that match the requested UIDs
-	var result []*models.Message
-	uidSet := make(map[uint32]bool)
-	for _, uid := range uids {
-		uidSet[uid] = true
-	}
-
-	for _, msg := range allMessages {
-		msgUID := stringToUID(msg.ID)
-		if uidSet[msgUID] {
-			result = append(result, msg)
-		}
-	}
-
-	return result, nil
+	return messages, nil
 }
 
 // GetAllMessageUIDsForInbox returns all message IDs for an inbox (excluding deleted)
 func (r *repository) GetAllMessageUIDsForInbox(ctx context.Context, inboxID string) ([]uint32, error) {
-	// Get all non-deleted messages
-	falseVal := false
-	filters := models.MessageFilters{IsDeleted: &falseVal}
-	messages, _, err := r.ListMessagesByInboxWithFilters(ctx, inboxID, filters, 0, 0)
+	var uids []uint32
+	err := r.queries.GetAllMessageUIDsForInbox.SelectContext(ctx, &uids, inboxID)
 	if err != nil {
-		return nil, err
-	}
-
-	// Convert string IDs to UIDs using hash
-	uids := make([]uint32, len(messages))
-	for i, msg := range messages {
-		uids[i] = stringToUID(msg.ID)
+		return nil, handleDBError(err)
 	}
 
 	return uids, nil
@@ -177,44 +147,24 @@ func (r *repository) GetAllMessageUIDsForInbox(ctx context.Context, inboxID stri
 // GetAllMessageUIDsForInboxIncludingDeleted returns all message IDs for an inbox (including deleted)
 // This is used for IMAP sequence number mapping where deleted messages are still addressable until expunged
 func (r *repository) GetAllMessageUIDsForInboxIncludingDeleted(ctx context.Context, inboxID string) ([]uint32, error) {
-	// Get all messages including deleted
-	filters := models.MessageFilters{}
-	messages, _, err := r.ListMessagesByInboxWithFilters(ctx, inboxID, filters, 0, 0)
+	var uids []uint32
+	err := r.queries.GetAllMessageUIDsForInboxIncludingDeleted.SelectContext(ctx, &uids, inboxID)
 	if err != nil {
-		return nil, err
-	}
-
-	// Convert string IDs to UIDs using hash
-	uids := make([]uint32, len(messages))
-	for i, msg := range messages {
-		uids[i] = stringToUID(msg.ID)
+		return nil, handleDBError(err)
 	}
 
 	return uids, nil
 }
 
 // GetMaxMessageUID returns the highest message UID in an inbox
-// Since UIDs are now hash-based, we need to get all messages and find the max UID
 func (r *repository) GetMaxMessageUID(ctx context.Context, inboxID string) (uint32, error) {
-	// Get all messages
-	filters := models.MessageFilters{}
-	messages, _, err := r.ListMessagesByInboxWithFilters(ctx, inboxID, filters, 0, 0)
-	if err != nil {
-		return 0, err
-	}
-
-	if len(messages) == 0 {
-		return 0, nil
-	}
-
-	// Find the maximum UID
 	var maxUID uint32
-	for _, msg := range messages {
-		uid := stringToUID(msg.ID)
-		if uid > maxUID {
-			maxUID = uid
-		}
-	}
+	err := r.queries.GetMaxMessageUID.GetContext(ctx, &maxUID, inboxID)
+	return maxUID, handleDBError(err)
+}
 
-	return maxUID, nil
+func (r *repository) GetMessageIDFromUID(ctx context.Context, inboxID string, uid uint32) (string, error) {
+	var messageID string
+	err := r.queries.GetMessageIDFromUID.GetContext(ctx, &messageID, inboxID, uid)
+	return messageID, handleDBError(err)
 }

@@ -28,11 +28,17 @@ func V0_2_0(db *sqlx.DB, config *config.Config, log *log.Logger) error {
 		// Add is_deleted column to messages table
 		`ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT false`,
 
+		// Add a serial (auto-incrementing integer) column for IMAP UIDs
+		`ALTER TABLE messages ADD COLUMN IF NOT EXISTS uid SERIAL`,
+
 		// Create index for efficient filtering by inbox_id and is_deleted
 		`CREATE INDEX IF NOT EXISTS idx_messages_inbox_id_is_deleted ON messages (inbox_id, is_deleted)`,
 
 		// Create additional indexes for IMAP filtering operations
 		`CREATE INDEX IF NOT EXISTS idx_messages_inbox_id_is_read_is_deleted ON messages (inbox_id, is_read, is_deleted)`,
+
+		// Create a unique index to enforce that UIDs are unique per inbox
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_inbox_uid ON messages(inbox_id, uid)`,
 	}
 
 	// Start a transaction
