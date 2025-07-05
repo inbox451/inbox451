@@ -385,6 +385,7 @@ func TestBuildImapMessage(t *testing.T) {
 			CreatedAt: null.TimeFrom(now),
 		},
 		InboxID:   "test-inbox-123",
+		UID:       42, // Test UID
 		Sender:    "sender@example.com",
 		Receiver:  "receiver@example.com",
 		Subject:   "Test Subject",
@@ -414,7 +415,7 @@ func TestBuildImapMessage(t *testing.T) {
 			validate: func(t *testing.T, msg *imap.Message) {
 				uid, ok := msg.Items[imap.FetchUid].(uint32)
 				assert.True(t, ok)
-				assert.Equal(t, uint32(0xd35cc9c2), uid) // Hash of "test-message-123"
+				assert.Equal(t, uint32(42), uid) // Test UID value
 			},
 		},
 		{
@@ -504,7 +505,7 @@ func TestBuildImapMessage(t *testing.T) {
 				assert.Contains(t, flags, imap.SeenFlag)
 
 				uid := msg.Items[imap.FetchUid].(uint32)
-				assert.Equal(t, uint32(0xd35cc9c2), uid) // Hash of "test-message-123"
+				assert.Equal(t, uint32(42), uid) // Test UID value
 
 				date := msg.Items[imap.FetchInternalDate].(time.Time)
 				assert.Equal(t, now, date)
@@ -532,6 +533,7 @@ func TestBuildImapMessage_DeletedFlags(t *testing.T) {
 			CreatedAt: null.TimeFrom(time.Now()),
 		},
 		InboxID:   "test-inbox-123",
+		UID:       1,
 		Sender:    "sender@example.com",
 		Receiver:  "receiver@example.com",
 		Subject:   "Test",

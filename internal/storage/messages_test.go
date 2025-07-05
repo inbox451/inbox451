@@ -103,8 +103,8 @@ func TestRepository_CreateMessage(t *testing.T) {
 						"Test Body",
 					).
 					WillReturnRows(
-						sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).
-							AddRow(testInboxID1, now, now),
+						sqlmock.NewRows([]string{"id", "created_at", "updated_at", "uid"}).
+							AddRow(testInboxID1, now, now, 1),
 					)
 			},
 			wantErr: false,
@@ -150,6 +150,7 @@ func TestRepository_CreateMessage(t *testing.T) {
 			assert.NotZero(t, tt.message.ID)
 			assert.NotZero(t, tt.message.CreatedAt)
 			assert.NotZero(t, tt.message.UpdatedAt)
+			assert.NotZero(t, tt.message.UID)
 
 			err = mock.ExpectationsWereMet()
 			assert.NoError(t, err)

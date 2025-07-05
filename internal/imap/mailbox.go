@@ -198,7 +198,7 @@ func (m *ImapMailbox) SearchMessages(uid bool, criteria *imap.SearchCriteria) ([
 		// Apply additional search criteria
 		if matchesSearchCriteria(msg, criteria) {
 			if uid {
-				results = append(results, stringToUID(msg.ID))
+				results = append(results, msg.UID)
 			} else {
 				// For sequence numbers, use 1-based indexing
 				results = append(results, uint32(i+1))
@@ -220,7 +220,14 @@ func (m *ImapMailbox) ExpungeMessages(uids []uint32) error {
 
 	// Delete each message
 	for _, uid := range uids {
-		if err := m.user.core.MessageService.Delete(ctx, uidToStringByLookup(ctx, m, uid)); err != nil {
+		// Get the message UUID from the UID
+		messageID, err := m.user.core.Repository.GetMessageIDFromUID(ctx, m.inboxModel.ID, uid)
+		if err != nil {
+			m.user.core.Logger.Error("Failed to find message ID for UID %d in inbox %s: %v", uid, m.inboxModel.ID, err)
+			continue // Skip to the next UID
+		}
+
+		if err := m.user.core.MessageService.Delete(ctx, messageID); err != nil {
 			m.user.core.Logger.Error("Failed to expunge message %d: %v", uid, err)
 			// Continue with other messages even if one fails
 		}
@@ -260,6 +267,14 @@ func (m *ImapMailbox) UpdateMessagesFlags(uid bool, seqSet *imap.SeqSet, operati
 
 	// Update flags for each message
 	for _, messageUID := range uids {
+		// Get the message UUID from the UID
+		messageID, err := m.user.core.Repository.GetMessageIDFromUID(ctx, m.inboxModel.ID, messageUID)
+		if err != nil {
+			m.user.core.Logger.Error("Failed to find message ID for UID %d in inbox %s: %v", messageUID, m.inboxModel.ID, err)
+			failedUpdates++
+			continue // Skip to the next UID
+		}
+
 		// For SetFlags operation, first clear all flags
 		if operation == imap.SetFlags {
 			// Clear Seen flag if not in the new flags list
@@ -276,13 +291,13 @@ func (m *ImapMailbox) UpdateMessagesFlags(uid bool, seqSet *imap.SeqSet, operati
 
 			// Clear flags that are not in the new set
 			if !seenInFlags {
-				if err := m.user.core.MessageService.MarkAsUnread(ctx, uidToStringByLookup(ctx, m, messageUID)); err != nil {
+				if err := m.user.core.MessageService.MarkAsUnread(ctx, messageID); err != nil {
 					m.user.core.Logger.Error("Failed to mark message %d as unread: %v", messageUID, err)
 					failedUpdates++
 				}
 			}
 			if !deletedInFlags {
-				if err := m.user.core.MessageService.MarkAsUndeleted(ctx, uidToStringByLookup(ctx, m, messageUID)); err != nil {
+				if err := m.user.core.MessageService.MarkAsUndeleted(ctx, messageID); err != nil {
 					m.user.core.Logger.Error("Failed to mark message %d as undeleted: %v", messageUID, err)
 					failedUpdates++
 				}
@@ -295,12 +310,12 @@ func (m *ImapMailbox) UpdateMessagesFlags(uid bool, seqSet *imap.SeqSet, operati
 			case imap.SeenFlag:
 				switch operation {
 				case imap.AddFlags, imap.SetFlags:
-					if err := m.user.core.MessageService.MarkAsRead(ctx, uidToStringByLookup(ctx, m, messageUID)); err != nil {
+					if err := m.user.core.MessageService.MarkAsRead(ctx, messageID); err != nil {
 						m.user.core.Logger.Error("Failed to mark message %d as read: %v", messageUID, err)
 						failedUpdates++
 					}
 				case imap.RemoveFlags:
-					if err := m.user.core.MessageService.MarkAsUnread(ctx, uidToStringByLookup(ctx, m, messageUID)); err != nil {
+					if err := m.user.core.MessageService.MarkAsUnread(ctx, messageID); err != nil {
 						m.user.core.Logger.Error("Failed to mark message %d as unread: %v", messageUID, err)
 						failedUpdates++
 					}
@@ -308,12 +323,12 @@ func (m *ImapMailbox) UpdateMessagesFlags(uid bool, seqSet *imap.SeqSet, operati
 			case imap.DeletedFlag:
 				switch operation {
 				case imap.AddFlags, imap.SetFlags:
-					if err := m.user.core.MessageService.MarkAsDeleted(ctx, uidToStringByLookup(ctx, m, messageUID)); err != nil {
+					if err := m.user.core.MessageService.MarkAsDeleted(ctx, messageID); err != nil {
 						m.user.core.Logger.Error("Failed to mark message %d as deleted: %v", messageUID, err)
 						failedUpdates++
 					}
 				case imap.RemoveFlags:
-					if err := m.user.core.MessageService.MarkAsUndeleted(ctx, uidToStringByLookup(ctx, m, messageUID)); err != nil {
+					if err := m.user.core.MessageService.MarkAsUndeleted(ctx, messageID); err != nil {
 						m.user.core.Logger.Error("Failed to mark message %d as undeleted: %v", messageUID, err)
 						failedUpdates++
 					}

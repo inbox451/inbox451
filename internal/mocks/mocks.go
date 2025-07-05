@@ -1202,6 +1202,78 @@ func (_c *Repository_GetMessage_Call) RunAndReturn(run func(ctx context.Context,
 	return _c
 }
 
+// GetMessageIDFromUID provides a mock function for the type Repository
+func (_mock *Repository) GetMessageIDFromUID(ctx context.Context, inboxID string, uid uint32) (string, error) {
+	ret := _mock.Called(ctx, inboxID, uid)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMessageIDFromUID")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, uint32) (string, error)); ok {
+		return returnFunc(ctx, inboxID, uid)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, uint32) string); ok {
+		r0 = returnFunc(ctx, inboxID, uid)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, uint32) error); ok {
+		r1 = returnFunc(ctx, inboxID, uid)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_GetMessageIDFromUID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMessageIDFromUID'
+type Repository_GetMessageIDFromUID_Call struct {
+	*mock.Call
+}
+
+// GetMessageIDFromUID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - inboxID string
+//   - uid uint32
+func (_e *Repository_Expecter) GetMessageIDFromUID(ctx interface{}, inboxID interface{}, uid interface{}) *Repository_GetMessageIDFromUID_Call {
+	return &Repository_GetMessageIDFromUID_Call{Call: _e.mock.On("GetMessageIDFromUID", ctx, inboxID, uid)}
+}
+
+func (_c *Repository_GetMessageIDFromUID_Call) Run(run func(ctx context.Context, inboxID string, uid uint32)) *Repository_GetMessageIDFromUID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 uint32
+		if args[2] != nil {
+			arg2 = args[2].(uint32)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_GetMessageIDFromUID_Call) Return(s string, err error) *Repository_GetMessageIDFromUID_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *Repository_GetMessageIDFromUID_Call) RunAndReturn(run func(ctx context.Context, inboxID string, uid uint32) (string, error)) *Repository_GetMessageIDFromUID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetMessagesByUIDs provides a mock function for the type Repository
 func (_mock *Repository) GetMessagesByUIDs(ctx context.Context, inboxID string, uids []uint32) ([]*models.Message, error) {
 	ret := _mock.Called(ctx, inboxID, uids)

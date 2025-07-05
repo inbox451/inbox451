@@ -98,6 +98,7 @@ type ForwardRule struct {
 type Message struct {
 	Base
 	InboxID   string `json:"inbox_id" db:"inbox_id" validate:"required"`
+	UID       uint32 `json:"uid" db:"uid"`
 	Sender    string `json:"sender" db:"sender" validate:"required,email"`
 	Receiver  string `json:"receiver" db:"receiver" validate:"required,email"`
 	Subject   string `json:"subject" db:"subject" validate:"required,max=200"`
