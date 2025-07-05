@@ -10,7 +10,7 @@ import (
 )
 
 type Base struct {
-	ID        int       `json:"id" db:"id"`
+	ID        string    `json:"id" db:"id"`
 	CreatedAt null.Time `json:"created_at" db:"created_at"`
 	UpdatedAt null.Time `json:"updated_at" db:"updated_at"`
 }
@@ -22,7 +22,7 @@ type Project struct {
 
 type Inbox struct {
 	Base
-	ProjectID int    `json:"project_id" db:"project_id" validate:"required"`
+	ProjectID string `json:"project_id" db:"project_id" validate:"required"`
 	Email     string `json:"email" db:"email" validate:"required,email"`
 }
 
@@ -73,14 +73,14 @@ func (u *User) CheckPassword(password string) (bool, error) {
 
 type ProjectUser struct {
 	Base
-	ProjectID int    `json:"project_id" db:"project_id" validate:"required"`
-	UserID    int    `json:"user_id" db:"user_id" validate:"required"`
+	ProjectID string `json:"project_id" db:"project_id" validate:"required"`
+	UserID    string `json:"user_id" db:"user_id" validate:"required"`
 	Role      string `json:"role" db:"role" validate:"required"`
 }
 
 type Token struct {
 	Base
-	UserID     int       `json:"user_id" db:"user_id" validate:"required"`
+	UserID     string    `json:"user_id" db:"user_id" validate:"required"`
 	Token      string    `json:"token" db:"token" validate:"required"`
 	Name       string    `json:"name" db:"name" validate:"required"`
 	ExpiresAt  null.Time `json:"expires_at" db:"expires_at"`
@@ -89,7 +89,7 @@ type Token struct {
 
 type ForwardRule struct {
 	Base
-	InboxID  int    `json:"inbox_id" db:"inbox_id" validate:"required"`
+	InboxID  string `json:"inbox_id" db:"inbox_id" validate:"required"`
 	Sender   string `json:"sender" db:"sender" validate:"omitempty,email"`
 	Receiver string `json:"receiver" db:"receiver" validate:"omitempty,email"`
 	Subject  string `json:"subject" db:"subject" validate:"omitempty,max=200"`
@@ -97,7 +97,7 @@ type ForwardRule struct {
 
 type Message struct {
 	Base
-	InboxID   int    `json:"inbox_id" db:"inbox_id" validate:"required"`
+	InboxID   string `json:"inbox_id" db:"inbox_id" validate:"required"`
 	Sender    string `json:"sender" db:"sender" validate:"required,email"`
 	Receiver  string `json:"receiver" db:"receiver" validate:"required,email"`
 	Subject   string `json:"subject" db:"subject" validate:"required,max=200"`
@@ -114,7 +114,7 @@ type MessageFilters struct {
 type Session struct {
 	Base
 	SessionID      string          `db:"session_id" json:"session_id"`
-	UserID         int64           `db:"user_id" json:"user_id"`
+	UserID         string          `db:"user_id" json:"user_id"`
 	Data           json.RawMessage `db:"data" json:"data"`
 	LastAccessedAt null.Time       `db:"last_accessed_at" json:"last_accessed_at"`
 	IPAddress      string          `db:"ip_address" json:"ip_address"`

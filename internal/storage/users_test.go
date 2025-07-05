@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"inbox451/internal/test"
+
 	"inbox451/internal/models"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -70,6 +72,8 @@ func setupTestDB(t *testing.T) (*repository, sqlmock.Sqlmock) {
 
 func TestRepository_ListUsers(t *testing.T) {
 	now := time.Now()
+	testUserID1 := test.RandomTestUUID()
+	testUserID2 := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
@@ -92,9 +96,9 @@ func TestRepository_ListUsers(t *testing.T) {
 					"id", "name", "username", "password", "email",
 					"status", "role", "loggedin_at", "created_at", "updated_at",
 				}).
-					AddRow(1, "User 1", "user1", null.StringFrom("hash1"), "user1@example.com",
+					AddRow(testUserID1, "User 1", "user1", null.StringFrom("hash1"), "user1@example.com",
 						"active", "user", nil, now, now).
-					AddRow(2, "User 2", "user2", null.StringFrom("hash2"), "user2@example.com",
+					AddRow(testUserID2, "User 2", "user2", null.StringFrom("hash2"), "user2@example.com",
 						"active", "user", nil, now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM users").
@@ -104,7 +108,7 @@ func TestRepository_ListUsers(t *testing.T) {
 			want: []*models.User{
 				{
 					Base: models.Base{
-						ID:        1,
+						ID:        testUserID1,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
@@ -117,7 +121,7 @@ func TestRepository_ListUsers(t *testing.T) {
 				},
 				{
 					Base: models.Base{
-						ID:        2,
+						ID:        testUserID2,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
@@ -171,10 +175,12 @@ func TestRepository_ListUsers(t *testing.T) {
 
 func TestRepository_GetUser(t *testing.T) {
 	now := time.Now()
+	testUserID1 := test.RandomTestUUID()
+	nonExistingUserID := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
-		userID  int
+		userID  string
 		mockFn  func(sqlmock.Sqlmock)
 		want    *models.User
 		wantErr bool
@@ -182,25 +188,25 @@ func TestRepository_GetUser(t *testing.T) {
 	}{
 		{
 			name:   "existing user",
-			userID: 1,
+			userID: testUserID1,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{
 					"id", "name", "username", "password", "email",
 					"status", "role", "password_login", "loggedin_at",
 					"created_at", "updated_at",
 				}).AddRow(
-					1, "Test User", "testuser", null.StringFrom("hash"), "test@example.com",
+					testUserID1, "Test User", "testuser", null.StringFrom("hash"), "test@example.com",
 					"active", "user", true, nil,
 					now, now,
 				)
 
 				mock.ExpectQuery("SELECT (.+) FROM users").
-					WithArgs(1).
+					WithArgs(testUserID1).
 					WillReturnRows(rows)
 			},
 			want: &models.User{
 				Base: models.Base{
-					ID:        1,
+					ID:        testUserID1,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},
@@ -216,10 +222,10 @@ func TestRepository_GetUser(t *testing.T) {
 		},
 		{
 			name:   "non-existent user",
-			userID: 999,
+			userID: nonExistingUserID,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("SELECT (.+) FROM users").
-					WithArgs(999).
+					WithArgs(nonExistingUserID).
 					WillReturnError(sql.ErrNoRows)
 			},
 			want:    nil,
@@ -255,7 +261,7 @@ func TestRepository_GetUser(t *testing.T) {
 
 func TestRepository_CreateUser(t *testing.T) {
 	now := time.Now()
-
+	testUserID1 := test.RandomTestUUID()
 	tests := []struct {
 		name    string
 		user    *models.User
@@ -286,7 +292,7 @@ func TestRepository_CreateUser(t *testing.T) {
 					).
 					WillReturnRows(
 						sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).
-							AddRow(1, now, now),
+							AddRow(testUserID1, now, now),
 					)
 			},
 			wantErr: false,
@@ -345,6 +351,8 @@ func TestRepository_CreateUser(t *testing.T) {
 
 func TestRepository_UpdateUser(t *testing.T) {
 	now := time.Now()
+	testUserID1 := test.RandomTestUUID()
+	nonExistingUserID := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
@@ -356,7 +364,7 @@ func TestRepository_UpdateUser(t *testing.T) {
 			name: "successful update",
 			user: &models.User{
 				Base: models.Base{
-					ID: 1,
+					ID: testUserID1,
 				},
 				Name:          "Updated User",
 				Username:      "updateduser",
@@ -376,7 +384,7 @@ func TestRepository_UpdateUser(t *testing.T) {
 						"active",
 						"admin",
 						true,
-						1,
+						testUserID1,
 					).
 					WillReturnRows(
 						sqlmock.NewRows([]string{"updated_at"}).
@@ -389,7 +397,7 @@ func TestRepository_UpdateUser(t *testing.T) {
 			name: "non-existent user",
 			user: &models.User{
 				Base: models.Base{
-					ID: 999,
+					ID: nonExistingUserID,
 				},
 				Name:          "Updated User",
 				Username:      "updateduser",
@@ -409,7 +417,7 @@ func TestRepository_UpdateUser(t *testing.T) {
 						"active",
 						"admin",
 						true,
-						999,
+						nonExistingUserID,
 					).
 					WillReturnError(sql.ErrNoRows)
 			},
@@ -440,28 +448,30 @@ func TestRepository_UpdateUser(t *testing.T) {
 }
 
 func TestRepository_DeleteUser(t *testing.T) {
+	testUserID1 := test.RandomTestUUID()
+	nonExistingUserID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
-		userID  int
+		userID  string
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name:   "successful deletion",
-			userID: 1,
+			userID: testUserID1,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM users").
-					WithArgs(1).
+					WithArgs(testUserID1).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			wantErr: false,
 		},
 		{
 			name:   "non-existent user",
-			userID: 999,
+			userID: nonExistingUserID,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM users").
-					WithArgs(999).
+					WithArgs(nonExistingUserID).
 					WillReturnResult(sqlmock.NewResult(0, 0))
 			},
 			wantErr: true,
@@ -491,6 +501,7 @@ func TestRepository_DeleteUser(t *testing.T) {
 
 func TestRepository_GetUserByUsername(t *testing.T) {
 	now := time.Now()
+	testUserID1 := test.RandomTestUUID()
 
 	tests := []struct {
 		name     string
@@ -508,7 +519,7 @@ func TestRepository_GetUserByUsername(t *testing.T) {
 					"status", "role", "password_login", "loggedin_at",
 					"created_at", "updated_at",
 				}).AddRow(
-					1, "Test User", "testuser", null.StringFrom("hash"), "test@example.com",
+					testUserID1, "Test User", "testuser", null.StringFrom("hash"), "test@example.com",
 					"active", "user", true, nil,
 					now, now,
 				)
@@ -519,7 +530,7 @@ func TestRepository_GetUserByUsername(t *testing.T) {
 			},
 			want: &models.User{
 				Base: models.Base{
-					ID:        1,
+					ID:        testUserID1,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},

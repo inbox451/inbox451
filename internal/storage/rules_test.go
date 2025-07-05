@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"inbox451/internal/test"
+
 	"inbox451/internal/models"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -76,6 +78,7 @@ func setupRuleTestDB(t *testing.T) (*repository, sqlmock.Sqlmock) {
 
 func TestRepository_CreateRule(t *testing.T) {
 	now := time.Now()
+	testInboxID1 := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
@@ -86,17 +89,17 @@ func TestRepository_CreateRule(t *testing.T) {
 		{
 			name: "successful creation",
 			rule: &models.ForwardRule{
-				InboxID:  1,
+				InboxID:  testInboxID1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
 				Subject:  "Test Subject",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("INSERT INTO forward_rules").
-					WithArgs(1, "sender@example.com", "receiver@example.com", "Test Subject").
+					WithArgs(testInboxID1, "sender@example.com", "receiver@example.com", "Test Subject").
 					WillReturnRows(
 						sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).
-							AddRow(1, now, now),
+							AddRow(testInboxID1, now, now),
 					)
 			},
 			wantErr: false,
@@ -104,14 +107,14 @@ func TestRepository_CreateRule(t *testing.T) {
 		{
 			name: "database error",
 			rule: &models.ForwardRule{
-				InboxID:  1,
+				InboxID:  testInboxID1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
 				Subject:  "Test Subject",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("INSERT INTO forward_rules").
-					WithArgs(1, "sender@example.com", "receiver@example.com", "Test Subject").
+					WithArgs(testInboxID1, "sender@example.com", "receiver@example.com", "Test Subject").
 					WillReturnError(sql.ErrConnDone)
 			},
 			wantErr: true,
@@ -144,10 +147,13 @@ func TestRepository_CreateRule(t *testing.T) {
 
 func TestRepository_GetRule(t *testing.T) {
 	now := time.Now()
+	testInboxID1 := test.RandomTestUUID()
+	testRuleID1 := test.RandomTestUUID()
+	nonExistingRuleID := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
-		id      int
+		id      string
 		mockFn  func(sqlmock.Sqlmock)
 		want    *models.ForwardRule
 		wantErr bool
@@ -155,23 +161,23 @@ func TestRepository_GetRule(t *testing.T) {
 	}{
 		{
 			name: "existing rule",
-			id:   1,
+			id:   testRuleID1,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{
 					"id", "inbox_id", "sender", "receiver", "subject", "created_at", "updated_at",
-				}).AddRow(1, 1, "sender@example.com", "receiver@example.com", "Test Subject", now, now)
+				}).AddRow(testRuleID1, testInboxID1, "sender@example.com", "receiver@example.com", "Test Subject", now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM forward_rules").
-					WithArgs(1).
+					WithArgs(testRuleID1).
 					WillReturnRows(rows)
 			},
 			want: &models.ForwardRule{
 				Base: models.Base{
-					ID:        1,
+					ID:        testRuleID1,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},
-				InboxID:  1,
+				InboxID:  testInboxID1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
 				Subject:  "Test Subject",
@@ -180,10 +186,10 @@ func TestRepository_GetRule(t *testing.T) {
 		},
 		{
 			name: "non-existent rule",
-			id:   999,
+			id:   nonExistingRuleID,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("SELECT (.+) FROM forward_rules").
-					WithArgs(999).
+					WithArgs(nonExistingRuleID).
 					WillReturnError(sql.ErrNoRows)
 			},
 			want:    nil,
@@ -218,6 +224,9 @@ func TestRepository_GetRule(t *testing.T) {
 }
 
 func TestRepository_UpdateRule(t *testing.T) {
+	testInboxID1 := test.RandomTestUUID()
+	testRuleID1 := test.RandomTestUUID()
+	nonExistingRuleID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
 		rule    *models.ForwardRule
@@ -227,15 +236,15 @@ func TestRepository_UpdateRule(t *testing.T) {
 		{
 			name: "successful update",
 			rule: &models.ForwardRule{
-				Base:     models.Base{ID: 1},
-				InboxID:  1,
+				Base:     models.Base{ID: testRuleID1},
+				InboxID:  testInboxID1,
 				Sender:   "updated@example.com",
 				Receiver: "newreceiver@example.com",
 				Subject:  "Updated Subject",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("UPDATE forward_rules").
-					WithArgs("updated@example.com", "newreceiver@example.com", "Updated Subject", 1).
+					WithArgs("updated@example.com", "newreceiver@example.com", "Updated Subject", testRuleID1).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			wantErr: false,
@@ -243,15 +252,15 @@ func TestRepository_UpdateRule(t *testing.T) {
 		{
 			name: "non-existent rule",
 			rule: &models.ForwardRule{
-				Base:     models.Base{ID: 999},
-				InboxID:  1,
+				Base:     models.Base{ID: nonExistingRuleID},
+				InboxID:  testInboxID1,
 				Sender:   "updated@example.com",
 				Receiver: "newreceiver@example.com",
 				Subject:  "Updated Subject",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("UPDATE forward_rules").
-					WithArgs("updated@example.com", "newreceiver@example.com", "Updated Subject", 999).
+					WithArgs("updated@example.com", "newreceiver@example.com", "Updated Subject", nonExistingRuleID).
 					WillReturnResult(sqlmock.NewResult(0, 0))
 			},
 			wantErr: true,
@@ -280,28 +289,30 @@ func TestRepository_UpdateRule(t *testing.T) {
 }
 
 func TestRepository_DeleteRule(t *testing.T) {
+	testRuleID1 := test.RandomTestUUID()
+	nonExistingRuleID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
-		id      int
+		id      string
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful deletion",
-			id:   1,
+			id:   testRuleID1,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM forward_rules").
-					WithArgs(1).
+					WithArgs(testRuleID1).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			wantErr: false,
 		},
 		{
 			name: "non-existent rule",
-			id:   999,
+			id:   nonExistingRuleID,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM forward_rules").
-					WithArgs(999).
+					WithArgs(nonExistingRuleID).
 					WillReturnResult(sqlmock.NewResult(0, 0))
 			},
 			wantErr: true,
@@ -331,6 +342,9 @@ func TestRepository_DeleteRule(t *testing.T) {
 
 func TestRepository_ListRules(t *testing.T) {
 	now := time.Now()
+	testInboxID1 := test.RandomTestUUID()
+	testRuleID1 := test.RandomTestUUID()
+	testRuleID2 := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
@@ -353,8 +367,8 @@ func TestRepository_ListRules(t *testing.T) {
 				rows := sqlmock.NewRows([]string{
 					"id", "inbox_id", "sender", "receiver", "subject", "created_at", "updated_at",
 				}).
-					AddRow(1, 1, "sender1@example.com", "receiver1@example.com", "Subject 1", now, now).
-					AddRow(2, 1, "sender2@example.com", "receiver2@example.com", "Subject 2", now, now)
+					AddRow(testRuleID1, testInboxID1, "sender1@example.com", "receiver1@example.com", "Subject 1", now, now).
+					AddRow(testRuleID2, testInboxID1, "sender2@example.com", "receiver2@example.com", "Subject 2", now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM forward_rules").
 					WithArgs(10, 0).
@@ -363,22 +377,22 @@ func TestRepository_ListRules(t *testing.T) {
 			want: []*models.ForwardRule{
 				{
 					Base: models.Base{
-						ID:        1,
+						ID:        testRuleID1,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					InboxID:  1,
+					InboxID:  testInboxID1,
 					Sender:   "sender1@example.com",
 					Receiver: "receiver1@example.com",
 					Subject:  "Subject 1",
 				},
 				{
 					Base: models.Base{
-						ID:        2,
+						ID:        testRuleID2,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					InboxID:  1,
+					InboxID:  testInboxID1,
 					Sender:   "sender2@example.com",
 					Receiver: "receiver2@example.com",
 					Subject:  "Subject 2",
@@ -427,10 +441,14 @@ func TestRepository_ListRules(t *testing.T) {
 
 func TestRepository_ListRulesByInbox(t *testing.T) {
 	now := time.Now()
+	testInboxID1 := test.RandomTestUUID()
+	testInboxID2 := test.RandomTestUUID()
+	testRuleID1 := test.RandomTestUUID()
+	testRuleID2 := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
-		inboxID int
+		inboxID string
 		limit   int
 		offset  int
 		mockFn  func(sqlmock.Sqlmock)
@@ -440,44 +458,44 @@ func TestRepository_ListRulesByInbox(t *testing.T) {
 	}{
 		{
 			name:    "successful list",
-			inboxID: 1,
+			inboxID: testInboxID1,
 			limit:   10,
 			offset:  0,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				countRows := sqlmock.NewRows([]string{"count"}).AddRow(2)
 				mock.ExpectQuery("SELECT COUNT").
-					WithArgs(1).
+					WithArgs(testInboxID1).
 					WillReturnRows(countRows)
 
 				rows := sqlmock.NewRows([]string{
 					"id", "inbox_id", "sender", "receiver", "subject", "created_at", "updated_at",
 				}).
-					AddRow(1, 1, "sender1@example.com", "receiver1@example.com", "Subject 1", now, now).
-					AddRow(2, 1, "sender2@example.com", "receiver2@example.com", "Subject 2", now, now)
+					AddRow(testRuleID1, testInboxID1, "sender1@example.com", "receiver1@example.com", "Subject 1", now, now).
+					AddRow(testRuleID2, testInboxID1, "sender2@example.com", "receiver2@example.com", "Subject 2", now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM forward_rules").
-					WithArgs(1, 10, 0).
+					WithArgs(testInboxID1, 10, 0).
 					WillReturnRows(rows)
 			},
 			want: []*models.ForwardRule{
 				{
 					Base: models.Base{
-						ID:        1,
+						ID:        testRuleID1,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					InboxID:  1,
+					InboxID:  testInboxID1,
 					Sender:   "sender1@example.com",
 					Receiver: "receiver1@example.com",
 					Subject:  "Subject 1",
 				},
 				{
 					Base: models.Base{
-						ID:        2,
+						ID:        testRuleID2,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					InboxID:  1,
+					InboxID:  testInboxID1,
 					Sender:   "sender2@example.com",
 					Receiver: "receiver2@example.com",
 					Subject:  "Subject 2",
@@ -488,13 +506,13 @@ func TestRepository_ListRulesByInbox(t *testing.T) {
 		},
 		{
 			name:    "empty inbox",
-			inboxID: 2,
+			inboxID: testInboxID2,
 			limit:   10,
 			offset:  0,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				countRows := sqlmock.NewRows([]string{"count"}).AddRow(0)
 				mock.ExpectQuery("SELECT COUNT").
-					WithArgs(2).
+					WithArgs(testInboxID2).
 					WillReturnRows(countRows)
 			},
 			want:    []*models.ForwardRule{},

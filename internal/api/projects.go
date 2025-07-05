@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
 	"inbox451/internal/models"
 
@@ -53,7 +52,7 @@ func (s *Server) getProjects(c echo.Context) error {
 
 func (s *Server) getProjectsByUser(c echo.Context) error {
 	ctx := c.Request().Context()
-	userID, _ := strconv.Atoi(c.Param("userId"))
+	userID := c.Param("userId")
 
 	var query models.PaginationQuery
 	if err := c.Bind(&query); err != nil {
@@ -76,7 +75,7 @@ func (s *Server) getProjectsByUser(c echo.Context) error {
 }
 
 func (s *Server) getProject(c echo.Context) error {
-	projectID, _ := strconv.Atoi(c.Param("projectId"))
+	projectID := c.Param("projectId")
 	project, err := s.core.ProjectService.Get(c.Request().Context(), projectID)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
@@ -88,7 +87,7 @@ func (s *Server) getProject(c echo.Context) error {
 }
 
 func (s *Server) updateProject(c echo.Context) error {
-	projectID, _ := strconv.Atoi(c.Param("projectId"))
+	projectID := c.Param("projectId")
 	var project models.Project
 	if err := c.Bind(&project); err != nil {
 		return s.core.HandleError(err, http.StatusBadRequest)
@@ -107,7 +106,7 @@ func (s *Server) updateProject(c echo.Context) error {
 }
 
 func (s *Server) projectAddUser(c echo.Context) error {
-	projectID, _ := strconv.Atoi(c.Param("projectId"))
+	projectID := c.Param("projectId")
 
 	s.core.Logger.Info("hello")
 
@@ -129,7 +128,7 @@ func (s *Server) projectAddUser(c echo.Context) error {
 }
 
 func (s *Server) deleteProject(c echo.Context) error {
-	projectID, _ := strconv.Atoi(c.Param("projectId"))
+	projectID := c.Param("projectId")
 	if err := s.core.ProjectService.Delete(c.Request().Context(), projectID); err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
@@ -137,8 +136,8 @@ func (s *Server) deleteProject(c echo.Context) error {
 }
 
 func (s *Server) projectRemoveUser(c echo.Context) error {
-	projectID, _ := strconv.Atoi(c.Param("projectId"))
-	userID, _ := strconv.Atoi(c.Param("userId"))
+	projectID := c.Param("projectId")
+	userID := c.Param("userId")
 	if err := s.core.ProjectService.RemoveUser(c.Request().Context(), projectID, userID); err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}

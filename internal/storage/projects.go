@@ -24,7 +24,7 @@ func (r *repository) ListProjects(ctx context.Context, limit, offset int) ([]*mo
 	return projects, total, nil
 }
 
-func (r *repository) ListProjectsByUser(ctx context.Context, userID int, limit int, offset int) ([]*models.Project, int, error) {
+func (r *repository) ListProjectsByUser(ctx context.Context, userID string, limit int, offset int) ([]*models.Project, int, error) {
 	var total int
 	err := r.queries.CountProjectsByUser.GetContext(ctx, &total, userID)
 	if err != nil {
@@ -42,7 +42,7 @@ func (r *repository) ListProjectsByUser(ctx context.Context, userID int, limit i
 	return projects, total, nil
 }
 
-func (r *repository) GetProject(ctx context.Context, id int) (*models.Project, error) {
+func (r *repository) GetProject(ctx context.Context, id string) (*models.Project, error) {
 	var project models.Project
 	err := r.queries.GetProject.GetContext(ctx, &project, id)
 	return &project, handleDBError(err)
@@ -66,7 +66,7 @@ func (r *repository) ProjectAddUser(ctx context.Context, projectUser *models.Pro
 	return handleDBError(err)
 }
 
-func (r *repository) DeleteProject(ctx context.Context, id int) error {
+func (r *repository) DeleteProject(ctx context.Context, id string) error {
 	result, err := r.queries.DeleteProject.ExecContext(ctx, id)
 	if err != nil {
 		return handleDBError(err)
@@ -74,8 +74,8 @@ func (r *repository) DeleteProject(ctx context.Context, id int) error {
 	return handleRowsAffected(result)
 }
 
-func (r *repository) ProjectRemoveUser(ctx context.Context, projectID int, userID int) error {
-	result, err := r.queries.RemoveUserFromProject.ExecContext(ctx, projectID, userID)
+func (r *repository) ProjectRemoveUser(ctx context.Context, projectID string, userID string) error {
+	result, err := r.queries.RemoveUserFromProject.ExecContext(ctx, userID, projectID)
 	if err != nil {
 		return handleDBError(err)
 	}

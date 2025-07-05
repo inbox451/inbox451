@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"inbox451/internal/test"
+
 	"inbox451/internal/logger"
 	"inbox451/internal/mocks"
 	"inbox451/internal/models"
@@ -31,6 +33,7 @@ func setupMessageTestCore(t *testing.T) (*Core, *mocks.Repository) {
 }
 
 func TestMessageService_Store(t *testing.T) {
+	testInboxID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
 		message *models.Message
@@ -40,7 +43,7 @@ func TestMessageService_Store(t *testing.T) {
 		{
 			name: "successful store",
 			message: &models.Message{
-				InboxID:  1,
+				InboxID:  testInboxID,
 				Sender:   "sender@example.com",
 				Receiver: "inbox@example.com",
 				Subject:  "Test Subject",
@@ -55,7 +58,7 @@ func TestMessageService_Store(t *testing.T) {
 		{
 			name: "repository error",
 			message: &models.Message{
-				InboxID:  1,
+				InboxID:  testInboxID,
 				Sender:   "sender@example.com",
 				Receiver: "inbox@example.com",
 				Subject:  "Test Subject",
@@ -87,10 +90,13 @@ func TestMessageService_Store(t *testing.T) {
 }
 
 func TestMessageService_Get(t *testing.T) {
+	testInboxID := test.RandomTestUUID()
+	testMessageID := test.RandomTestUUID()
+	nonExistingMessageID := test.RandomTestUUID()
 	now := time.Now()
 	tests := []struct {
 		name    string
-		id      int
+		id      string
 		mockFn  func(*mocks.Repository)
 		want    *models.Message
 		wantErr bool
@@ -98,15 +104,15 @@ func TestMessageService_Get(t *testing.T) {
 	}{
 		{
 			name: "existing message",
-			id:   1,
+			id:   testMessageID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetMessage", mock.Anything, 1).Return(&models.Message{
+				m.On("GetMessage", mock.Anything, testMessageID).Return(&models.Message{
 					Base: models.Base{
-						ID:        1,
+						ID:        testMessageID,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					InboxID:  1,
+					InboxID:  testInboxID,
 					Sender:   "sender@example.com",
 					Receiver: "inbox@example.com",
 					Subject:  "Test Subject",
@@ -115,11 +121,11 @@ func TestMessageService_Get(t *testing.T) {
 			},
 			want: &models.Message{
 				Base: models.Base{
-					ID:        1,
+					ID:        testMessageID,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},
-				InboxID:  1,
+				InboxID:  testInboxID,
 				Sender:   "sender@example.com",
 				Receiver: "inbox@example.com",
 				Subject:  "Test Subject",
@@ -129,9 +135,9 @@ func TestMessageService_Get(t *testing.T) {
 		},
 		{
 			name: "non-existent message",
-			id:   999,
+			id:   nonExistingMessageID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetMessage", mock.Anything, 999).Return(nil, storage.ErrNotFound)
+				m.On("GetMessage", mock.Anything, nonExistingMessageID).Return(nil, storage.ErrNotFound)
 			},
 			want:    nil,
 			wantErr: true,
@@ -161,10 +167,13 @@ func TestMessageService_Get(t *testing.T) {
 }
 
 func TestMessageService_ListByInbox(t *testing.T) {
+	testInboxID1 := test.RandomTestUUID()
+	testMessageID1 := test.RandomTestUUID()
+	testMessageID2 := test.RandomTestUUID()
 	isRead := true
 	tests := []struct {
 		name    string
-		inboxID int
+		inboxID string
 		limit   int
 		offset  int
 		filters models.MessageFilters
@@ -174,30 +183,30 @@ func TestMessageService_ListByInbox(t *testing.T) {
 	}{
 		{
 			name:    "successful list with read filter",
-			inboxID: 1,
+			inboxID: testInboxID1,
 			limit:   10,
 			offset:  0,
 			filters: models.MessageFilters{IsRead: &isRead},
 			mockFn: func(m *mocks.Repository) {
 				messages := []*models.Message{
 					{
-						Base:     models.Base{ID: 1},
-						InboxID:  1,
+						Base:     models.Base{ID: testMessageID1},
+						InboxID:  testInboxID1,
 						Sender:   "sender1@example.com",
 						Receiver: "inbox@example.com",
 						Subject:  "Subject 1",
 						Body:     "Body 1",
-						IsRead:   true,
+						IsRead:   isRead,
 					},
 				}
-				m.On("ListMessagesByInboxWithFilters", mock.Anything, 1, models.MessageFilters{IsRead: &isRead}, 10, 0).
+				m.On("ListMessagesByInboxWithFilters", mock.Anything, testInboxID1, models.MessageFilters{IsRead: &isRead}, 10, 0).
 					Return(messages, 1, nil)
 			},
 			want: &models.PaginatedResponse{
 				Data: []*models.Message{
 					{
-						Base:     models.Base{ID: 1},
-						InboxID:  1,
+						Base:     models.Base{ID: testMessageID1},
+						InboxID:  testInboxID1,
 						Sender:   "sender1@example.com",
 						Receiver: "inbox@example.com",
 						Subject:  "Subject 1",
@@ -215,15 +224,15 @@ func TestMessageService_ListByInbox(t *testing.T) {
 		},
 		{
 			name:    "successful list without read filter",
-			inboxID: 1,
+			inboxID: testInboxID1,
 			limit:   10,
 			offset:  0,
 			filters: models.MessageFilters{},
 			mockFn: func(m *mocks.Repository) {
 				messages := []*models.Message{
 					{
-						Base:     models.Base{ID: 1},
-						InboxID:  1,
+						Base:     models.Base{ID: testMessageID1},
+						InboxID:  testInboxID1,
 						Sender:   "sender1@example.com",
 						Receiver: "inbox@example.com",
 						Subject:  "Subject 1",
@@ -231,8 +240,8 @@ func TestMessageService_ListByInbox(t *testing.T) {
 						IsRead:   true,
 					},
 					{
-						Base:     models.Base{ID: 2},
-						InboxID:  1,
+						Base:     models.Base{ID: testMessageID2},
+						InboxID:  testInboxID1,
 						Sender:   "sender2@example.com",
 						Receiver: "inbox@example.com",
 						Subject:  "Subject 2",
@@ -240,14 +249,14 @@ func TestMessageService_ListByInbox(t *testing.T) {
 						IsRead:   false,
 					},
 				}
-				m.On("ListMessagesByInboxWithFilters", mock.Anything, 1, models.MessageFilters{}, 10, 0).
+				m.On("ListMessagesByInboxWithFilters", mock.Anything, testInboxID1, models.MessageFilters{}, 10, 0).
 					Return(messages, 2, nil)
 			},
 			want: &models.PaginatedResponse{
 				Data: []*models.Message{
 					{
-						Base:     models.Base{ID: 1},
-						InboxID:  1,
+						Base:     models.Base{ID: testMessageID1},
+						InboxID:  testInboxID1,
 						Sender:   "sender1@example.com",
 						Receiver: "inbox@example.com",
 						Subject:  "Subject 1",
@@ -255,8 +264,8 @@ func TestMessageService_ListByInbox(t *testing.T) {
 						IsRead:   true,
 					},
 					{
-						Base:     models.Base{ID: 2},
-						InboxID:  1,
+						Base:     models.Base{ID: testMessageID2},
+						InboxID:  testInboxID1,
 						Sender:   "sender2@example.com",
 						Receiver: "inbox@example.com",
 						Subject:  "Subject 2",
@@ -274,12 +283,12 @@ func TestMessageService_ListByInbox(t *testing.T) {
 		},
 		{
 			name:    "repository error",
-			inboxID: 1,
+			inboxID: testInboxID1,
 			limit:   10,
 			offset:  0,
 			filters: models.MessageFilters{},
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListMessagesByInboxWithFilters", mock.Anything, 1, models.MessageFilters{}, 10, 0).
+				m.On("ListMessagesByInboxWithFilters", mock.Anything, testInboxID1, models.MessageFilters{}, 10, 0).
 					Return([]*models.Message(nil), 0, errors.New("database error"))
 			},
 			want:    nil,
@@ -306,25 +315,27 @@ func TestMessageService_ListByInbox(t *testing.T) {
 }
 
 func TestMessageService_MarkAsRead(t *testing.T) {
+	testMessageID1 := test.RandomTestUUID()
+	nonExistingMessageID := test.RandomTestUUID()
 	tests := []struct {
 		name      string
-		messageID int
+		messageID string
 		mockFn    func(*mocks.Repository)
 		wantErr   bool
 	}{
 		{
 			name:      "successful mark as read",
-			messageID: 1,
+			messageID: testMessageID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageReadStatus", mock.Anything, 1, true).Return(nil)
+				m.On("UpdateMessageReadStatus", mock.Anything, testMessageID1, true).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name:      "non-existent message",
-			messageID: 999,
+			messageID: nonExistingMessageID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageReadStatus", mock.Anything, 999, true).Return(storage.ErrNotFound)
+				m.On("UpdateMessageReadStatus", mock.Anything, nonExistingMessageID, true).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -348,25 +359,27 @@ func TestMessageService_MarkAsRead(t *testing.T) {
 }
 
 func TestMessageService_MarkAsUnread(t *testing.T) {
+	testMessageID1 := test.RandomTestUUID()
+	nonExistingMessageID := test.RandomTestUUID()
 	tests := []struct {
 		name      string
-		messageID int
+		messageID string
 		mockFn    func(*mocks.Repository)
 		wantErr   bool
 	}{
 		{
 			name:      "successful mark as unread",
-			messageID: 1,
+			messageID: testMessageID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageReadStatus", mock.Anything, 1, false).Return(nil)
+				m.On("UpdateMessageReadStatus", mock.Anything, testMessageID1, false).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name:      "non-existent message",
-			messageID: 999,
+			messageID: nonExistingMessageID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageReadStatus", mock.Anything, 999, false).Return(storage.ErrNotFound)
+				m.On("UpdateMessageReadStatus", mock.Anything, nonExistingMessageID, false).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -390,25 +403,27 @@ func TestMessageService_MarkAsUnread(t *testing.T) {
 }
 
 func TestMessageService_MarkAsDeleted(t *testing.T) {
+	testMessageID1 := test.RandomTestUUID()
+	nonExistingMessageID := test.RandomTestUUID()
 	tests := []struct {
 		name      string
-		messageID int
+		messageID string
 		mockFn    func(*mocks.Repository)
 		wantErr   bool
 	}{
 		{
 			name:      "successful mark as deleted",
-			messageID: 1,
+			messageID: testMessageID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageDeletedStatus", mock.Anything, 1, true).Return(nil)
+				m.On("UpdateMessageDeletedStatus", mock.Anything, testMessageID1, true).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name:      "non-existent message",
-			messageID: 999,
+			messageID: nonExistingMessageID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageDeletedStatus", mock.Anything, 999, true).Return(storage.ErrNotFound)
+				m.On("UpdateMessageDeletedStatus", mock.Anything, nonExistingMessageID, true).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -432,25 +447,27 @@ func TestMessageService_MarkAsDeleted(t *testing.T) {
 }
 
 func TestMessageService_MarkAsUndeleted(t *testing.T) {
+	testMessageID1 := test.RandomTestUUID()
+	nonExistingMessageID := test.RandomTestUUID()
 	tests := []struct {
 		name      string
-		messageID int
+		messageID string
 		mockFn    func(*mocks.Repository)
 		wantErr   bool
 	}{
 		{
 			name:      "successful mark as undeleted",
-			messageID: 1,
+			messageID: testMessageID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageDeletedStatus", mock.Anything, 1, false).Return(nil)
+				m.On("UpdateMessageDeletedStatus", mock.Anything, testMessageID1, false).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name:      "non-existent message",
-			messageID: 999,
+			messageID: nonExistingMessageID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageDeletedStatus", mock.Anything, 999, false).Return(storage.ErrNotFound)
+				m.On("UpdateMessageDeletedStatus", mock.Anything, nonExistingMessageID, false).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -474,25 +491,27 @@ func TestMessageService_MarkAsUndeleted(t *testing.T) {
 }
 
 func TestMessageService_Delete(t *testing.T) {
+	testMessageID1 := test.RandomTestUUID()
+	nonExistingMessageID := test.RandomTestUUID()
 	tests := []struct {
 		name      string
-		messageID int
+		messageID string
 		mockFn    func(*mocks.Repository)
 		wantErr   bool
 	}{
 		{
 			name:      "successful deletion",
-			messageID: 1,
+			messageID: testMessageID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteMessage", mock.Anything, 1).Return(nil)
+				m.On("DeleteMessage", mock.Anything, testMessageID1).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name:      "non-existent message",
-			messageID: 999,
+			messageID: nonExistingMessageID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteMessage", mock.Anything, 999).Return(storage.ErrNotFound)
+				m.On("DeleteMessage", mock.Anything, nonExistingMessageID).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},

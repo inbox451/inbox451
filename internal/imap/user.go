@@ -39,7 +39,7 @@ func (u *ImapUser) ListMailboxes(subscribed bool) ([]backend.Mailbox, error) {
 	ctx := u.ctx
 	inboxes, err := u.core.InboxService.ListByUser(ctx, u.userModel.ID)
 	if err != nil {
-		u.core.Logger.Error("Failed to list inboxes for user %d: %v", u.userModel.ID, err)
+		u.core.Logger.Error("Failed to list inboxes for user %s: %v", u.userModel.ID, err)
 		return nil, err
 	}
 
@@ -48,7 +48,7 @@ func (u *ImapUser) ListMailboxes(subscribed bool) ([]backend.Mailbox, error) {
 		mailboxes[i] = NewImapMailbox(ctx, inbox, u)
 	}
 
-	u.core.Logger.Info("Listed %d mailboxes for user %d", len(mailboxes), u.userModel.ID)
+	u.core.Logger.Info("Listed %d mailboxes for user %s", len(mailboxes), u.userModel.ID)
 	return mailboxes, nil
 }
 
@@ -60,21 +60,21 @@ func (u *ImapUser) GetMailbox(name string) (backend.Mailbox, error) {
 	if name == "INBOX" {
 		inboxes, err := u.core.InboxService.ListByUser(ctx, u.userModel.ID)
 		if err != nil {
-			u.core.Logger.Error("IMAP GetMailbox: Error fetching inboxes for INBOX special name for user %d: %v", u.userModel.ID, err)
+			u.core.Logger.Error("IMAP GetMailbox: Error fetching inboxes for INBOX special name for user %s: %v", u.userModel.ID, err)
 			return nil, err
 		}
 		if len(inboxes) == 0 {
-			u.core.Logger.Warn("IMAP GetMailbox: No inboxes available for user %d, cannot select INBOX.", u.userModel.ID)
+			u.core.Logger.Warn("IMAP GetMailbox: No inboxes available for user %s, cannot select INBOX.", u.userModel.ID)
 			return nil, backend.ErrNoSuchMailbox
 		}
-		u.core.Logger.Debug("IMAP GetMailbox: Mapping 'INBOX' to user %d's first inbox: %s", u.userModel.ID, inboxes[0].Email)
+		u.core.Logger.Debug("IMAP GetMailbox: Mapping 'INBOX' to user %s's first inbox: %s", u.userModel.ID, inboxes[0].Email)
 		return NewImapMailbox(ctx, inboxes[0], u), nil
 	}
 
 	// Try to get inbox by email address
 	inbox, err := u.core.InboxService.GetByEmailAndUser(ctx, name, u.userModel.ID)
 	if err != nil {
-		u.core.Logger.Error("Failed to get mailbox %s for user %d: %v", name, u.userModel.ID, err)
+		u.core.Logger.Error("Failed to get mailbox %s for user %s: %v", name, u.userModel.ID, err)
 		return nil, backend.ErrNoSuchMailbox
 	}
 

@@ -15,19 +15,19 @@ func NewMessageService(core *Core) MessageService {
 }
 
 func (s *MessageService) Store(ctx context.Context, message *models.Message) error {
-	s.core.Logger.Info("Storing new message for inbox %d from %s", message.InboxID, message.Sender)
+	s.core.Logger.Info("Storing new message for inbox %s from %s", message.InboxID, message.Sender)
 
 	if err := s.core.Repository.CreateMessage(ctx, message); err != nil {
 		s.core.Logger.Error("Failed to store message: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully stored message with ID: %d", message.ID)
+	s.core.Logger.Info("Successfully stored message with ID: %s", message.ID)
 	return nil
 }
 
-func (s *MessageService) Get(ctx context.Context, id int) (*models.Message, error) {
-	s.core.Logger.Debug("Fetching message with ID: %d", id)
+func (s *MessageService) Get(ctx context.Context, id string) (*models.Message, error) {
+	s.core.Logger.Debug("Fetching message with ID: %s", id)
 
 	message, err := s.core.Repository.GetMessage(ctx, id)
 	if err != nil {
@@ -36,15 +36,15 @@ func (s *MessageService) Get(ctx context.Context, id int) (*models.Message, erro
 	}
 
 	if message == nil {
-		s.core.Logger.Info("Message not found with ID: %d", id)
+		s.core.Logger.Info("Message not found with ID: %s", id)
 		return nil, ErrNotFound
 	}
 
 	return message, nil
 }
 
-func (s *MessageService) ListByInbox(ctx context.Context, inboxID int, limit, offset int, filters models.MessageFilters) (*models.PaginatedResponse, error) {
-	s.core.Logger.Info("Listing messages for inbox %d with limit: %d, offset: %d, filters: %+v",
+func (s *MessageService) ListByInbox(ctx context.Context, inboxID string, limit, offset int, filters models.MessageFilters) (*models.PaginatedResponse, error) {
+	s.core.Logger.Info("Listing messages for inbox %s with limit: %d, offset: %d, filters: %+v",
 		inboxID, limit, offset, filters)
 
 	messages, total, err := s.core.Repository.ListMessagesByInboxWithFilters(ctx, inboxID, filters, limit, offset)
@@ -64,62 +64,62 @@ func (s *MessageService) ListByInbox(ctx context.Context, inboxID int, limit, of
 	return response, nil
 }
 
-func (s *MessageService) MarkAsRead(ctx context.Context, messageID int) error {
-	s.core.Logger.Debug("Marking message %d as read", messageID)
+func (s *MessageService) MarkAsRead(ctx context.Context, messageID string) error {
+	s.core.Logger.Debug("Marking message %s as read", messageID)
 
 	if err := s.core.Repository.UpdateMessageReadStatus(ctx, messageID, true); err != nil {
 		s.core.Logger.Error("Failed to mark message as read: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully marked message %d as read", messageID)
+	s.core.Logger.Info("Successfully marked message %s as read", messageID)
 	return nil
 }
 
-func (s *MessageService) MarkAsUnread(ctx context.Context, messageID int) error {
-	s.core.Logger.Debug("Marking message %d as unread", messageID)
+func (s *MessageService) MarkAsUnread(ctx context.Context, messageID string) error {
+	s.core.Logger.Debug("Marking message %s as unread", messageID)
 
 	if err := s.core.Repository.UpdateMessageReadStatus(ctx, messageID, false); err != nil {
 		s.core.Logger.Error("Failed to mark message as unread: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully marked message %d as unread", messageID)
+	s.core.Logger.Info("Successfully marked message %s as unread", messageID)
 	return nil
 }
 
-func (s *MessageService) MarkAsDeleted(ctx context.Context, messageID int) error {
-	s.core.Logger.Debug("Marking message %d as deleted", messageID)
+func (s *MessageService) MarkAsDeleted(ctx context.Context, messageID string) error {
+	s.core.Logger.Debug("Marking message %s as deleted", messageID)
 
 	if err := s.core.Repository.UpdateMessageDeletedStatus(ctx, messageID, true); err != nil {
 		s.core.Logger.Error("Failed to mark message as deleted: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully marked message %d as deleted", messageID)
+	s.core.Logger.Info("Successfully marked message %s as deleted", messageID)
 	return nil
 }
 
-func (s *MessageService) MarkAsUndeleted(ctx context.Context, messageID int) error {
-	s.core.Logger.Debug("Marking message %d as undeleted", messageID)
+func (s *MessageService) MarkAsUndeleted(ctx context.Context, messageID string) error {
+	s.core.Logger.Debug("Marking message %s as undeleted", messageID)
 
 	if err := s.core.Repository.UpdateMessageDeletedStatus(ctx, messageID, false); err != nil {
 		s.core.Logger.Error("Failed to mark message as undeleted: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully marked message %d as undeleted", messageID)
+	s.core.Logger.Info("Successfully marked message %s as undeleted", messageID)
 	return nil
 }
 
-func (s *MessageService) Delete(ctx context.Context, messageID int) error {
-	s.core.Logger.Debug("Deleting message with ID: %d", messageID)
+func (s *MessageService) Delete(ctx context.Context, messageID string) error {
+	s.core.Logger.Debug("Deleting message with ID: %s", messageID)
 
 	if err := s.core.Repository.DeleteMessage(ctx, messageID); err != nil {
 		s.core.Logger.Error("Failed to delete message: %v", err)
 		return err
 	}
 
-	s.core.Logger.Info("Successfully deleted message with ID: %d", messageID)
+	s.core.Logger.Info("Successfully deleted message with ID: %s", messageID)
 	return nil
 }

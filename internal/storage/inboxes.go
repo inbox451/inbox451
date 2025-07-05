@@ -13,7 +13,7 @@ func (r *repository) CreateInbox(ctx context.Context, inbox *models.Inbox) error
 		Scan(&inbox.ID, &inbox.CreatedAt, &inbox.UpdatedAt)
 }
 
-func (r *repository) GetInbox(ctx context.Context, id int) (*models.Inbox, error) {
+func (r *repository) GetInbox(ctx context.Context, id string) (*models.Inbox, error) {
 	var inbox models.Inbox
 	err := r.queries.GetInbox.GetContext(ctx, &inbox, id)
 	return &inbox, handleDBError(err)
@@ -39,7 +39,7 @@ func (r *repository) UpdateInbox(ctx context.Context, inbox *models.Inbox) error
 	return handleRowsAffected(result)
 }
 
-func (r *repository) DeleteInbox(ctx context.Context, id int) error {
+func (r *repository) DeleteInbox(ctx context.Context, id string) error {
 	result, err := r.queries.DeleteInbox.ExecContext(ctx, id)
 	if err != nil {
 		return handleDBError(err)
@@ -47,7 +47,7 @@ func (r *repository) DeleteInbox(ctx context.Context, id int) error {
 	return handleRowsAffected(result)
 }
 
-func (r *repository) ListInboxesByProject(ctx context.Context, projectID, limit, offset int) ([]*models.Inbox, int, error) {
+func (r *repository) ListInboxesByProject(ctx context.Context, projectID string, limit, offset int) ([]*models.Inbox, int, error) {
 	var total int
 	err := r.queries.CountInboxesByProject.GetContext(ctx, &total, projectID)
 	if err != nil {
@@ -66,7 +66,7 @@ func (r *repository) ListInboxesByProject(ctx context.Context, projectID, limit,
 }
 
 // ListInboxesByUser returns all inboxes accessible to a user through project membership
-func (r *repository) ListInboxesByUser(ctx context.Context, userID int) ([]*models.Inbox, error) {
+func (r *repository) ListInboxesByUser(ctx context.Context, userID string) ([]*models.Inbox, error) {
 	inboxes := []*models.Inbox{}
 	err := r.queries.ListInboxesByUser.SelectContext(ctx, &inboxes, userID)
 	if err != nil {
@@ -77,7 +77,7 @@ func (r *repository) ListInboxesByUser(ctx context.Context, userID int) ([]*mode
 }
 
 // GetInboxByEmailAndUser returns an inbox by email if the user has access to it
-func (r *repository) GetInboxByEmailAndUser(ctx context.Context, email string, userID int) (*models.Inbox, error) {
+func (r *repository) GetInboxByEmailAndUser(ctx context.Context, email string, userID string) (*models.Inbox, error) {
 	var inbox models.Inbox
 	err := r.queries.GetInboxByEmailAndUser.GetContext(ctx, &inbox, email, userID)
 	if err != nil {

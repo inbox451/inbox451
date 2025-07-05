@@ -45,7 +45,7 @@ func (s *Server) login(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 
-	s.core.Logger.Info("User %s (ID: %d) logged in successfully via password.", user.Username, user.ID)
+	s.core.Logger.Info("User %s (ID: %s) logged in successfully via password.", user.Username, user.ID)
 	// Return only non-sensitive user info
 	userInfo := map[string]interface{}{
 		"id":       user.ID,
@@ -210,7 +210,7 @@ func (s *Server) oidcCallback(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}
 
-	s.core.Logger.Info("User %s (ID: %d) logged in successfully via OIDC.", user.Username, user.ID)
+	s.core.Logger.Info("User %s (ID: %s) logged in successfully via OIDC.", user.Username, user.ID)
 
 	// Redirect to the frontend (e.g., dashboard)
 	// Ideally, the original 'next' URL should be part of the state (need to align with bernardo)

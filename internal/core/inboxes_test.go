@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"inbox451/internal/test"
+
 	"inbox451/internal/config"
 	"inbox451/internal/logger"
 	"inbox451/internal/mocks"
@@ -49,7 +51,7 @@ func TestInboxService_Create(t *testing.T) {
 		{
 			name: "successful creation",
 			inbox: &models.Inbox{
-				ProjectID: 1,
+				ProjectID: test.StaticTestUUID(),
 				Email:     "test@example.com",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -61,7 +63,7 @@ func TestInboxService_Create(t *testing.T) {
 		{
 			name: "repository error",
 			inbox: &models.Inbox{
-				ProjectID: 1,
+				ProjectID: test.StaticTestUUID(),
 				Email:     "test@example.com",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -90,10 +92,13 @@ func TestInboxService_Create(t *testing.T) {
 }
 
 func TestInboxService_Get(t *testing.T) {
+	testProjectID := test.RandomTestUUID()
+	testInboxID := test.RandomTestUUID()
+	nonExistingInboxID := test.RandomTestUUID()
 	now := time.Now()
 	tests := []struct {
 		name    string
-		id      int
+		id      string
 		mockFn  func(*mocks.Repository)
 		want    *models.Inbox
 		wantErr bool
@@ -101,34 +106,34 @@ func TestInboxService_Get(t *testing.T) {
 	}{
 		{
 			name: "existing inbox",
-			id:   1,
+			id:   testInboxID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetInbox", mock.Anything, 1).Return(&models.Inbox{
+				m.On("GetInbox", mock.Anything, testInboxID).Return(&models.Inbox{
 					Base: models.Base{
-						ID:        1,
+						ID:        testInboxID,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					ProjectID: 1,
+					ProjectID: testProjectID,
 					Email:     "test@example.com",
 				}, nil)
 			},
 			want: &models.Inbox{
 				Base: models.Base{
-					ID:        1,
+					ID:        testInboxID,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},
-				ProjectID: 1,
+				ProjectID: testProjectID,
 				Email:     "test@example.com",
 			},
 			wantErr: false,
 		},
 		{
 			name: "non-existent inbox",
-			id:   999,
+			id:   nonExistingInboxID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetInbox", mock.Anything, 999).Return(nil, storage.ErrNotFound)
+				m.On("GetInbox", mock.Anything, nonExistingInboxID).Return(nil, storage.ErrNotFound)
 			},
 			want:    nil,
 			wantErr: true,
@@ -158,6 +163,9 @@ func TestInboxService_Get(t *testing.T) {
 }
 
 func TestInboxService_Update(t *testing.T) {
+	testProjectID := test.RandomTestUUID()
+	testInboxID := test.RandomTestUUID()
+	nonExistingInboxID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
 		inbox   *models.Inbox
@@ -167,8 +175,8 @@ func TestInboxService_Update(t *testing.T) {
 		{
 			name: "successful update",
 			inbox: &models.Inbox{
-				Base:      models.Base{ID: 1},
-				ProjectID: 1,
+				Base:      models.Base{ID: testInboxID},
+				ProjectID: testProjectID,
 				Email:     "updated@example.com",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -180,8 +188,8 @@ func TestInboxService_Update(t *testing.T) {
 		{
 			name: "update non-existent inbox",
 			inbox: &models.Inbox{
-				Base:      models.Base{ID: 999},
-				ProjectID: 1,
+				Base:      models.Base{ID: nonExistingInboxID},
+				ProjectID: testProjectID,
 				Email:     "updated@example.com",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -210,25 +218,27 @@ func TestInboxService_Update(t *testing.T) {
 }
 
 func TestInboxService_Delete(t *testing.T) {
+	testInboxID := test.RandomTestUUID()
+	nonExistingInboxID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
-		id      int
+		id      string
 		mockFn  func(*mocks.Repository)
 		wantErr bool
 	}{
 		{
 			name: "successful deletion",
-			id:   1,
+			id:   testInboxID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteInbox", mock.Anything, 1).Return(nil)
+				m.On("DeleteInbox", mock.Anything, testInboxID).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name: "delete non-existent inbox",
-			id:   999,
+			id:   nonExistingInboxID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteInbox", mock.Anything, 999).Return(storage.ErrNotFound)
+				m.On("DeleteInbox", mock.Anything, nonExistingInboxID).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -252,9 +262,13 @@ func TestInboxService_Delete(t *testing.T) {
 }
 
 func TestInboxService_ListByProject(t *testing.T) {
+	testProjectID1 := test.RandomTestUUID()
+	testInboxID1 := test.RandomTestUUID()
+	testInboxID2 := test.RandomTestUUID()
+	emptyProjectID := test.RandomTestUUID()
 	tests := []struct {
 		name      string
-		projectID int
+		projectID string
 		limit     int
 		offset    int
 		mockFn    func(*mocks.Repository)
@@ -263,34 +277,34 @@ func TestInboxService_ListByProject(t *testing.T) {
 	}{
 		{
 			name:      "successful list",
-			projectID: 1,
+			projectID: testProjectID1,
 			limit:     10,
 			offset:    0,
 			mockFn: func(m *mocks.Repository) {
 				inboxes := []*models.Inbox{
 					{
-						Base:      models.Base{ID: 1},
-						ProjectID: 1,
+						Base:      models.Base{ID: testInboxID1},
+						ProjectID: testProjectID1,
 						Email:     "inbox1@example.com",
 					},
 					{
-						Base:      models.Base{ID: 2},
-						ProjectID: 1,
+						Base:      models.Base{ID: testInboxID2},
+						ProjectID: testProjectID1,
 						Email:     "inbox2@example.com",
 					},
 				}
-				m.On("ListInboxesByProject", mock.Anything, 1, 10, 0).Return(inboxes, 2, nil)
+				m.On("ListInboxesByProject", mock.Anything, testProjectID1, 10, 0).Return(inboxes, 2, nil)
 			},
 			want: &models.PaginatedResponse{
 				Data: []*models.Inbox{
 					{
-						Base:      models.Base{ID: 1},
-						ProjectID: 1,
+						Base:      models.Base{ID: testInboxID1},
+						ProjectID: testProjectID1,
 						Email:     "inbox1@example.com",
 					},
 					{
-						Base:      models.Base{ID: 2},
-						ProjectID: 1,
+						Base:      models.Base{ID: testInboxID2},
+						ProjectID: testProjectID1,
 						Email:     "inbox2@example.com",
 					},
 				},
@@ -304,11 +318,11 @@ func TestInboxService_ListByProject(t *testing.T) {
 		},
 		{
 			name:      "repository error",
-			projectID: 1,
+			projectID: testProjectID1,
 			limit:     10,
 			offset:    0,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListInboxesByProject", mock.Anything, 1, 10, 0).
+				m.On("ListInboxesByProject", mock.Anything, testProjectID1, 10, 0).
 					Return([]*models.Inbox(nil), 0, errors.New("database error"))
 			},
 			want:    nil,
@@ -316,11 +330,11 @@ func TestInboxService_ListByProject(t *testing.T) {
 		},
 		{
 			name:      "empty project",
-			projectID: 2,
+			projectID: emptyProjectID,
 			limit:     10,
 			offset:    0,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListInboxesByProject", mock.Anything, 2, 10, 0).
+				m.On("ListInboxesByProject", mock.Anything, emptyProjectID, 10, 0).
 					Return([]*models.Inbox{}, 0, nil)
 			},
 			want: &models.PaginatedResponse{
@@ -354,6 +368,7 @@ func TestInboxService_ListByProject(t *testing.T) {
 }
 
 func TestInboxService_Create_WithEmailDomain(t *testing.T) {
+	testProjectID := test.RandomTestUUID()
 	tests := []struct {
 		name        string
 		emailDomain string
@@ -367,7 +382,7 @@ func TestInboxService_Create_WithEmailDomain(t *testing.T) {
 			name:        "auto-append domain to local part",
 			emailDomain: "example.com",
 			inbox: &models.Inbox{
-				ProjectID: 1,
+				ProjectID: testProjectID,
 				Email:     "testinbox",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -382,7 +397,7 @@ func TestInboxService_Create_WithEmailDomain(t *testing.T) {
 			name:        "accept full email with correct domain",
 			emailDomain: "example.com",
 			inbox: &models.Inbox{
-				ProjectID: 1,
+				ProjectID: testProjectID,
 				Email:     "test@example.com",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -397,7 +412,7 @@ func TestInboxService_Create_WithEmailDomain(t *testing.T) {
 			name:        "reject email with incorrect domain",
 			emailDomain: "example.com",
 			inbox: &models.Inbox{
-				ProjectID: 1,
+				ProjectID: testProjectID,
 				Email:     "test@otherdomain.com",
 			},
 			mockFn:     func(m *mocks.Repository) {},
@@ -408,7 +423,7 @@ func TestInboxService_Create_WithEmailDomain(t *testing.T) {
 			name:        "no domain configured - accept any email",
 			emailDomain: "",
 			inbox: &models.Inbox{
-				ProjectID: 1,
+				ProjectID: testProjectID,
 				Email:     "test@anydomain.com",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -423,7 +438,7 @@ func TestInboxService_Create_WithEmailDomain(t *testing.T) {
 			name:        "auto-append domain with special characters",
 			emailDomain: "sub.example.com",
 			inbox: &models.Inbox{
-				ProjectID: 1,
+				ProjectID: testProjectID,
 				Email:     "user+tag",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -459,6 +474,8 @@ func TestInboxService_Create_WithEmailDomain(t *testing.T) {
 }
 
 func TestInboxService_Update_WithEmailDomain(t *testing.T) {
+	testProjectID := test.RandomTestUUID()
+	testInboxID1 := test.RandomTestUUID()
 	tests := []struct {
 		name        string
 		emailDomain string
@@ -472,8 +489,8 @@ func TestInboxService_Update_WithEmailDomain(t *testing.T) {
 			name:        "auto-append domain to local part on update",
 			emailDomain: "example.com",
 			inbox: &models.Inbox{
-				Base:      models.Base{ID: 1},
-				ProjectID: 1,
+				Base:      models.Base{ID: testInboxID1},
+				ProjectID: testProjectID,
 				Email:     "updatedinbox",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -488,8 +505,8 @@ func TestInboxService_Update_WithEmailDomain(t *testing.T) {
 			name:        "accept updated email with correct domain",
 			emailDomain: "example.com",
 			inbox: &models.Inbox{
-				Base:      models.Base{ID: 1},
-				ProjectID: 1,
+				Base:      models.Base{ID: testInboxID1},
+				ProjectID: testProjectID,
 				Email:     "updated@example.com",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -504,8 +521,8 @@ func TestInboxService_Update_WithEmailDomain(t *testing.T) {
 			name:        "reject updated email with incorrect domain",
 			emailDomain: "example.com",
 			inbox: &models.Inbox{
-				Base:      models.Base{ID: 1},
-				ProjectID: 1,
+				Base:      models.Base{ID: testInboxID1},
+				ProjectID: testProjectID,
 				Email:     "updated@wrongdomain.com",
 			},
 			mockFn:     func(m *mocks.Repository) {},
@@ -516,8 +533,8 @@ func TestInboxService_Update_WithEmailDomain(t *testing.T) {
 			name:        "no domain configured - accept any updated email",
 			emailDomain: "",
 			inbox: &models.Inbox{
-				Base:      models.Base{ID: 1},
-				ProjectID: 1,
+				Base:      models.Base{ID: testInboxID1},
+				ProjectID: testProjectID,
 				Email:     "updated@anydomain.com",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -554,56 +571,62 @@ func TestInboxService_Update_WithEmailDomain(t *testing.T) {
 
 func TestInboxService_ListByUser(t *testing.T) {
 	now := time.Now()
+	testUserID1 := test.RandomTestUUID()
+	testUserID2 := test.RandomTestUUID()
+	testInboxID1 := test.RandomTestUUID()
+	testInboxID2 := test.RandomTestUUID()
+	testProjectID1 := test.RandomTestUUID()
+	testProjectID2 := test.RandomTestUUID()
 	tests := []struct {
 		name    string
-		userID  int
+		userID  string
 		mockFn  func(*mocks.Repository)
 		want    []*models.Inbox
 		wantErr bool
 	}{
 		{
 			name:   "successful list with multiple inboxes",
-			userID: 1,
+			userID: testUserID1,
 			mockFn: func(m *mocks.Repository) {
 				inboxes := []*models.Inbox{
 					{
 						Base: models.Base{
-							ID:        1,
+							ID:        testInboxID1,
 							CreatedAt: null.TimeFrom(now),
 							UpdatedAt: null.TimeFrom(now),
 						},
-						ProjectID: 1,
+						ProjectID: testProjectID1,
 						Email:     "inbox1@example.com",
 					},
 					{
 						Base: models.Base{
-							ID:        2,
+							ID:        testInboxID2,
 							CreatedAt: null.TimeFrom(now),
 							UpdatedAt: null.TimeFrom(now),
 						},
-						ProjectID: 2,
+						ProjectID: testProjectID2,
 						Email:     "inbox2@example.com",
 					},
 				}
-				m.On("ListInboxesByUser", mock.Anything, 1).Return(inboxes, nil)
+				m.On("ListInboxesByUser", mock.Anything, testUserID1).Return(inboxes, nil)
 			},
 			want: []*models.Inbox{
 				{
 					Base: models.Base{
-						ID:        1,
+						ID:        testInboxID1,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					ProjectID: 1,
+					ProjectID: testProjectID1,
 					Email:     "inbox1@example.com",
 				},
 				{
 					Base: models.Base{
-						ID:        2,
+						ID:        testInboxID2,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					ProjectID: 2,
+					ProjectID: testProjectID2,
 					Email:     "inbox2@example.com",
 				},
 			},
@@ -611,18 +634,18 @@ func TestInboxService_ListByUser(t *testing.T) {
 		},
 		{
 			name:   "successful list with no inboxes",
-			userID: 2,
+			userID: testUserID2,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListInboxesByUser", mock.Anything, 2).Return([]*models.Inbox{}, nil)
+				m.On("ListInboxesByUser", mock.Anything, testUserID2).Return([]*models.Inbox{}, nil)
 			},
 			want:    []*models.Inbox{},
 			wantErr: false,
 		},
 		{
 			name:   "repository error",
-			userID: 1,
+			userID: testUserID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListInboxesByUser", mock.Anything, 1).Return([]*models.Inbox(nil), errors.New("database error"))
+				m.On("ListInboxesByUser", mock.Anything, testUserID1).Return([]*models.Inbox(nil), errors.New("database error"))
 			},
 			want:    nil,
 			wantErr: true,
@@ -649,10 +672,13 @@ func TestInboxService_ListByUser(t *testing.T) {
 
 func TestInboxService_GetByEmailAndUser(t *testing.T) {
 	now := time.Now()
+	testUserID1 := test.RandomTestUUID()
+	testInboxID1 := test.RandomTestUUID()
+	testProjectID1 := test.RandomTestUUID()
 	tests := []struct {
 		name    string
 		email   string
-		userID  int
+		userID  string
 		mockFn  func(*mocks.Repository)
 		want    *models.Inbox
 		wantErr bool
@@ -661,25 +687,25 @@ func TestInboxService_GetByEmailAndUser(t *testing.T) {
 		{
 			name:   "existing inbox",
 			email:  "inbox@example.com",
-			userID: 1,
+			userID: testUserID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetInboxByEmailAndUser", mock.Anything, "inbox@example.com", 1).Return(&models.Inbox{
+				m.On("GetInboxByEmailAndUser", mock.Anything, "inbox@example.com", testUserID1).Return(&models.Inbox{
 					Base: models.Base{
-						ID:        1,
+						ID:        testInboxID1,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					ProjectID: 1,
+					ProjectID: testProjectID1,
 					Email:     "inbox@example.com",
 				}, nil)
 			},
 			want: &models.Inbox{
 				Base: models.Base{
-					ID:        1,
+					ID:        testInboxID1,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},
-				ProjectID: 1,
+				ProjectID: testProjectID1,
 				Email:     "inbox@example.com",
 			},
 			wantErr: false,
@@ -687,9 +713,9 @@ func TestInboxService_GetByEmailAndUser(t *testing.T) {
 		{
 			name:   "non-existent inbox",
 			email:  "nonexistent@example.com",
-			userID: 1,
+			userID: testUserID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetInboxByEmailAndUser", mock.Anything, "nonexistent@example.com", 1).Return(nil, storage.ErrNotFound)
+				m.On("GetInboxByEmailAndUser", mock.Anything, "nonexistent@example.com", testUserID1).Return(nil, storage.ErrNotFound)
 			},
 			want:    nil,
 			wantErr: true,
@@ -698,9 +724,9 @@ func TestInboxService_GetByEmailAndUser(t *testing.T) {
 		{
 			name:   "repository error",
 			email:  "inbox@example.com",
-			userID: 1,
+			userID: testUserID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetInboxByEmailAndUser", mock.Anything, "inbox@example.com", 1).Return(nil, errors.New("database error"))
+				m.On("GetInboxByEmailAndUser", mock.Anything, "inbox@example.com", testUserID1).Return(nil, errors.New("database error"))
 			},
 			want:    nil,
 			wantErr: true,

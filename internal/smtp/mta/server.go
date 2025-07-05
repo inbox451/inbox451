@@ -125,7 +125,7 @@ func (s *MTASession) Rcpt(to string, opts *smtp.RcptOptions) error {
 		}
 	}
 
-	s.core.Logger.Info("MSA: Recipient %s accepted for (inbox ID: %d)", to, inbox.ID)
+	s.core.Logger.Info("MSA: Recipient %s accepted for (inbox ID: %s)", to, inbox.ID)
 
 	s.to = to
 	return nil

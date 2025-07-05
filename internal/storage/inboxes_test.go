@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"inbox451/internal/test"
+
 	"inbox451/internal/models"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -70,6 +72,7 @@ func setupInboxTestDB(t *testing.T) (*repository, sqlmock.Sqlmock) {
 
 func TestRepository_CreateInbox(t *testing.T) {
 	now := time.Now()
+	testProjectID1 := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
@@ -80,15 +83,15 @@ func TestRepository_CreateInbox(t *testing.T) {
 		{
 			name: "successful creation",
 			inbox: &models.Inbox{
-				ProjectID: 1,
+				ProjectID: testProjectID1,
 				Email:     "test@example.com",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("INSERT INTO inboxes").
-					WithArgs(1, "test@example.com").
+					WithArgs(testProjectID1, "test@example.com").
 					WillReturnRows(
 						sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).
-							AddRow(1, now, now),
+							AddRow(testProjectID1, now, now),
 					)
 			},
 			wantErr: false,
@@ -96,12 +99,12 @@ func TestRepository_CreateInbox(t *testing.T) {
 		{
 			name: "duplicate email",
 			inbox: &models.Inbox{
-				ProjectID: 1,
+				ProjectID: testProjectID1,
 				Email:     "existing@example.com",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("INSERT INTO inboxes").
-					WithArgs(1, "existing@example.com").
+					WithArgs(testProjectID1, "existing@example.com").
 					WillReturnError(sql.ErrConnDone)
 			},
 			wantErr: true,
@@ -134,10 +137,13 @@ func TestRepository_CreateInbox(t *testing.T) {
 
 func TestRepository_GetInbox(t *testing.T) {
 	now := time.Now()
+	testProjectID1 := test.RandomTestUUID()
+	testInboxID1 := test.RandomTestUUID()
+	testNonExistingInboxID := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
-		id      int
+		id      string
 		mockFn  func(sqlmock.Sqlmock)
 		want    *models.Inbox
 		wantErr bool
@@ -145,33 +151,33 @@ func TestRepository_GetInbox(t *testing.T) {
 	}{
 		{
 			name: "existing inbox",
-			id:   1,
+			id:   testInboxID1,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{
 					"id", "project_id", "email", "created_at", "updated_at",
-				}).AddRow(1, 1, "test@example.com", now, now)
+				}).AddRow(testInboxID1, testProjectID1, "test@example.com", now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM inboxes").
-					WithArgs(1).
+					WithArgs(testInboxID1).
 					WillReturnRows(rows)
 			},
 			want: &models.Inbox{
 				Base: models.Base{
-					ID:        1,
+					ID:        testInboxID1,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},
-				ProjectID: 1,
+				ProjectID: testProjectID1,
 				Email:     "test@example.com",
 			},
 			wantErr: false,
 		},
 		{
 			name: "non-existent inbox",
-			id:   999,
+			id:   testNonExistingInboxID,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("SELECT (.+) FROM inboxes").
-					WithArgs(999).
+					WithArgs(testNonExistingInboxID).
 					WillReturnError(sql.ErrNoRows)
 			},
 			want:    nil,
@@ -207,6 +213,8 @@ func TestRepository_GetInbox(t *testing.T) {
 
 func TestRepository_GetInboxByEmail(t *testing.T) {
 	now := time.Now()
+	testProjectID1 := test.RandomTestUUID()
+	testInboxID1 := test.RandomTestUUID()
 
 	tests := []struct {
 		name    string
@@ -221,7 +229,7 @@ func TestRepository_GetInboxByEmail(t *testing.T) {
 			mockFn: func(mock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{
 					"id", "project_id", "email", "created_at", "updated_at",
-				}).AddRow(1, 1, "test@example.com", now, now)
+				}).AddRow(testInboxID1, testProjectID1, "test@example.com", now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM inboxes").
 					WithArgs("test@example.com").
@@ -229,11 +237,11 @@ func TestRepository_GetInboxByEmail(t *testing.T) {
 			},
 			want: &models.Inbox{
 				Base: models.Base{
-					ID:        1,
+					ID:        testInboxID1,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},
-				ProjectID: 1,
+				ProjectID: testProjectID1,
 				Email:     "test@example.com",
 			},
 			wantErr: false,
@@ -274,6 +282,10 @@ func TestRepository_GetInboxByEmail(t *testing.T) {
 }
 
 func TestRepository_UpdateInbox(t *testing.T) {
+	testProjectID1 := test.RandomTestUUID()
+	testInboxID1 := test.RandomTestUUID()
+	testNonExistingInboxID := test.RandomTestUUID()
+
 	tests := []struct {
 		name    string
 		inbox   *models.Inbox
@@ -283,13 +295,13 @@ func TestRepository_UpdateInbox(t *testing.T) {
 		{
 			name: "successful update",
 			inbox: &models.Inbox{
-				Base:      models.Base{ID: 1},
-				ProjectID: 1,
+				Base:      models.Base{ID: testInboxID1},
+				ProjectID: testProjectID1,
 				Email:     "updated@example.com",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("UPDATE inboxes").
-					WithArgs("updated@example.com", 1).
+					WithArgs("updated@example.com", testInboxID1).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			wantErr: false,
@@ -297,13 +309,13 @@ func TestRepository_UpdateInbox(t *testing.T) {
 		{
 			name: "non-existent inbox",
 			inbox: &models.Inbox{
-				Base:      models.Base{ID: 999},
-				ProjectID: 1,
+				Base:      models.Base{ID: testNonExistingInboxID},
+				ProjectID: testProjectID1,
 				Email:     "updated@example.com",
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("UPDATE inboxes").
-					WithArgs("updated@example.com", 999).
+					WithArgs("updated@example.com", testNonExistingInboxID).
 					WillReturnResult(sqlmock.NewResult(0, 0))
 			},
 			wantErr: true,
@@ -332,28 +344,30 @@ func TestRepository_UpdateInbox(t *testing.T) {
 }
 
 func TestRepository_DeleteInbox(t *testing.T) {
+	testInboxID1 := test.RandomTestUUID()
+	testNonExistingInboxID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
-		id      int
+		id      string
 		mockFn  func(sqlmock.Sqlmock)
 		wantErr bool
 	}{
 		{
 			name: "successful deletion",
-			id:   1,
+			id:   testInboxID1,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM inboxes").
-					WithArgs(1).
+					WithArgs(testInboxID1).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			wantErr: false,
 		},
 		{
 			name: "non-existent inbox",
-			id:   999,
+			id:   testNonExistingInboxID,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM inboxes").
-					WithArgs(999).
+					WithArgs(testNonExistingInboxID).
 					WillReturnResult(sqlmock.NewResult(0, 0))
 			},
 			wantErr: true,
@@ -383,10 +397,13 @@ func TestRepository_DeleteInbox(t *testing.T) {
 
 func TestRepository_ListInboxesByProject(t *testing.T) {
 	now := time.Now()
+	testProjectID1 := test.RandomTestUUID()
+	testInboxID1 := test.RandomTestUUID()
+	testInboxID2 := test.RandomTestUUID()
 
 	tests := []struct {
 		name      string
-		projectID int
+		projectID string
 		limit     int
 		offset    int
 		mockFn    func(sqlmock.Sqlmock)
@@ -396,42 +413,42 @@ func TestRepository_ListInboxesByProject(t *testing.T) {
 	}{
 		{
 			name:      "successful list",
-			projectID: 1,
+			projectID: testProjectID1,
 			limit:     10,
 			offset:    0,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				countRows := sqlmock.NewRows([]string{"count"}).AddRow(2)
 				mock.ExpectQuery("SELECT COUNT").
-					WithArgs(1).
+					WithArgs(testProjectID1).
 					WillReturnRows(countRows)
 
 				rows := sqlmock.NewRows([]string{
 					"id", "project_id", "email", "created_at", "updated_at",
 				}).
-					AddRow(1, 1, "inbox1@example.com", now, now).
-					AddRow(2, 1, "inbox2@example.com", now, now)
+					AddRow(testInboxID1, testProjectID1, "inbox1@example.com", now, now).
+					AddRow(testInboxID2, testProjectID1, "inbox2@example.com", now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM inboxes").
-					WithArgs(1, 10, 0).
+					WithArgs(testProjectID1, 10, 0).
 					WillReturnRows(rows)
 			},
 			want: []*models.Inbox{
 				{
 					Base: models.Base{
-						ID:        1,
+						ID:        testInboxID1,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					ProjectID: 1,
+					ProjectID: testProjectID1,
 					Email:     "inbox1@example.com",
 				},
 				{
 					Base: models.Base{
-						ID:        2,
+						ID:        testInboxID2,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					ProjectID: 1,
+					ProjectID: testProjectID1,
 					Email:     "inbox2@example.com",
 				},
 			},
@@ -440,13 +457,13 @@ func TestRepository_ListInboxesByProject(t *testing.T) {
 		},
 		{
 			name:      "empty project",
-			projectID: 2,
+			projectID: testProjectID1,
 			limit:     10,
 			offset:    0,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				countRows := sqlmock.NewRows([]string{"count"}).AddRow(0)
 				mock.ExpectQuery("SELECT COUNT").
-					WithArgs(2).
+					WithArgs(testProjectID1).
 					WillReturnRows(countRows)
 			},
 			want:    []*models.Inbox{},

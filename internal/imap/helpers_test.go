@@ -124,10 +124,10 @@ func TestReconstructRFC822(t *testing.T) {
 	now := time.Now()
 	message := &models.Message{
 		Base: models.Base{
-			ID:        1,
+			ID:        "test-message-1",
 			CreatedAt: null.TimeFrom(now),
 		},
-		InboxID:  1,
+		InboxID:  "test-inbox-1",
 		Sender:   "sender@example.com",
 		Receiver: "receiver@example.com",
 		Subject:  "Test Subject",
@@ -164,10 +164,10 @@ func TestMatchesSearchCriteria(t *testing.T) {
 
 	message := &models.Message{
 		Base: models.Base{
-			ID:        1,
+			ID:        "test-message-1",
 			CreatedAt: null.TimeFrom(now),
 		},
-		InboxID:  1,
+		InboxID:  "test-inbox-1",
 		Sender:   "sender@example.com",
 		Receiver: "receiver@example.com",
 		Subject:  "Important Subject",
@@ -341,10 +341,10 @@ func TestBuildEnvelope(t *testing.T) {
 	now := time.Now()
 	message := &models.Message{
 		Base: models.Base{
-			ID:        1,
+			ID:        "test-message-1",
 			CreatedAt: null.TimeFrom(now),
 		},
-		InboxID:  1,
+		InboxID:  "test-inbox-1",
 		Sender:   "John Doe <john@example.com>",
 		Receiver: "Jane Smith <jane@example.com>",
 		Subject:  "Test Subject",
@@ -381,10 +381,10 @@ func TestBuildImapMessage(t *testing.T) {
 	now := time.Now()
 	message := &models.Message{
 		Base: models.Base{
-			ID:        123,
+			ID:        "test-message-123",
 			CreatedAt: null.TimeFrom(now),
 		},
-		InboxID:   1,
+		InboxID:   "test-inbox-123",
 		Sender:    "sender@example.com",
 		Receiver:  "receiver@example.com",
 		Subject:   "Test Subject",
@@ -414,7 +414,7 @@ func TestBuildImapMessage(t *testing.T) {
 			validate: func(t *testing.T, msg *imap.Message) {
 				uid, ok := msg.Items[imap.FetchUid].(uint32)
 				assert.True(t, ok)
-				assert.Equal(t, uint32(123), uid)
+				assert.Equal(t, uint32(0xd35cc9c2), uid) // Hash of "test-message-123"
 			},
 		},
 		{
@@ -504,7 +504,7 @@ func TestBuildImapMessage(t *testing.T) {
 				assert.Contains(t, flags, imap.SeenFlag)
 
 				uid := msg.Items[imap.FetchUid].(uint32)
-				assert.Equal(t, uint32(123), uid)
+				assert.Equal(t, uint32(0xd35cc9c2), uid) // Hash of "test-message-123"
 
 				date := msg.Items[imap.FetchInternalDate].(time.Time)
 				assert.Equal(t, now, date)
@@ -528,10 +528,10 @@ func TestBuildImapMessage(t *testing.T) {
 func TestBuildImapMessage_DeletedFlags(t *testing.T) {
 	message := &models.Message{
 		Base: models.Base{
-			ID:        1,
+			ID:        "test-message-1",
 			CreatedAt: null.TimeFrom(time.Now()),
 		},
-		InboxID:   1,
+		InboxID:   "test-inbox-123",
 		Sender:    "sender@example.com",
 		Receiver:  "receiver@example.com",
 		Subject:   "Test",

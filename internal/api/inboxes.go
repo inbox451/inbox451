@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
 	"inbox451/internal/models"
 
@@ -10,7 +9,7 @@ import (
 )
 
 func (s *Server) createInbox(c echo.Context) error {
-	projectID, _ := strconv.Atoi(c.Param("projectId"))
+	projectID := c.Param("projectId")
 	var inbox models.Inbox
 	if err := c.Bind(&inbox); err != nil {
 		return s.core.HandleError(err, http.StatusBadRequest)
@@ -29,7 +28,7 @@ func (s *Server) createInbox(c echo.Context) error {
 }
 
 func (s *Server) getInboxes(c echo.Context) error {
-	accountID, _ := strconv.Atoi(c.Param("projectId"))
+	accountID := c.Param("projectId")
 
 	var query models.PaginationQuery
 	if err := c.Bind(&query); err != nil {
@@ -52,7 +51,7 @@ func (s *Server) getInboxes(c echo.Context) error {
 }
 
 func (s *Server) getInbox(c echo.Context) error {
-	inboxID, _ := strconv.Atoi(c.Param("inboxId"))
+	inboxID := c.Param("inboxId")
 	inbox, err := s.core.InboxService.Get(c.Request().Context(), inboxID)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
@@ -64,8 +63,8 @@ func (s *Server) getInbox(c echo.Context) error {
 }
 
 func (s *Server) updateInbox(c echo.Context) error {
-	inboxID, _ := strconv.Atoi(c.Param("inboxId"))
-	projectID, _ := strconv.Atoi(c.Param("projectId"))
+	inboxID := c.Param("inboxId")
+	projectID := c.Param("projectId")
 
 	var inbox models.Inbox
 	if err := c.Bind(&inbox); err != nil {
@@ -88,7 +87,7 @@ func (s *Server) updateInbox(c echo.Context) error {
 }
 
 func (s *Server) deleteInbox(c echo.Context) error {
-	inboxID, _ := strconv.Atoi(c.Param("inboxId"))
+	inboxID := c.Param("inboxId")
 	if err := s.core.InboxService.Delete(c.Request().Context(), inboxID); err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}

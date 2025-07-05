@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"inbox451/internal/test"
+
 	"inbox451/internal/logger"
 	"inbox451/internal/mocks"
 	"inbox451/internal/models"
@@ -79,10 +81,12 @@ func TestProjectService_Create(t *testing.T) {
 }
 
 func TestProjectService_Get(t *testing.T) {
+	testProjectID1 := test.RandomTestUUID()
+	testNonExistingProjectID := test.RandomTestUUID()
 	now := time.Now()
 	tests := []struct {
 		name    string
-		id      int
+		id      string
 		mockFn  func(*mocks.Repository)
 		want    *models.Project
 		wantErr bool
@@ -90,11 +94,11 @@ func TestProjectService_Get(t *testing.T) {
 	}{
 		{
 			name: "existing project",
-			id:   1,
+			id:   testProjectID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetProject", mock.Anything, 1).Return(&models.Project{
+				m.On("GetProject", mock.Anything, testProjectID1).Return(&models.Project{
 					Base: models.Base{
-						ID:        1,
+						ID:        testProjectID1,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
@@ -103,7 +107,7 @@ func TestProjectService_Get(t *testing.T) {
 			},
 			want: &models.Project{
 				Base: models.Base{
-					ID:        1,
+					ID:        testProjectID1,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},
@@ -113,9 +117,9 @@ func TestProjectService_Get(t *testing.T) {
 		},
 		{
 			name: "non-existent project",
-			id:   999,
+			id:   testNonExistingProjectID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetProject", mock.Anything, 999).Return(nil, storage.ErrNotFound)
+				m.On("GetProject", mock.Anything, testNonExistingProjectID).Return(nil, storage.ErrNotFound)
 			},
 			want:    nil,
 			wantErr: true,
@@ -145,6 +149,8 @@ func TestProjectService_Get(t *testing.T) {
 }
 
 func TestProjectService_List(t *testing.T) {
+	testProjectID1 := test.RandomTestUUID()
+	testProjectID2 := test.RandomTestUUID()
 	tests := []struct {
 		name    string
 		limit   int
@@ -159,15 +165,15 @@ func TestProjectService_List(t *testing.T) {
 			offset: 0,
 			mockFn: func(m *mocks.Repository) {
 				projects := []*models.Project{
-					{Base: models.Base{ID: 1}, Name: "Project 1"},
-					{Base: models.Base{ID: 2}, Name: "Project 2"},
+					{Base: models.Base{ID: testProjectID1}, Name: "Project 1"},
+					{Base: models.Base{ID: testProjectID2}, Name: "Project 2"},
 				}
 				m.On("ListProjects", mock.Anything, 10, 0).Return(projects, 2, nil)
 			},
 			want: &models.PaginatedResponse{
 				Data: []*models.Project{
-					{Base: models.Base{ID: 1}, Name: "Project 1"},
-					{Base: models.Base{ID: 2}, Name: "Project 2"},
+					{Base: models.Base{ID: testProjectID1}, Name: "Project 1"},
+					{Base: models.Base{ID: testProjectID2}, Name: "Project 2"},
 				},
 				Pagination: models.Pagination{
 					Total:  2,
@@ -208,6 +214,8 @@ func TestProjectService_List(t *testing.T) {
 }
 
 func TestProjectService_Update(t *testing.T) {
+	testProjectID1 := test.RandomTestUUID()
+	testNonExistingProjectID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
 		project *models.Project
@@ -217,7 +225,7 @@ func TestProjectService_Update(t *testing.T) {
 		{
 			name: "successful update",
 			project: &models.Project{
-				Base: models.Base{ID: 1},
+				Base: models.Base{ID: testProjectID1},
 				Name: "Updated Project",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -229,7 +237,7 @@ func TestProjectService_Update(t *testing.T) {
 		{
 			name: "update non-existent project",
 			project: &models.Project{
-				Base: models.Base{ID: 999},
+				Base: models.Base{ID: testNonExistingProjectID},
 				Name: "Updated Project",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -258,25 +266,27 @@ func TestProjectService_Update(t *testing.T) {
 }
 
 func TestProjectService_Delete(t *testing.T) {
+	testProjectID1 := test.RandomTestUUID()
+	testNonExistingProjectID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
-		id      int
+		id      string
 		mockFn  func(*mocks.Repository)
 		wantErr bool
 	}{
 		{
 			name: "successful deletion",
-			id:   1,
+			id:   testProjectID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteProject", mock.Anything, 1).Return(nil)
+				m.On("DeleteProject", mock.Anything, testProjectID1).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name: "delete non-existent project",
-			id:   999,
+			id:   testNonExistingProjectID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteProject", mock.Anything, 999).Return(storage.ErrNotFound)
+				m.On("DeleteProject", mock.Anything, testNonExistingProjectID).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -300,6 +310,8 @@ func TestProjectService_Delete(t *testing.T) {
 }
 
 func TestProjectService_AddUser(t *testing.T) {
+	testProjectID1 := test.RandomTestUUID()
+	testUserID1 := test.RandomTestUUID()
 	tests := []struct {
 		name        string
 		projectUser *models.ProjectUser
@@ -309,13 +321,13 @@ func TestProjectService_AddUser(t *testing.T) {
 		{
 			name: "successful add user",
 			projectUser: &models.ProjectUser{
-				ProjectID: 1,
-				UserID:    1,
+				ProjectID: testProjectID1,
+				UserID:    testUserID1,
 				Role:      "member",
 			},
 			mockFn: func(m *mocks.Repository) {
 				m.On("ProjectAddUser", mock.Anything, mock.MatchedBy(func(pu *models.ProjectUser) bool {
-					return pu.ProjectID == 1 && pu.UserID == 1 && pu.Role == "member"
+					return pu.ProjectID == testProjectID1 && pu.UserID == testUserID1 && pu.Role == "member"
 				})).Return(nil)
 			},
 			wantErr: false,
@@ -323,8 +335,8 @@ func TestProjectService_AddUser(t *testing.T) {
 		{
 			name: "repository error",
 			projectUser: &models.ProjectUser{
-				ProjectID: 1,
-				UserID:    1,
+				ProjectID: testProjectID1,
+				UserID:    testUserID1,
 				Role:      "member",
 			},
 			mockFn: func(m *mocks.Repository) {
@@ -353,28 +365,30 @@ func TestProjectService_AddUser(t *testing.T) {
 }
 
 func TestProjectService_RemoveUser(t *testing.T) {
+	testProjectID1 := test.RandomTestUUID()
+	testUserID1 := test.RandomTestUUID()
 	tests := []struct {
 		name      string
-		projectID int
-		userID    int
+		projectID string
+		userID    string
 		mockFn    func(*mocks.Repository)
 		wantErr   bool
 	}{
 		{
 			name:      "successful remove user",
-			projectID: 1,
-			userID:    1,
+			projectID: testProjectID1,
+			userID:    testUserID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ProjectRemoveUser", mock.Anything, 1, 1).Return(nil)
+				m.On("ProjectRemoveUser", mock.Anything, testProjectID1, testUserID1).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name:      "repository error",
-			projectID: 1,
-			userID:    1,
+			projectID: testProjectID1,
+			userID:    testUserID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ProjectRemoveUser", mock.Anything, 1, 1).
+				m.On("ProjectRemoveUser", mock.Anything, testProjectID1, testUserID1).
 					Return(errors.New("database error"))
 			},
 			wantErr: true,
@@ -399,10 +413,13 @@ func TestProjectService_RemoveUser(t *testing.T) {
 }
 
 func TestProjectService_ListByUser(t *testing.T) {
+	testProjectID1 := test.RandomTestUUID()
+	testProjectID2 := test.RandomTestUUID()
+	testUserID1 := test.RandomTestUUID()
 	now := time.Now()
 	tests := []struct {
 		name    string
-		userID  int
+		userID  string
 		limit   int
 		offset  int
 		mockFn  func(*mocks.Repository)
@@ -411,14 +428,14 @@ func TestProjectService_ListByUser(t *testing.T) {
 	}{
 		{
 			name:   "successful list",
-			userID: 1,
+			userID: testUserID1,
 			limit:  10,
 			offset: 0,
 			mockFn: func(m *mocks.Repository) {
 				projects := []*models.Project{
 					{
 						Base: models.Base{
-							ID:        1,
+							ID:        testProjectID1,
 							CreatedAt: null.TimeFrom(now),
 							UpdatedAt: null.TimeFrom(now),
 						},
@@ -426,20 +443,20 @@ func TestProjectService_ListByUser(t *testing.T) {
 					},
 					{
 						Base: models.Base{
-							ID:        2,
+							ID:        testProjectID2,
 							CreatedAt: null.TimeFrom(now),
 							UpdatedAt: null.TimeFrom(now),
 						},
 						Name: "Project 2",
 					},
 				}
-				m.On("ListProjectsByUser", mock.Anything, 1, 10, 0).Return(projects, 2, nil)
+				m.On("ListProjectsByUser", mock.Anything, testUserID1, 10, 0).Return(projects, 2, nil)
 			},
 			want: &models.PaginatedResponse{
 				Data: []*models.Project{
 					{
 						Base: models.Base{
-							ID:        1,
+							ID:        testProjectID1,
 							CreatedAt: null.TimeFrom(now),
 							UpdatedAt: null.TimeFrom(now),
 						},
@@ -447,7 +464,7 @@ func TestProjectService_ListByUser(t *testing.T) {
 					},
 					{
 						Base: models.Base{
-							ID:        2,
+							ID:        testProjectID2,
 							CreatedAt: null.TimeFrom(now),
 							UpdatedAt: null.TimeFrom(now),
 						},
@@ -464,11 +481,11 @@ func TestProjectService_ListByUser(t *testing.T) {
 		},
 		{
 			name:   "repository error",
-			userID: 1,
+			userID: testUserID1,
 			limit:  10,
 			offset: 0,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListProjectsByUser", mock.Anything, 1, 10, 0).
+				m.On("ListProjectsByUser", mock.Anything, testUserID1, 10, 0).
 					Return([]*models.Project(nil), 0, errors.New("database error"))
 			},
 			want:    nil,

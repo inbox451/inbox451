@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"inbox451/internal/test"
+
 	"inbox451/internal/logger"
 	"inbox451/internal/mocks"
 	"inbox451/internal/models"
@@ -31,6 +33,7 @@ func setupRuleTestCore(t *testing.T) (*Core, *mocks.Repository) {
 }
 
 func TestRuleService_Create(t *testing.T) {
+	testInboxID1 := test.RandomTestUUID()
 	tests := []struct {
 		name    string
 		rule    *models.ForwardRule
@@ -40,7 +43,7 @@ func TestRuleService_Create(t *testing.T) {
 		{
 			name: "successful creation",
 			rule: &models.ForwardRule{
-				InboxID:  1,
+				InboxID:  testInboxID1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
 				Subject:  "Test Subject",
@@ -54,7 +57,7 @@ func TestRuleService_Create(t *testing.T) {
 		{
 			name: "repository error",
 			rule: &models.ForwardRule{
-				InboxID:  1,
+				InboxID:  testInboxID1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
 				Subject:  "Test Subject",
@@ -86,9 +89,12 @@ func TestRuleService_Create(t *testing.T) {
 
 func TestRuleService_Get(t *testing.T) {
 	now := time.Now()
+	testInboxID1 := test.RandomTestUUID()
+	testRuleID1 := test.RandomTestUUID()
+	nonExistingRuleID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
-		id      int
+		id      string
 		mockFn  func(*mocks.Repository)
 		want    *models.ForwardRule
 		wantErr bool
@@ -96,15 +102,15 @@ func TestRuleService_Get(t *testing.T) {
 	}{
 		{
 			name: "existing rule",
-			id:   1,
+			id:   testRuleID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetRule", mock.Anything, 1).Return(&models.ForwardRule{
+				m.On("GetRule", mock.Anything, testRuleID1).Return(&models.ForwardRule{
 					Base: models.Base{
-						ID:        1,
+						ID:        testRuleID1,
 						CreatedAt: null.TimeFrom(now),
 						UpdatedAt: null.TimeFrom(now),
 					},
-					InboxID:  1,
+					InboxID:  testInboxID1,
 					Sender:   "sender@example.com",
 					Receiver: "receiver@example.com",
 					Subject:  "Test Subject",
@@ -112,11 +118,11 @@ func TestRuleService_Get(t *testing.T) {
 			},
 			want: &models.ForwardRule{
 				Base: models.Base{
-					ID:        1,
+					ID:        testRuleID1,
 					CreatedAt: null.TimeFrom(now),
 					UpdatedAt: null.TimeFrom(now),
 				},
-				InboxID:  1,
+				InboxID:  testInboxID1,
 				Sender:   "sender@example.com",
 				Receiver: "receiver@example.com",
 				Subject:  "Test Subject",
@@ -125,9 +131,9 @@ func TestRuleService_Get(t *testing.T) {
 		},
 		{
 			name: "non-existent rule",
-			id:   999,
+			id:   nonExistingRuleID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("GetRule", mock.Anything, 999).Return(nil, storage.ErrNotFound)
+				m.On("GetRule", mock.Anything, nonExistingRuleID).Return(nil, storage.ErrNotFound)
 			},
 			want:    nil,
 			wantErr: true,
@@ -157,6 +163,9 @@ func TestRuleService_Get(t *testing.T) {
 }
 
 func TestRuleService_Update(t *testing.T) {
+	testInboxID1 := test.RandomTestUUID()
+	testRuleID1 := test.RandomTestUUID()
+	nonExistingRuleID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
 		rule    *models.ForwardRule
@@ -166,8 +175,8 @@ func TestRuleService_Update(t *testing.T) {
 		{
 			name: "successful update",
 			rule: &models.ForwardRule{
-				Base:     models.Base{ID: 1},
-				InboxID:  1,
+				Base:     models.Base{ID: testRuleID1},
+				InboxID:  testInboxID1,
 				Sender:   "updated@example.com",
 				Receiver: "receiver@example.com",
 				Subject:  "Updated Subject",
@@ -181,8 +190,8 @@ func TestRuleService_Update(t *testing.T) {
 		{
 			name: "update non-existent rule",
 			rule: &models.ForwardRule{
-				Base:     models.Base{ID: 999},
-				InboxID:  1,
+				Base:     models.Base{ID: nonExistingRuleID},
+				InboxID:  testInboxID1,
 				Sender:   "updated@example.com",
 				Receiver: "receiver@example.com",
 				Subject:  "Updated Subject",
@@ -213,25 +222,27 @@ func TestRuleService_Update(t *testing.T) {
 }
 
 func TestRuleService_Delete(t *testing.T) {
+	testRuleID1 := test.RandomTestUUID()
+	nonExistingRuleID := test.RandomTestUUID()
 	tests := []struct {
 		name    string
-		id      int
+		id      string
 		mockFn  func(*mocks.Repository)
 		wantErr bool
 	}{
 		{
 			name: "successful deletion",
-			id:   1,
+			id:   testRuleID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteRule", mock.Anything, 1).Return(nil)
+				m.On("DeleteRule", mock.Anything, testRuleID1).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name: "delete non-existent rule",
-			id:   999,
+			id:   nonExistingRuleID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("DeleteRule", mock.Anything, 999).Return(storage.ErrNotFound)
+				m.On("DeleteRule", mock.Anything, nonExistingRuleID).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -255,9 +266,13 @@ func TestRuleService_Delete(t *testing.T) {
 }
 
 func TestRuleService_ListByInbox(t *testing.T) {
+	testInboxID1 := test.RandomTestUUID()
+	testInboxID2 := test.RandomTestUUID()
+	testRuleID1 := test.RandomTestUUID()
+	testRuleID2 := test.RandomTestUUID()
 	tests := []struct {
 		name    string
-		inboxID int
+		inboxID string
 		limit   int
 		offset  int
 		mockFn  func(*mocks.Repository)
@@ -266,40 +281,40 @@ func TestRuleService_ListByInbox(t *testing.T) {
 	}{
 		{
 			name:    "successful list",
-			inboxID: 1,
+			inboxID: testInboxID1,
 			limit:   10,
 			offset:  0,
 			mockFn: func(m *mocks.Repository) {
 				rules := []*models.ForwardRule{
 					{
-						Base:     models.Base{ID: 1},
-						InboxID:  1,
+						Base:     models.Base{ID: testRuleID1},
+						InboxID:  testInboxID1,
 						Sender:   "sender1@example.com",
 						Receiver: "receiver1@example.com",
 						Subject:  "Subject 1",
 					},
 					{
-						Base:     models.Base{ID: 2},
-						InboxID:  1,
+						Base:     models.Base{ID: testRuleID2},
+						InboxID:  testInboxID1,
 						Sender:   "sender2@example.com",
 						Receiver: "receiver2@example.com",
 						Subject:  "Subject 2",
 					},
 				}
-				m.On("ListRulesByInbox", mock.Anything, 1, 10, 0).Return(rules, 2, nil)
+				m.On("ListRulesByInbox", mock.Anything, testInboxID1, 10, 0).Return(rules, 2, nil)
 			},
 			want: &models.PaginatedResponse{
 				Data: []*models.ForwardRule{
 					{
-						Base:     models.Base{ID: 1},
-						InboxID:  1,
+						Base:     models.Base{ID: testRuleID1},
+						InboxID:  testInboxID1,
 						Sender:   "sender1@example.com",
 						Receiver: "receiver1@example.com",
 						Subject:  "Subject 1",
 					},
 					{
-						Base:     models.Base{ID: 2},
-						InboxID:  1,
+						Base:     models.Base{ID: testRuleID2},
+						InboxID:  testInboxID1,
 						Sender:   "sender2@example.com",
 						Receiver: "receiver2@example.com",
 						Subject:  "Subject 2",
@@ -315,11 +330,11 @@ func TestRuleService_ListByInbox(t *testing.T) {
 		},
 		{
 			name:    "repository error",
-			inboxID: 1,
+			inboxID: testInboxID1,
 			limit:   10,
 			offset:  0,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListRulesByInbox", mock.Anything, 1, 10, 0).
+				m.On("ListRulesByInbox", mock.Anything, testInboxID1, 10, 0).
 					Return([]*models.ForwardRule(nil), 0, errors.New("database error"))
 			},
 			want:    nil,
@@ -327,11 +342,11 @@ func TestRuleService_ListByInbox(t *testing.T) {
 		},
 		{
 			name:    "empty inbox",
-			inboxID: 2,
+			inboxID: testInboxID2,
 			limit:   10,
 			offset:  0,
 			mockFn: func(m *mocks.Repository) {
-				m.On("ListRulesByInbox", mock.Anything, 2, 10, 0).
+				m.On("ListRulesByInbox", mock.Anything, testInboxID2, 10, 0).
 					Return([]*models.ForwardRule{}, 0, nil)
 			},
 			want: &models.PaginatedResponse{
