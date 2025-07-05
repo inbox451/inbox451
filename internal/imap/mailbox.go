@@ -52,7 +52,7 @@ func (m *ImapMailbox) Status(items []imap.StatusItem) (*imap.MailboxStatus, erro
 	filters := models.MessageFilters{IsDeleted: &falseVal}
 	_, total, err := m.user.core.Repository.ListMessagesByInboxWithFilters(ctx, m.inboxModel.ID, filters, 1, 0)
 	if err != nil {
-		m.user.core.Logger.Error("Failed to get message count for inbox %d: %v", m.inboxModel.ID, err)
+		m.user.core.Logger.Error("Failed to get message count for inbox %s: %v", m.inboxModel.ID, err)
 		return status, nil
 	}
 	status.Messages = uint32(total)
@@ -61,7 +61,7 @@ func (m *ImapMailbox) Status(items []imap.StatusItem) (*imap.MailboxStatus, erro
 	filters.IsRead = &falseVal
 	_, unreadTotal, err := m.user.core.Repository.ListMessagesByInboxWithFilters(ctx, m.inboxModel.ID, filters, 1, 0)
 	if err != nil {
-		m.user.core.Logger.Error("Failed to get unread message count for inbox %d: %v", m.inboxModel.ID, err)
+		m.user.core.Logger.Error("Failed to get unread message count for inbox %s: %v", m.inboxModel.ID, err)
 	} else {
 		status.Unseen = uint32(unreadTotal)
 	}
@@ -72,7 +72,7 @@ func (m *ImapMailbox) Status(items []imap.StatusItem) (*imap.MailboxStatus, erro
 	// Get next UID
 	maxUID, err := m.user.core.Repository.GetMaxMessageUID(ctx, m.inboxModel.ID)
 	if err != nil {
-		m.user.core.Logger.Error("Failed to get max UID for inbox %d: %v", m.inboxModel.ID, err)
+		m.user.core.Logger.Error("Failed to get max UID for inbox %s: %v", m.inboxModel.ID, err)
 		status.UidNext = 1
 	} else {
 		status.UidNext = maxUID + 1
@@ -198,7 +198,7 @@ func (m *ImapMailbox) SearchMessages(uid bool, criteria *imap.SearchCriteria) ([
 		// Apply additional search criteria
 		if matchesSearchCriteria(msg, criteria) {
 			if uid {
-				results = append(results, uint32(msg.ID))
+				results = append(results, stringToUID(msg.ID))
 			} else {
 				// For sequence numbers, use 1-based indexing
 				results = append(results, uint32(i+1))
@@ -220,13 +220,13 @@ func (m *ImapMailbox) ExpungeMessages(uids []uint32) error {
 
 	// Delete each message
 	for _, uid := range uids {
-		if err := m.user.core.MessageService.Delete(ctx, int(uid)); err != nil {
+		if err := m.user.core.MessageService.Delete(ctx, uidToStringByLookup(ctx, m, uid)); err != nil {
 			m.user.core.Logger.Error("Failed to expunge message %d: %v", uid, err)
 			// Continue with other messages even if one fails
 		}
 	}
 
-	m.user.core.Logger.Info("Expunged %d messages from inbox %d", len(uids), m.inboxModel.ID)
+	m.user.core.Logger.Info("Expunged %d messages from inbox %s", len(uids), m.inboxModel.ID)
 	return nil
 }
 
@@ -276,13 +276,13 @@ func (m *ImapMailbox) UpdateMessagesFlags(uid bool, seqSet *imap.SeqSet, operati
 
 			// Clear flags that are not in the new set
 			if !seenInFlags {
-				if err := m.user.core.MessageService.MarkAsUnread(ctx, int(messageUID)); err != nil {
+				if err := m.user.core.MessageService.MarkAsUnread(ctx, uidToStringByLookup(ctx, m, messageUID)); err != nil {
 					m.user.core.Logger.Error("Failed to mark message %d as unread: %v", messageUID, err)
 					failedUpdates++
 				}
 			}
 			if !deletedInFlags {
-				if err := m.user.core.MessageService.MarkAsUndeleted(ctx, int(messageUID)); err != nil {
+				if err := m.user.core.MessageService.MarkAsUndeleted(ctx, uidToStringByLookup(ctx, m, messageUID)); err != nil {
 					m.user.core.Logger.Error("Failed to mark message %d as undeleted: %v", messageUID, err)
 					failedUpdates++
 				}
@@ -295,12 +295,12 @@ func (m *ImapMailbox) UpdateMessagesFlags(uid bool, seqSet *imap.SeqSet, operati
 			case imap.SeenFlag:
 				switch operation {
 				case imap.AddFlags, imap.SetFlags:
-					if err := m.user.core.MessageService.MarkAsRead(ctx, int(messageUID)); err != nil {
+					if err := m.user.core.MessageService.MarkAsRead(ctx, uidToStringByLookup(ctx, m, messageUID)); err != nil {
 						m.user.core.Logger.Error("Failed to mark message %d as read: %v", messageUID, err)
 						failedUpdates++
 					}
 				case imap.RemoveFlags:
-					if err := m.user.core.MessageService.MarkAsUnread(ctx, int(messageUID)); err != nil {
+					if err := m.user.core.MessageService.MarkAsUnread(ctx, uidToStringByLookup(ctx, m, messageUID)); err != nil {
 						m.user.core.Logger.Error("Failed to mark message %d as unread: %v", messageUID, err)
 						failedUpdates++
 					}
@@ -308,12 +308,12 @@ func (m *ImapMailbox) UpdateMessagesFlags(uid bool, seqSet *imap.SeqSet, operati
 			case imap.DeletedFlag:
 				switch operation {
 				case imap.AddFlags, imap.SetFlags:
-					if err := m.user.core.MessageService.MarkAsDeleted(ctx, int(messageUID)); err != nil {
+					if err := m.user.core.MessageService.MarkAsDeleted(ctx, uidToStringByLookup(ctx, m, messageUID)); err != nil {
 						m.user.core.Logger.Error("Failed to mark message %d as deleted: %v", messageUID, err)
 						failedUpdates++
 					}
 				case imap.RemoveFlags:
-					if err := m.user.core.MessageService.MarkAsUndeleted(ctx, int(messageUID)); err != nil {
+					if err := m.user.core.MessageService.MarkAsUndeleted(ctx, uidToStringByLookup(ctx, m, messageUID)); err != nil {
 						m.user.core.Logger.Error("Failed to mark message %d as undeleted: %v", messageUID, err)
 						failedUpdates++
 					}
@@ -346,12 +346,12 @@ func (m *ImapMailbox) Expunge() error {
 	// Permanently delete each message
 	for _, msg := range messages {
 		if err := m.user.core.MessageService.Delete(ctx, msg.ID); err != nil {
-			m.user.core.Logger.Error("Failed to expunge message %d: %v", msg.ID, err)
+			m.user.core.Logger.Error("Failed to expunge message %s: %v", msg.ID, err)
 			// Continue with other messages even if one fails
 		}
 	}
 
-	m.user.core.Logger.Info("Expunged %d messages from inbox %d", len(messages), m.inboxModel.ID)
+	m.user.core.Logger.Info("Expunged %d messages from inbox %s", len(messages), m.inboxModel.ID)
 	return nil
 }
 

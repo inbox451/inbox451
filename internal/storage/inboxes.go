@@ -66,7 +66,7 @@ func (r *repository) ListInboxesByProject(ctx context.Context, projectID string,
 }
 
 // ListInboxesByUser returns all inboxes accessible to a user through project membership
-func (r *repository) ListInboxesByUser(ctx context.Context, userID int) ([]*models.Inbox, error) {
+func (r *repository) ListInboxesByUser(ctx context.Context, userID string) ([]*models.Inbox, error) {
 	inboxes := []*models.Inbox{}
 	err := r.queries.ListInboxesByUser.SelectContext(ctx, &inboxes, userID)
 	if err != nil {
@@ -77,7 +77,7 @@ func (r *repository) ListInboxesByUser(ctx context.Context, userID int) ([]*mode
 }
 
 // GetInboxByEmailAndUser returns an inbox by email if the user has access to it
-func (r *repository) GetInboxByEmailAndUser(ctx context.Context, email string, userID int) (*models.Inbox, error) {
+func (r *repository) GetInboxByEmailAndUser(ctx context.Context, email string, userID string) (*models.Inbox, error) {
 	var inbox models.Inbox
 	err := r.queries.GetInboxByEmailAndUser.GetContext(ctx, &inbox, email, userID)
 	if err != nil {

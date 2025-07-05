@@ -129,8 +129,8 @@ func (s *InboxService) ListByProject(ctx context.Context, projectID string, limi
 	return response, nil
 }
 
-func (s *InboxService) ListByUser(ctx context.Context, userID int) ([]*models.Inbox, error) {
-	s.core.Logger.Info("Listing inboxes for user %d", userID)
+func (s *InboxService) ListByUser(ctx context.Context, userID string) ([]*models.Inbox, error) {
+	s.core.Logger.Info("Listing inboxes for user %s", userID)
 
 	inboxes, err := s.core.Repository.ListInboxesByUser(ctx, userID)
 	if err != nil {
@@ -138,12 +138,12 @@ func (s *InboxService) ListByUser(ctx context.Context, userID int) ([]*models.In
 		return nil, err
 	}
 
-	s.core.Logger.Info("Successfully retrieved %d inboxes for user %d", len(inboxes), userID)
+	s.core.Logger.Info("Successfully retrieved %d inboxes for user %s", len(inboxes), userID)
 	return inboxes, nil
 }
 
-func (s *InboxService) GetByEmailAndUser(ctx context.Context, email string, userID int) (*models.Inbox, error) {
-	s.core.Logger.Debug("Fetching inbox with email %s for user %d", email, userID)
+func (s *InboxService) GetByEmailAndUser(ctx context.Context, email string, userID string) (*models.Inbox, error) {
+	s.core.Logger.Debug("Fetching inbox with email %s for user %s", email, userID)
 
 	inbox, err := s.core.Repository.GetInboxByEmailAndUser(ctx, email, userID)
 	if err != nil {
@@ -152,11 +152,11 @@ func (s *InboxService) GetByEmailAndUser(ctx context.Context, email string, user
 	}
 
 	if inbox == nil {
-		s.core.Logger.Info("Inbox not found with email %s for user %d", email, userID)
+		s.core.Logger.Info("Inbox not found with email %s for user %s", email, userID)
 		return nil, ErrNotFound
 	}
 
-	s.core.Logger.Info("Successfully retrieved inbox %d with email %s for user %d", inbox.ID, email, userID)
+	s.core.Logger.Info("Successfully retrieved inbox %s with email %s for user %s", inbox.ID, email, userID)
 	return inbox, nil
 }
 

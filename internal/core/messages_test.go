@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"inbox451/internal/test"
+
 	"inbox451/internal/logger"
 	"inbox451/internal/mocks"
 	"inbox451/internal/models"
@@ -402,25 +404,27 @@ func TestMessageService_MarkAsUnread(t *testing.T) {
 }
 
 func TestMessageService_MarkAsDeleted(t *testing.T) {
+	testMessageID1 := test.RandomTestUUID()
+	nonExistingMessageID := test.RandomTestUUID()
 	tests := []struct {
 		name      string
-		messageID int
+		messageID string
 		mockFn    func(*mocks.Repository)
 		wantErr   bool
 	}{
 		{
 			name:      "successful mark as deleted",
-			messageID: 1,
+			messageID: testMessageID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageDeletedStatus", mock.Anything, 1, true).Return(nil)
+				m.On("UpdateMessageDeletedStatus", mock.Anything, testMessageID1, true).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name:      "non-existent message",
-			messageID: 999,
+			messageID: nonExistingMessageID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageDeletedStatus", mock.Anything, 999, true).Return(storage.ErrNotFound)
+				m.On("UpdateMessageDeletedStatus", mock.Anything, nonExistingMessageID, true).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},
@@ -444,25 +448,27 @@ func TestMessageService_MarkAsDeleted(t *testing.T) {
 }
 
 func TestMessageService_MarkAsUndeleted(t *testing.T) {
+	testMessageID1 := test.RandomTestUUID()
+	nonExistingMessageID := test.RandomTestUUID()
 	tests := []struct {
 		name      string
-		messageID int
+		messageID string
 		mockFn    func(*mocks.Repository)
 		wantErr   bool
 	}{
 		{
 			name:      "successful mark as undeleted",
-			messageID: 1,
+			messageID: testMessageID1,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageDeletedStatus", mock.Anything, 1, false).Return(nil)
+				m.On("UpdateMessageDeletedStatus", mock.Anything, testMessageID1, false).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name:      "non-existent message",
-			messageID: 999,
+			messageID: nonExistingMessageID,
 			mockFn: func(m *mocks.Repository) {
-				m.On("UpdateMessageDeletedStatus", mock.Anything, 999, false).Return(storage.ErrNotFound)
+				m.On("UpdateMessageDeletedStatus", mock.Anything, nonExistingMessageID, false).Return(storage.ErrNotFound)
 			},
 			wantErr: true,
 		},

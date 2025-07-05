@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"inbox451/internal/test"
+
 	"inbox451/internal/logger"
 	"inbox451/internal/mocks"
 	"inbox451/internal/models"
@@ -334,7 +336,7 @@ func TestUserService_LoginWithPassword(t *testing.T) {
 			password: "password123",
 			mockFn: func(m *mocks.Repository) {
 				user := &models.User{
-					Base:          models.Base{ID: 1},
+					Base:          models.Base{ID: "test-user-id-1"},
 					Username:      "testuser",
 					Status:        "active",
 					Password:      null.StringFrom("$2a$10$LhYtVKJdkcACbejxhtJU8eoDyMNhsntXzXDc3uQVpAXSBSSreyK6i"),
@@ -343,7 +345,7 @@ func TestUserService_LoginWithPassword(t *testing.T) {
 				m.On("GetUserByUsername", mock.Anything, "testuser").Return(user, nil)
 			},
 			want: &models.User{
-				Base:          models.Base{ID: 1},
+				Base:          models.Base{ID: "test-user-id-1"},
 				Username:      "testuser",
 				Status:        "active",
 				Password:      null.StringFrom("$2a$10$LhYtVKJdkcACbejxhtJU8eoDyMNhsntXzXDc3uQVpAXSBSSreyK6i"),

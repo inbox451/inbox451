@@ -75,7 +75,7 @@ func (r *repository) DeleteProject(ctx context.Context, id string) error {
 }
 
 func (r *repository) ProjectRemoveUser(ctx context.Context, projectID string, userID string) error {
-	result, err := r.queries.RemoveUserFromProject.ExecContext(ctx, projectID, userID)
+	result, err := r.queries.RemoveUserFromProject.ExecContext(ctx, userID, projectID)
 	if err != nil {
 		return handleDBError(err)
 	}

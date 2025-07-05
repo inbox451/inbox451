@@ -114,6 +114,7 @@ func (s *MessageService) MarkAsUndeleted(ctx context.Context, messageID string) 
 
 func (s *MessageService) Delete(ctx context.Context, messageID string) error {
 	s.core.Logger.Debug("Deleting message with ID: %s", messageID)
+
 	if err := s.core.Repository.DeleteMessage(ctx, messageID); err != nil {
 		s.core.Logger.Error("Failed to delete message: %v", err)
 		return err

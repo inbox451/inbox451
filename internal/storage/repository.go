@@ -49,14 +49,14 @@ type Repository interface {
 	DeleteMessage(ctx context.Context, messageID string) error
 
 	// IMAP-related operations
-	UpdateMessageDeletedStatus(ctx context.Context, messageID int, isDeleted bool) error
-	ListMessagesByInboxWithFilters(ctx context.Context, inboxID int, filters models.MessageFilters, limit, offset int) ([]*models.Message, int, error)
-	ListInboxesByUser(ctx context.Context, userID int) ([]*models.Inbox, error)
-	GetInboxByEmailAndUser(ctx context.Context, email string, userID int) (*models.Inbox, error)
-	GetMessagesByUIDs(ctx context.Context, inboxID int, uids []uint32) ([]*models.Message, error)
-	GetAllMessageUIDsForInbox(ctx context.Context, inboxID int) ([]uint32, error)
-	GetAllMessageUIDsForInboxIncludingDeleted(ctx context.Context, inboxID int) ([]uint32, error)
-	GetMaxMessageUID(ctx context.Context, inboxID int) (uint32, error)
+	UpdateMessageDeletedStatus(ctx context.Context, messageID string, isDeleted bool) error
+	ListMessagesByInboxWithFilters(ctx context.Context, inboxID string, filters models.MessageFilters, limit, offset int) ([]*models.Message, int, error)
+	ListInboxesByUser(ctx context.Context, userID string) ([]*models.Inbox, error)
+	GetInboxByEmailAndUser(ctx context.Context, email string, userID string) (*models.Inbox, error)
+	GetMessagesByUIDs(ctx context.Context, inboxID string, uids []uint32) ([]*models.Message, error)
+	GetAllMessageUIDsForInbox(ctx context.Context, inboxID string) ([]uint32, error)
+	GetAllMessageUIDsForInboxIncludingDeleted(ctx context.Context, inboxID string) ([]uint32, error)
+	GetMaxMessageUID(ctx context.Context, inboxID string) (uint32, error)
 
 	// User operations
 	ListUsers(ctx context.Context, limit, offset int) ([]*models.User, int, error)
