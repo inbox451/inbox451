@@ -150,7 +150,9 @@ func (suite *IMAPIntegrationTestSuite) ensureTestMessage() {
 	if err == nil && response != nil {
 		messages := response.Data.([]*models.Message)
 		for _, msg := range messages {
-			suite.core.MessageService.Delete(ctx, msg.ID)
+			if err := suite.core.MessageService.Delete(ctx, msg.ID); err != nil {
+				suite.T().Logf("Failed to delete message %s: %v", msg.ID, err)
+			}
 		}
 	}
 
