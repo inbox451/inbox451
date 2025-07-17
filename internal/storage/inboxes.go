@@ -64,3 +64,25 @@ func (r *repository) ListInboxesByProject(ctx context.Context, projectID string,
 
 	return inboxes, total, nil
 }
+
+// ListInboxesByUser returns all inboxes accessible to a user through project membership
+func (r *repository) ListInboxesByUser(ctx context.Context, userID string) ([]*models.Inbox, error) {
+	inboxes := []*models.Inbox{}
+	err := r.queries.ListInboxesByUser.SelectContext(ctx, &inboxes, userID)
+	if err != nil {
+		return nil, handleDBError(err)
+	}
+
+	return inboxes, nil
+}
+
+// GetInboxByEmailAndUser returns an inbox by email if the user has access to it
+func (r *repository) GetInboxByEmailAndUser(ctx context.Context, email string, userID string) (*models.Inbox, error) {
+	var inbox models.Inbox
+	err := r.queries.GetInboxByEmailAndUser.GetContext(ctx, &inbox, email, userID)
+	if err != nil {
+		return nil, handleDBError(err)
+	}
+
+	return &inbox, nil
+}

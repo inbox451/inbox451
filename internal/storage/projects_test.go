@@ -3,9 +3,10 @@ package storage
 import (
 	"context"
 	"database/sql"
-	"inbox451/internal/test"
 	"testing"
 	"time"
+
+	"inbox451/internal/test"
 
 	"inbox451/internal/models"
 
@@ -548,7 +549,7 @@ func TestRepository_ProjectAddUser(t *testing.T) {
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("INSERT INTO project_users").
-					WithArgs(testProjectID1, testUserID1, "member").
+					WithArgs(testUserID1, testProjectID1, "member").
 					WillReturnRows(
 						sqlmock.NewRows([]string{"created_at", "updated_at"}).
 							AddRow(now, now),
@@ -565,7 +566,7 @@ func TestRepository_ProjectAddUser(t *testing.T) {
 			},
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("INSERT INTO project_users").
-					WithArgs(testProjectID1, testUserID1, "member").
+					WithArgs(testUserID1, testProjectID1, "member").
 					WillReturnError(sql.ErrConnDone)
 			},
 			wantErr: true,
@@ -613,7 +614,7 @@ func TestRepository_ProjectRemoveUser(t *testing.T) {
 			userID:    testUserID1,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM project_users").
-					WithArgs(testProjectID1, testUserID1).
+					WithArgs(testUserID1, testProjectID1).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			wantErr: false,
@@ -624,7 +625,7 @@ func TestRepository_ProjectRemoveUser(t *testing.T) {
 			userID:    testUserID2,
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectExec("DELETE FROM project_users").
-					WithArgs(nonExistingProjectID, testUserID2).
+					WithArgs(testUserID2, nonExistingProjectID).
 					WillReturnResult(sqlmock.NewResult(0, 0))
 			},
 			wantErr: true,

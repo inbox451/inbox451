@@ -43,11 +43,11 @@ func (s *MessageService) Get(ctx context.Context, id string) (*models.Message, e
 	return message, nil
 }
 
-func (s *MessageService) ListByInbox(ctx context.Context, inboxID string, limit, offset int, isRead *bool) (*models.PaginatedResponse, error) {
-	s.core.Logger.Info("Listing messages for inbox %s with limit: %d, offset: %d, isRead: %v",
-		inboxID, limit, offset, isRead)
+func (s *MessageService) ListByInbox(ctx context.Context, inboxID string, limit, offset int, filters models.MessageFilters) (*models.PaginatedResponse, error) {
+	s.core.Logger.Info("Listing messages for inbox %s with limit: %d, offset: %d, filters: %+v",
+		inboxID, limit, offset, filters)
 
-	messages, total, err := s.core.Repository.ListMessagesByInboxWithFilter(ctx, inboxID, isRead, limit, offset)
+	messages, total, err := s.core.Repository.ListMessagesByInboxWithFilters(ctx, inboxID, filters, limit, offset)
 	if err != nil {
 		s.core.Logger.Error("Failed to list messages: %v", err)
 		return nil, err
@@ -85,6 +85,30 @@ func (s *MessageService) MarkAsUnread(ctx context.Context, messageID string) err
 	}
 
 	s.core.Logger.Info("Successfully marked message %s as unread", messageID)
+	return nil
+}
+
+func (s *MessageService) MarkAsDeleted(ctx context.Context, messageID string) error {
+	s.core.Logger.Debug("Marking message %s as deleted", messageID)
+
+	if err := s.core.Repository.UpdateMessageDeletedStatus(ctx, messageID, true); err != nil {
+		s.core.Logger.Error("Failed to mark message as deleted: %v", err)
+		return err
+	}
+
+	s.core.Logger.Info("Successfully marked message %s as deleted", messageID)
+	return nil
+}
+
+func (s *MessageService) MarkAsUndeleted(ctx context.Context, messageID string) error {
+	s.core.Logger.Debug("Marking message %s as undeleted", messageID)
+
+	if err := s.core.Repository.UpdateMessageDeletedStatus(ctx, messageID, false); err != nil {
+		s.core.Logger.Error("Failed to mark message as undeleted: %v", err)
+		return err
+	}
+
+	s.core.Logger.Info("Successfully marked message %s as undeleted", messageID)
 	return nil
 }
 

@@ -39,7 +39,7 @@ func initDB(cfg *config.Config) (*sqlx.DB, *sql.DB, error) {
 	var err error
 
 	const maxRetries = 5
-	for i := 0; i < maxRetries; i++ {
+	for i := range maxRetries {
 		db, err = sqlx.Connect("postgres", cfg.Database.URL)
 		if err == nil {
 			break
@@ -85,10 +85,16 @@ func startServers(core *core.Core, db *sql.DB) error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
+	// Initialize IMAP server
+	imapServer, err := imap.NewServer(core)
+	if err != nil {
+		return fmt.Errorf("failed to create IMAP server: %w", err)
+	}
+
 	// Initialize all servers
 	servers := []ServerInstance{
 		{server: api.NewServer(context.Background(), core, db), name: "HTTP"},
-		{server: imap.NewServer(core), name: "IMAP"},
+		{server: imapServer, name: "IMAP"},
 		{server: mta.NewServer(core), name: "SMTP: Mail Transfer Agent (MTA)"},
 		{server: msa.NewServer(core), name: "SMTP Mail Submission Agent (MSA)"},
 	}
@@ -140,7 +146,7 @@ func handleGracefulShutdown(core *core.Core, servers []ServerInstance) error {
 
 	// Wait for all servers to shut down or timeout
 	var shutdownErrors []error
-	for i := 0; i < len(servers); i++ {
+	for range len(servers) {
 		if err := <-errChan; err != nil {
 			shutdownErrors = append(shutdownErrors, err)
 		}

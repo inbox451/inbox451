@@ -146,18 +146,18 @@ SELECT COUNT(*) FROM forward_rules;
 -- name: create-message
 INSERT INTO messages (inbox_id, sender, receiver, subject, body, is_read, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-RETURNING id, created_at, updated_at;
+RETURNING id, created_at, updated_at, uid;
 
 -- name: get-message
-SELECT id, inbox_id, sender, receiver, subject, body, is_read, created_at, updated_at
+SELECT id, inbox_id, uid, sender, receiver, subject, body, is_read, created_at, updated_at
 FROM messages
 WHERE id = $1;
 
 -- name: list-messages-by-inbox
-SELECT id, inbox_id, sender, receiver, subject, body, is_read, created_at, updated_at
+SELECT id, inbox_id, uid, sender, receiver, subject, body, is_read, created_at, updated_at
 FROM messages
 WHERE inbox_id = $1
-ORDER BY id
+ORDER BY uid
 LIMIT $2 OFFSET $3;
 
 -- name: count-messages-by-inbox
@@ -174,10 +174,10 @@ WHERE id = $2;
 DELETE FROM messages WHERE id = $1;
 
 -- name: list-messages-by-inbox-with-read-filter
-SELECT id, inbox_id, sender, receiver, subject, body, is_read, created_at, updated_at
+SELECT id, inbox_id, uid, sender, receiver, subject, body, is_read, created_at, updated_at
 FROM messages
 WHERE inbox_id = $1 AND is_read = $2
-ORDER BY id
+ORDER BY uid
 LIMIT $3 OFFSET $4;
 
 -- name: count-messages-by-inbox-with-read-filter
@@ -286,3 +286,66 @@ DELETE FROM sessions;
 
 -- name: update-session
 UPDATE sessions SET data=$1  WHERE id=$2;
+
+-- =============================================================================
+-- IMAP-related queries
+-- =============================================================================
+
+-- name: update-message-deleted-status
+UPDATE messages
+SET is_deleted = $1, updated_at = CURRENT_TIMESTAMP
+WHERE id = $2;
+
+-- name: list-messages-by-inbox-with-filters
+SELECT id, inbox_id, uid, sender, receiver, subject, body, is_read, is_deleted, created_at, updated_at
+FROM messages
+WHERE inbox_id = $1
+  AND ($2::BOOLEAN IS NULL OR is_read = $2)
+  AND ($3::BOOLEAN IS NULL OR is_deleted = $3)
+ORDER BY uid
+LIMIT $4 OFFSET $5;
+
+-- name: count-messages-by-inbox-with-filters
+SELECT COUNT(*)
+FROM messages
+WHERE inbox_id = $1
+  AND ($2::BOOLEAN IS NULL OR is_read = $2)
+  AND ($3::BOOLEAN IS NULL OR is_deleted = $3);
+
+-- name: list-inboxes-by-user
+SELECT DISTINCT i.id, i.project_id, i.email, i.created_at, i.updated_at
+FROM inboxes i
+INNER JOIN project_users pu ON i.project_id = pu.project_id
+WHERE pu.user_id = $1
+ORDER BY i.email;
+
+-- name: get-inbox-by-email-and-user
+SELECT DISTINCT i.id, i.project_id, i.email, i.created_at, i.updated_at
+FROM inboxes i
+INNER JOIN project_users pu ON i.project_id = pu.project_id
+WHERE i.email = $1 AND pu.user_id = $2;
+
+-- name: get-messages-by-uids
+SELECT id, inbox_id, uid, sender, receiver, subject, body, is_read, is_deleted, created_at, updated_at
+FROM messages
+WHERE inbox_id = $1 AND uid = ANY($2::int[])
+ORDER BY uid;
+
+-- name: get-all-message-uids-for-inbox
+SELECT uid
+FROM messages
+WHERE inbox_id = $1 AND is_deleted = false
+ORDER BY uid;
+
+-- name: get-all-message-uids-for-inbox-including-deleted
+SELECT uid
+FROM messages
+WHERE inbox_id = $1
+ORDER BY uid;
+
+-- name: get-max-message-uid
+SELECT COALESCE(MAX(uid), 0) FROM messages WHERE inbox_id = $1;
+
+-- name: get-message-id-from-uid
+-- Get the UUID of a message from its inbox-specific integer UID.
+SELECT id FROM messages WHERE inbox_id = $1 AND uid = $2;

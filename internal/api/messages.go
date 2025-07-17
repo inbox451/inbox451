@@ -1,9 +1,10 @@
 package api
 
 import (
+	"net/http"
+
 	"inbox451/internal/models"
 	"inbox451/internal/storage"
-	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
@@ -24,7 +25,12 @@ func (s *Server) getMessages(c echo.Context) error {
 		return s.core.HandleError(err, http.StatusBadRequest)
 	}
 
-	response, err := s.core.MessageService.ListByInbox(c.Request().Context(), inboxID, query.Limit, query.Offset, query.IsRead)
+	filters := models.MessageFilters{
+		IsRead: query.IsRead,
+		// IsDeleted is not exposed via API, defaulting to showing non-deleted messages
+		IsDeleted: nil,
+	}
+	response, err := s.core.MessageService.ListByInbox(c.Request().Context(), inboxID, query.Limit, query.Offset, filters)
 	if err != nil {
 		return s.core.HandleError(err, http.StatusInternalServerError)
 	}

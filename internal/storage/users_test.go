@@ -3,9 +3,10 @@ package storage
 import (
 	"context"
 	"database/sql"
-	"inbox451/internal/test"
 	"testing"
 	"time"
+
+	"inbox451/internal/test"
 
 	"inbox451/internal/models"
 
@@ -552,7 +553,7 @@ func TestRepository_GetUserByUsername(t *testing.T) {
 					WillReturnError(sql.ErrNoRows)
 			},
 			want:    nil,
-			wantErr: false,
+			wantErr: true,
 		},
 		{
 			name:     "database error",

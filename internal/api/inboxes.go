@@ -1,8 +1,9 @@
 package api
 
 import (
-	"inbox451/internal/models"
 	"net/http"
+
+	"inbox451/internal/models"
 
 	"github.com/labstack/echo/v4"
 )

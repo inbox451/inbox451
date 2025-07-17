@@ -129,6 +129,37 @@ func (s *InboxService) ListByProject(ctx context.Context, projectID string, limi
 	return response, nil
 }
 
+func (s *InboxService) ListByUser(ctx context.Context, userID string) ([]*models.Inbox, error) {
+	s.core.Logger.Info("Listing inboxes for user %s", userID)
+
+	inboxes, err := s.core.Repository.ListInboxesByUser(ctx, userID)
+	if err != nil {
+		s.core.Logger.Error("Failed to list inboxes by user: %v", err)
+		return nil, err
+	}
+
+	s.core.Logger.Info("Successfully retrieved %d inboxes for user %s", len(inboxes), userID)
+	return inboxes, nil
+}
+
+func (s *InboxService) GetByEmailAndUser(ctx context.Context, email string, userID string) (*models.Inbox, error) {
+	s.core.Logger.Debug("Fetching inbox with email %s for user %s", email, userID)
+
+	inbox, err := s.core.Repository.GetInboxByEmailAndUser(ctx, email, userID)
+	if err != nil {
+		s.core.Logger.Error("Failed to fetch inbox by email and user: %v", err)
+		return nil, err
+	}
+
+	if inbox == nil {
+		s.core.Logger.Info("Inbox not found with email %s for user %s", email, userID)
+		return nil, ErrNotFound
+	}
+
+	s.core.Logger.Info("Successfully retrieved inbox %s with email %s for user %s", inbox.ID, email, userID)
+	return inbox, nil
+}
+
 func (s *InboxService) GetByEmailWithWildcard(ctx context.Context, to string) (*models.Inbox, error) {
 	s.core.Logger.Info("Fetching inbox by email with wildcard: %s", to)
 
@@ -167,5 +198,4 @@ func (s *InboxService) GetByEmailWithWildcard(ctx context.Context, to string) (*
 	s.core.Logger.Info("Looking for inbox for wildcard match. inbox=%s wildcard=%s", baseEmail, to)
 
 	return s.core.Repository.GetInboxByEmail(ctx, baseEmail)
-
 }

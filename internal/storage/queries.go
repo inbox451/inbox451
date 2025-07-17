@@ -82,6 +82,18 @@ type Queries struct {
 	DeleteSession         *sqlx.Stmt `query:"delete-session"`
 	DeleteExpiredSessions *sqlx.Stmt `query:"delete-expired-sessions"`
 	UpdateSession         *sqlx.Stmt `query:"update-session"`
+
+	// IMAP-related queries
+	UpdateMessageDeletedStatus                *sqlx.Stmt `query:"update-message-deleted-status"`
+	ListMessagesByInboxWithFilters            *sqlx.Stmt `query:"list-messages-by-inbox-with-filters"`
+	CountMessagesByInboxWithFilters           *sqlx.Stmt `query:"count-messages-by-inbox-with-filters"`
+	ListInboxesByUser                         *sqlx.Stmt `query:"list-inboxes-by-user"`
+	GetInboxByEmailAndUser                    *sqlx.Stmt `query:"get-inbox-by-email-and-user"`
+	GetMessagesByUIDs                         *sqlx.Stmt `query:"get-messages-by-uids"`
+	GetAllMessageUIDsForInbox                 *sqlx.Stmt `query:"get-all-message-uids-for-inbox"`
+	GetAllMessageUIDsForInboxIncludingDeleted *sqlx.Stmt `query:"get-all-message-uids-for-inbox-including-deleted"`
+	GetMaxMessageUID                          *sqlx.Stmt `query:"get-max-message-uid"`
+	GetMessageIDFromUID                       *sqlx.Stmt `query:"get-message-id-from-uid"`
 }
 
 func PrepareQueries(db *sqlx.DB) (*Queries, error) {

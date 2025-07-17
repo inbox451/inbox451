@@ -14,7 +14,6 @@ func V0_2_0(db *sqlx.DB, config *config.Config, log *log.Logger) error {
 	log.Print("Running migration v0.2.0: Add Authentication")
 
 	schema := []string{
-
 		// Ensure sessions table exists and matches simplesessions requirements
 		// See https://github.com/zerodha/simplesessions/blob/v3.0.0/stores/postgres/postgres.go#L4
 		// dropping sessions table from first migration to ensure it is created with the correct schema
@@ -26,6 +25,20 @@ func V0_2_0(db *sqlx.DB, config *config.Config, log *log.Logger) error {
         )`,
 		`CREATE INDEX IF NOT EXISTS idx_sessions_id ON sessions (id)`,
 		`CREATE INDEX IF NOT EXISTS idx_sessions_id_created_at ON sessions (id, created_at)`,
+		// Add is_deleted column to messages table
+		`ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT false`,
+
+		// Add a serial (auto-incrementing integer) column for IMAP UIDs
+		`ALTER TABLE messages ADD COLUMN IF NOT EXISTS uid SERIAL`,
+
+		// Create index for efficient filtering by inbox_id and is_deleted
+		`CREATE INDEX IF NOT EXISTS idx_messages_inbox_id_is_deleted ON messages (inbox_id, is_deleted)`,
+
+		// Create additional indexes for IMAP filtering operations
+		`CREATE INDEX IF NOT EXISTS idx_messages_inbox_id_is_read_is_deleted ON messages (inbox_id, is_read, is_deleted)`,
+
+		// Create a unique index to enforce that UIDs are unique per inbox
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_inbox_uid ON messages(inbox_id, uid)`,
 	}
 
 	// Start a transaction

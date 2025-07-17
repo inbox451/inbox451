@@ -61,7 +61,7 @@ func (r *repository) UpdateProject(ctx context.Context, project *models.Project)
 }
 
 func (r *repository) ProjectAddUser(ctx context.Context, projectUser *models.ProjectUser) error {
-	err := r.queries.AddUserToProject.QueryRowContext(ctx, projectUser.ProjectID, projectUser.UserID, projectUser.Role).
+	err := r.queries.AddUserToProject.QueryRowContext(ctx, projectUser.UserID, projectUser.ProjectID, projectUser.Role).
 		Scan(&projectUser.CreatedAt, &projectUser.UpdatedAt)
 	return handleDBError(err)
 }
@@ -75,7 +75,7 @@ func (r *repository) DeleteProject(ctx context.Context, id string) error {
 }
 
 func (r *repository) ProjectRemoveUser(ctx context.Context, projectID string, userID string) error {
-	result, err := r.queries.RemoveUserFromProject.ExecContext(ctx, projectID, userID)
+	result, err := r.queries.RemoveUserFromProject.ExecContext(ctx, userID, projectID)
 	if err != nil {
 		return handleDBError(err)
 	}
